@@ -35,18 +35,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapPost("/getAllWays", ([FromBody]Poi[] points, IAntColonyAlgorithm algorithm) => GetAllWays(points, algorithm));
-app.MapPost("/getBestPath", ([FromBody]Poi[] points, IAntColonyAlgorithm algorithm) => GetBestPath(points, algorithm));
+app.MapPost("/getAllWays", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetAllWays(edges, algorithm));
+app.MapPost("/getBestPath", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetBestPath(edges, algorithm));
 app.UseCors();
 app.Run();
 
 
-List<Result> GetAllWays(Poi[] points, IAntColonyAlgorithm algorithm)
+List<Result> GetAllWays(Edge[] edges, IAntColonyAlgorithm algorithm)
 {
-    return algorithm.GetAllWays(points);
+    return algorithm.GetAllWays(edges);
 }
 
-Path GetBestPath(Poi[] points, IAntColonyAlgorithm algorithm)
+Path GetBestPath(Edge[] edges, IAntColonyAlgorithm algorithm)
 {
-    return algorithm.GetBestWay(points);
+    return algorithm.GetBestWay(edges);
 }

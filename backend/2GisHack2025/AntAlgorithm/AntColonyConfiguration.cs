@@ -15,11 +15,16 @@ public class AntColonyConfiguration
     /// Влияние расстояния
     /// </summary>
     public double Beta { get; set; } = 3.0;
-    
+
+    /// <summary>
+    /// Влияние веса вершины
+    /// </summary>
+    public double Gamma { get; set; } = 3.0;
+
     /// <summary>
     /// Испарение феромона
     /// </summary>
-    public double Evaporation { get; set; } = 0.01; //
+    public double Evaporation { get; set; } = 0.01;
     
     /// <summary>
     /// Константа для обновления феромона
