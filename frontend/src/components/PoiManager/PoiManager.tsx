@@ -35,7 +35,6 @@ export function PoiManager() {
     
     // Храним ссылки на маркеры POI
     const markersRef = useRef<Array<{ id: number; marker: any }>>([]);
-    console.log(store);
 
     // Синхронизация маркеров с данными из стора
     useEffect(() => {
