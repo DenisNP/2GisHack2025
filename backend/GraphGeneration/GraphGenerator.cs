@@ -1,4 +1,5 @@
 ﻿using AntAlgorithm;
+using GraphGeneration.A;
 using NetTopologySuite.Geometries;
 using VoronatorSharp;
 using Point = NetTopologySuite.Geometries.Point;
@@ -21,11 +22,11 @@ public static class GraphGenerator
         };
         
         // Генерируем точки
-        var hexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(polygons.Where(p => p.Zone != ZoneType.Restricted).ToList(), settings);
+        var hexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(pois.Max(p=>p.Id), polygons.ToList(), settings);
         
         // Создаем общую диаграмму Вороного/Делоне для всех точек
-        var vectorPoints = hexPoints.Select(p => new Vector2((float)p.X, (float)p.Y)).ToArray();
-        var voronator = new Voronator(vectorPoints.Concat(pois).ToArray());
+        // var vectorPoints = hexPoints.Select(p => new Vector2((float)p.X, (float)p.Y)).ToArray();
+        var voronator = new Voronator(hexPoints.Concat(pois).ToArray());
 
         // var graphNodes = DelaunayGraph.BuildGraphFromDelaunay(voronator.Delaunator);
 
@@ -48,12 +49,12 @@ public static class GraphGenerator
         return svgContent;
     }
     
-    public static string GenerateSvg(List<Polygon> polygons, List<Vector2> pois)
+    public static (string, Edge[]) GenerateSvg(List<Polygon> polygons, List<Vector2> poi)
     {
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
         {
-            HexSize = 4,
+            HexSize = 2,
             Density = 1,
             UseConvexHull = false,
             AddPolygonVertices = false,
@@ -62,14 +63,12 @@ public static class GraphGenerator
         };
         
         // Генерируем точки
-        var hexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(polygons.Where(p => p.Zone != ZoneType.Restricted).ToList(), settings);
+        var hexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(poi.Max(p => p.Id), polygons.ToList(), settings);
         
         // Создаем общую диаграмму Вороного/Делоне для всех точек
-        var vectorPoints = hexPoints.Select(p => new Vector2((float)p.X, (float)p.Y)).ToArray();
-        var voronator = new Voronator(vectorPoints.Concat(pois).ToArray());
-
-        // var graphNodes = DelaunayGraph.BuildGraphFromDelaunay(voronator.Delaunator);
-
+        // var vectorPoints = hexPoints.Select(p => new Vector2((float)p.X, (float)p.Y)).ToArray();
+        var voronator = new Voronator(hexPoints.Concat(poi).ToArray());
+        
         var pointsByPolygon = new Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>>();
 
         var ignore  = new List<NetTopologySuite.Geometries.Polygon>();
@@ -83,8 +82,25 @@ public static class GraphGenerator
                 ignore.Add(polygonPoints);
         }
         
-        var svgContent = GraphGeneration.GenerateSvg.GenerateMultiPolygonGraphSvg(ignore, pointsByPolygon.Keys.ToList(), pointsByPolygon, voronator.Delaunator, 50, settings.HexSize);
+        var graph = VoronoiGraphAdapter.ConvertToQuickGraph(ignore, voronator, settings.HexSize);
 
-        return svgContent;
+        var shortPaths = UniquePairsLinq.GetUniquePairsLinq(poi)
+            .SelectMany(pair => VoronoiPathFinder.FindPath(graph, pair.Item1, pair.Item2))
+            .ToList();
+        
+        
+        var (edge, vector) = VoronatorFilter.Get(ignore, voronator, settings.HexSize, shortPaths);
+        // foreach (var pair in UniquePairsLinq.GetUniquePairsLinq(poi))
+        // {
+        //     VoronoiPathFinder.FindPath(voronator, pair.Item1, pair.Item2);
+        // }
+
+        
+        var svgContent = GenerateSvg3.GenerateMultiPolygonGraphSvg(pointsByPolygon, vector, edge, 50, settings.HexSize);
+
+        return (
+            svgContent,
+            edge.Select(e => new Edge(new Poi(e.Source.Id, e.Source.X, e.Source.Y, e.Source.Weight), new Poi(e.Target.Id, e.Target.X, e.Target.Y, e.Target.Weight))).ToArray()
+            );
     }
 }

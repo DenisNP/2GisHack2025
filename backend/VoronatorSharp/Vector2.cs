@@ -4,7 +4,7 @@ using System.Diagnostics;
 namespace VoronatorSharp
 {
 #if !UNITY_2019_1_OR_NEWER
-    public struct Vector2
+    public struct Vector2 : IComparable
     {
         
         public int Id { get; set; }
@@ -131,6 +131,32 @@ namespace VoronatorSharp
         }
         public float SqrMagnitude() => sqrMagnitude;
         public override string ToString() => $"({x}, {y})";
+
+        public int CompareTo(object obj)
+        {
+            var r =  (Vector2)obj;
+            int xComparison = X.CompareTo(r.X);
+            if (xComparison != 0)
+                return xComparison;
+
+            return Y.CompareTo(r.Y);
+        }
+
+        // public override bool Equals(object obj)
+        // {
+        //     if (obj is Vector2 other)
+        //     {
+        //         return (x.Equals(other.x) && y.Equals(other.y)) ||
+        //                (x.Equals(other.y) && y.Equals(other.x));
+        //     }
+        //     return false;
+        // }
+        
+        // public override int GetHashCode()
+        // {
+        //     return Start.GetHashCode() ^ End.GetHashCode();
+        // }
+
         public string ToString(string format) => ToString();
 
         public static Vector2 operator +(Vector2 a, Vector2 b) => new Vector2(a.x + b.x, a.y + b.y);

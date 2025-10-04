@@ -17,6 +17,7 @@ public class HexagonalMultiPolygonGenerator
     }
     
     public static List<Vector2> GenerateHexagonalPoints(
+        int maxId,
         List<Polygon> sourcePolygons,
         HexagonalSettings settings)
     {
@@ -30,12 +31,12 @@ public class HexagonalMultiPolygonGenerator
         // 2. Генерируем гексагональную сетку в bounding полигоне
         if (settings.Density > 1)
         {
-            points.AddRange(HexagonalGridGenerator.GenerateDenseHexagonalGrid(
+            points.AddRange(HexagonalGridGenerator.GenerateDenseHexagonalGrid(maxId,
                 boundingPolygon, settings.HexSize, settings.Density));
         }
         else
         {
-            points.AddRange(HexagonalGridGenerator.GenerateHexagonalGridInPolygon(
+            points.AddRange(HexagonalGridGenerator.GenerateHexagonalGridInPolygon(maxId,
                 boundingPolygon, settings.HexSize));
         }
         
@@ -157,7 +158,9 @@ public class HexagonalMultiPolygonGenerator
     
     private static List<Vector2> FilterPointsBySourcePolygons(List<Vector2> points, List<Polygon> sourcePolygons)
     {
-        return points.Where(point => sourcePolygons.Any(polygon => polygon.Zone != ZoneType.Restricted && polygon.ContainsPoint(point))).ToList();
+        return points.Where(point => sourcePolygons
+            .Any(polygon => polygon.Zone != ZoneType.Restricted && polygon.ContainsPoint(point)))
+            .ToList();
     }
     
     private static float Cross(Vector2 o, Vector2 a, Vector2 b)
