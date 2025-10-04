@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AntAlgorithm", "AntAlgorithm\AntAlgorithm.csproj", "{686E3A0A-0914-49C4-81B9-8430081A4197}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AntAlgorightm.WebApi", "AntAlgorightm.WebApi\AntAlgorightm.WebApi.csproj", "{D32241C8-C26A-4CFE-8F15-7D7A99AB48B6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{686E3A0A-0914-49C4-81B9-8430081A4197}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{686E3A0A-0914-49C4-81B9-8430081A4197}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{686E3A0A-0914-49C4-81B9-8430081A4197}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{686E3A0A-0914-49C4-81B9-8430081A4197}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D32241C8-C26A-4CFE-8F15-7D7A99AB48B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D32241C8-C26A-4CFE-8F15-7D7A99AB48B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D32241C8-C26A-4CFE-8F15-7D7A99AB48B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D32241C8-C26A-4CFE-8F15-7D7A99AB48B6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
