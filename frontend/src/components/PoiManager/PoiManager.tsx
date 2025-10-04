@@ -49,9 +49,7 @@ export function PoiManager() {
             }
         });
         markersRef.current = [];
- 
-        console.log(JSON.stringify(convertToSnakeCase(store)));
-         
+
         // Создаем новые маркеры для каждого POI
         store.poi.forEach((poi: Poi) => {
             try {

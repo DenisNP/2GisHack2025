@@ -10,7 +10,7 @@ export interface Poi {
 }
 
 export enum PoiType {
-    High = 'high',
-    Medium = 'medium',
-    Low = 'low',
+    High = 'High',
+    Medium = 'Medium',
+    Low = 'Low',
 }
