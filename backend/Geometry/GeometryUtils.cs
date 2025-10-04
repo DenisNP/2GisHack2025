@@ -5,10 +5,9 @@ using System.Linq;
 
 namespace Geometry;
 
-
 public static class GeometryUtils
 {
-    // Алгоритм проверки точки в многоугольнике (Ray Casting)
+    // Улучшенный алгоритм проверки точки в многоугольнике (Ray Casting)
     public static bool IsPointInPolygon(Point point, List<Point> polygon)
     {
         if (polygon.Count < 3)
@@ -20,6 +19,10 @@ public static class GeometryUtils
             var pi = polygon[i];
             var pj = polygon[j];
 
+            // Проверяем, лежит ли точка на ребре многоугольника
+            if (IsPointOnSegment(point, pi, pj))
+                return true;
+
             if (((pi.Y > point.Y) != (pj.Y > point.Y)) &&
                 (point.X < (pj.X - pi.X) * (point.Y - pi.Y) / (pj.Y - pi.Y) + pi.X))
             {
@@ -27,6 +30,29 @@ public static class GeometryUtils
             }
         }
         return inside;
+    }
+
+    // Проверка, лежит ли точка на отрезке
+    public static bool IsPointOnSegment(Point point, Point segmentStart, Point segmentEnd)
+    {
+        // Проверяем коллинеарность
+        double crossProduct = (point.Y - segmentStart.Y) * (segmentEnd.X - segmentStart.X) 
+                            - (point.X - segmentStart.X) * (segmentEnd.Y - segmentStart.Y);
+        
+        if (Math.Abs(crossProduct) > 1e-10)
+            return false;
+
+        // Проверяем, что точка между концами отрезка
+        double dotProduct = (point.X - segmentStart.X) * (segmentEnd.X - segmentStart.X) 
+                          + (point.Y - segmentStart.Y) * (segmentEnd.Y - segmentStart.Y);
+        
+        if (dotProduct < 0)
+            return false;
+
+        double squaredLength = (segmentEnd.X - segmentStart.X) * (segmentEnd.X - segmentStart.X) 
+                             + (segmentEnd.Y - segmentStart.Y) * (segmentEnd.Y - segmentStart.Y);
+        
+        return dotProduct <= squaredLength;
     }
 
     // Проверка, находится ли точка в любой из restricted зон
@@ -81,21 +107,28 @@ public static class GeometryUtils
         return points;
     }
 
-    // Простая реализация триангуляции Делоне - генерация дополнительных точек
-    public static List<Point> GenerateDelaunayPoints(List<Point> polygon, double density)
+    // Улучшенная генерация точек для триангуляции Делоне
+    public static List<Point> GenerateDelaunayPoints(List<Point> polygon, int targetPointCount)
     {
         var points = new List<Point>();
         
+        if (polygon.Count == 0)
+            return points;
+
         // Добавляем вершины многоугольника
         points.AddRange(polygon);
+
+        // Если уже достаточно точек, возвращаем
+        if (points.Count >= targetPointCount)
+            return points.Take(targetPointCount).ToList();
 
         // Генерируем случайные точки внутри многоугольника
         var (min, max) = GetBoundingBox(polygon);
         var random = new Random();
         int attempts = 0;
-        int maxAttempts = 1000;
+        int maxAttempts = targetPointCount * 10; // Ограничиваем попытки
 
-        while (points.Count < polygon.Count * density && attempts < maxAttempts)
+        while (points.Count < targetPointCount && attempts < maxAttempts)
         {
             double x = min.X + random.NextDouble() * (max.X - min.X);
             double y = min.Y + random.NextDouble() * (max.Y - min.Y);
@@ -109,5 +142,35 @@ public static class GeometryUtils
         }
 
         return points;
+    }
+
+    // Альтернативный метод: генерация точек по регулярной сетке с фильтрацией
+    public static List<Point> GenerateGridPointsInPolygon(List<Point> polygon, double step)
+    {
+        var (min, max) = GetBoundingBox(polygon);
+        var gridPoints = GenerateGridPoints(min, max, step);
+        
+        return gridPoints
+            .Where(point => IsPointInPolygon(point, polygon))
+            .ToList();
+    }
+
+    // Вычисление центра масс многоугольника
+    public static Point CalculateCentroid(List<Point> polygon)
+    {
+        if (polygon.Count == 0)
+            return new Point(0, 0);
+
+        double sumX = 0;
+        double sumY = 0;
+        int count = polygon.Count;
+
+        foreach (var point in polygon)
+        {
+            sumX += point.X;
+            sumY += point.Y;
+        }
+
+        return new Point(sumX / count, sumY / count);
     }
 }

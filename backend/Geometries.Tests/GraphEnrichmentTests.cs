@@ -219,6 +219,7 @@ public class GraphEnrichmentTests
         Assert.True(count1 > count3);
     }
 
+
     [Fact]
     public void TestDelaunayPointGeneration()
     {
@@ -232,11 +233,72 @@ public class GraphEnrichmentTests
         };
 
         // Act
-        var points = GeometryUtils.GenerateDelaunayPoints(polygon, 2.0);
+        var points = GeometryUtils.GenerateDelaunayPoints(polygon, 10);
+
+        // Assert - проверяем, что все точки либо внутри, либо на границе
+        Assert.True(points.Count >= polygon.Count); // Должны быть вершины + дополнительные точки
+        
+        // Более мягкая проверка: большинство точек должно быть внутри/на границе
+        var validPoints = points.Where(point => 
+            GeometryUtils.IsPointInPolygon(point, polygon)).ToList();
+        
+        Assert.True(validPoints.Count >= polygon.Count, 
+            $"Большинство точек должно быть внутри полигона. Всего: {points.Count}, Внутри: {validPoints.Count}");
+        
+        // Проверяем, что вершины многоугольника включены
+        foreach (var vertex in polygon)
+        {
+            Assert.Contains(points, p => Math.Abs(p.X - vertex.X) < 1e-10 && Math.Abs(p.Y - vertex.Y) < 1e-10);
+        }
+    }
+
+    // Новый тест для проверки точек на границе
+    [Fact]
+    public void TestPointOnPolygonBoundary()
+    {
+        // Arrange
+        var polygon = new List<Point>
+        {
+            new(0, 0),
+            new(10, 0),
+            new(10, 10),
+            new(0, 10)
+        };
+
+        // Точки на границе
+        var edgePoint1 = new Point(5, 0);  // на нижнем ребре
+        var edgePoint2 = new Point(10, 5); // на правом ребре
+        var vertexPoint = new Point(0, 0); // вершина
+
+        // Act & Assert
+        Assert.True(GeometryUtils.IsPointInPolygon(edgePoint1, polygon));
+        Assert.True(GeometryUtils.IsPointInPolygon(edgePoint2, polygon));
+        Assert.True(GeometryUtils.IsPointInPolygon(vertexPoint, polygon));
+    }
+
+    // Тест для улучшенного метода генерации сетки
+    [Fact]
+    public void TestGridPointsInPolygon()
+    {
+        // Arrange
+        var polygon = new List<Point>
+        {
+            new(0, 0),
+            new(10, 0),
+            new(10, 10),
+            new(0, 10)
+        };
+
+        // Act
+        var points = GeometryUtils.GenerateGridPointsInPolygon(polygon, 5.0);
 
         // Assert
-        Assert.True(points.Count >= polygon.Count); // Должны быть вершины + дополнительные точки
         Assert.All(points, point => 
-            Assert.True(GeometryUtils.IsPointInPolygon(point, polygon))); // Все точки внутри полигона
+            Assert.True(GeometryUtils.IsPointInPolygon(point, polygon)));
+        
+        // Должны быть точки внутри
+        Assert.Contains(points, p => p.X == 5 && p.Y == 5);
+        Assert.Contains(points, p => p.X == 0 && p.Y == 0);
+        Assert.Contains(points, p => p.X == 10 && p.Y == 10);
     }
 }

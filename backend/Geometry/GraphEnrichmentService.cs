@@ -51,16 +51,17 @@ public class GraphEnrichmentService
         return FilterPoints(points, restrictedZones);
     }
 
-    private List<Point> GenerateAvailableGridPoints(Zone zone, List<Zone> restrictedZones)
+    private List<Point> GenerateAvailableDelaunayPoints(Zone zone, List<Zone> restrictedZones)
     {
-        // Для Available зон используем более редкую сетку
-        var points = GenerateGridPointsForZone(zone, _config.GridStep * 1.5);
+        // Используем улучшенный метод генерации
+        var points = GeometryUtils.GenerateDelaunayPoints(zone.Region, _config.MaxPointsPerZone);
         return FilterPoints(points, restrictedZones);
     }
 
-    private List<Point> GenerateAvailableDelaunayPoints(Zone zone, List<Zone> restrictedZones)
+    private List<Point> GenerateAvailableGridPoints(Zone zone, List<Zone> restrictedZones)
     {
-        var points = GeometryUtils.GenerateDelaunayPoints(zone.Region, 2.0);
+        // Для Available зон используем более редкую сетку, но гарантированно работающую
+        var points = GeometryUtils.GenerateGridPointsInPolygon(zone.Region, _config.GridStep * 1.5);
         return FilterPoints(points, restrictedZones).Take(_config.MaxPointsPerZone).ToList();
     }
 
