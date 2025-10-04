@@ -7,6 +7,6 @@ public class InputData
     [JsonPropertyName("zones")]
     public Zone[] Zones { get; set; }
     
-    [JsonPropertyName("pois")]
+    [JsonPropertyName("poi")]
     public Poi[]  Pois { get; set; }
 }

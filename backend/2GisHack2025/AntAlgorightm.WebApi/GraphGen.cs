@@ -20,15 +20,20 @@ public static class GraphGen
 
         List<Vector2> pp  =pois.Select(pp =>new Vector2(pp.Id, (float)pp.Point.X,  (float)pp.Point.Y, pp.Weight)).ToList();
 
+        
+        
         foreach (var zone in polygons)
         {
             zone.Vertices.Add(zone.Vertices.First());
+            
         }
 
         var result = GraphGenerator.Generate2(polygons, pp);
         
         File.WriteAllText("multi_polygon_graph.svg", result, Encoding.UTF8);
+        
+        var result2 = GraphGenerator.Generate(polygons, pp);
 
-        return new Path(); //algorithm.GetBestWay(result);
+        return algorithm.GetBestWay(result2);
     }
 }

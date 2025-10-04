@@ -73,7 +73,7 @@ public static class Generatesvg
             var t1 = tPoints[i];
             var t2 = tPoints[(i + 1) % 3];
 
-            if (sr * 1.2 < Vector2.Distance(t1, t2))
+            if (sr * 2 < Vector2.Distance(t1, t2))
             {
                 continue;
             }
