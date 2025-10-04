@@ -8,6 +8,19 @@
 }
 
 .App-map-container {
-    height: calc(100vh - 56px);
+    height: 100vh;
     width: 100%;
+    position: relative;
+}
+
+/* Убираем отступы и задаем полную высоту */
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#root {
+    height: 100vh;
 }
