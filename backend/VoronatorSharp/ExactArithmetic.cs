@@ -74,7 +74,7 @@ namespace VoronatorSharp
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
         public static void FastTwoSumTail(double a, double b, double x, out double y)
         {
-            double bvirt = x - a;
+            var bvirt = x - a;
             y = b - bvirt;
         }
 
@@ -88,7 +88,7 @@ namespace VoronatorSharp
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
         public static void FastTwoDiffTail(double a, double b, double x, out double y)
         {
-            double bvirt = a - x;
+            var bvirt = a - x;
             y = bvirt - b;
         }
 
@@ -102,10 +102,10 @@ namespace VoronatorSharp
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
         public static void TwoSumTail(double a, double b, double x, out double y)
         {
-            double bvirt = x - a;
-            double avirt = x - bvirt;
-            double bround = b - bvirt;
-            double around = a - avirt;
+            var bvirt = x - a;
+            var avirt = x - bvirt;
+            var bround = b - bvirt;
+            var around = a - avirt;
             y = around + bround;
         }
 
@@ -119,10 +119,10 @@ namespace VoronatorSharp
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
         public static void TwoDiffTail(double a, double b, double x, out double y)
         {
-            double bvirt = a - x;
-            double avirt = x + bvirt;
-            double bround = bvirt - b;
-            double around = a - avirt;
+            var bvirt = a - x;
+            var avirt = x + bvirt;
+            var bround = bvirt - b;
+            var around = a - avirt;
             y = around + bround;
         }
 
@@ -133,8 +133,8 @@ namespace VoronatorSharp
             // Set splitter used for Product (using s = 27)
             // Agrees with value calculated by EpsilonSplitter
             const double splitter = (1 << 27) + 1.0; // 2^ceiling(p / 2) + 1 (and p=53)
-            double c = splitter * a;
-            double abig = c - a;
+            var c = splitter * a;
+            var abig = c - a;
             ahi = c - abig;
             alo = a - ahi;
         }
@@ -154,9 +154,9 @@ namespace VoronatorSharp
 
             Split(a, out ahi, out alo);
             Split(b, out bhi, out blo);
-            double err1 = x - (ahi * bhi);
-            double err2 = err1 - (alo * bhi);
-            double err3 = err2 - (ahi * blo);
+            var err1 = x - (ahi * bhi);
+            var err2 = err1 - (alo * bhi);
+            var err3 = err2 - (ahi * blo);
             y = (alo * blo) - err3;
         }
 
@@ -168,9 +168,9 @@ namespace VoronatorSharp
 
             x = a * b;
             Split(a, out ahi, out alo);
-            double err1 = x - (ahi * bhi);
-            double err2 = err1 - (alo * bhi);
-            double err3 = err2 - (ahi * blo);
+            var err1 = x - (ahi * bhi);
+            var err2 = err1 - (alo * bhi);
+            var err3 = err2 - (ahi * blo);
             y = (alo * blo) - err3;
         }
 
@@ -179,9 +179,9 @@ namespace VoronatorSharp
         public static void TwoProduct2Presplit(double a, double ahi, double alo, double b, double bhi, double blo, out double x, out double y)
         {
             x = a * b;
-            double err1 = x - (ahi * bhi);
-            double err2 = err1 - (alo * bhi);
-            double err3 = err2 - (ahi * blo);
+            var err1 = x - (ahi * bhi);
+            var err2 = err1 - (alo * bhi);
+            var err3 = err2 - (ahi * blo);
             y = (alo * blo) - err3;
         }
 

@@ -103,7 +103,7 @@ internal sealed class AntColonyAlgorithm : IAntColonyAlgorithm
 
     private List<Result> GetResult()
     {
-        List<Result> res = new List<Result>();
+        var res = new List<Result>();
         
         for (var i = 0; i < _distances.GetLength(0); i++)
         {

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 #if UNITY_2019_1_OR_NEWER
 using UnityEngine;
@@ -269,9 +268,9 @@ namespace VoronatorSharp
             var n = points.Count;
             List<Vector2> P = null;
             Vector2 v0;
-            Vector2 v1 = points[n - 1];
+            var v1 = points[n - 1];
             int c0;
-            int c1 = RegionCode(v1);
+            var c1 = RegionCode(v1);
             int e0, e1 = 0;
             for (var j = 0; j < n; j += 1)
             {
@@ -654,7 +653,7 @@ namespace VoronatorSharp
         {
             var t = float.PositiveInfinity;
             float c;
-            Vector2 r = new Vector2();
+            var r = new Vector2();
             if (v.y < 0)
             { // top
                 if (u.y <= clipMin.y) return null;
@@ -802,9 +801,9 @@ namespace VoronatorSharp
 
         public static Vector2 GetCentroid(List<Vector2> points)
         {
-            float accumulatedArea = 0.0f;
-            float centerX = 0.0f;
-            float centerY = 0.0f;
+            var accumulatedArea = 0.0f;
+            var centerX = 0.0f;
+            var centerY = 0.0f;
 
             for (int i = 0, j = points.Count - 1; i < points.Count; j = i++)
             {

@@ -25,13 +25,13 @@ public class Polygon
     // Проверка, находится ли точка внутри полигона (алгоритм winding number)
     public bool ContainsPoint(Vector2 point)
     {
-        int windingNumber = 0;
-        int n = Vertices.Count;
+        var windingNumber = 0;
+        var n = Vertices.Count;
         
-        for (int i = 0; i < n; i++)
+        for (var i = 0; i < n; i++)
         {
-            Vector2 current = Vertices[i];
-            Vector2 next = Vertices[(i + 1) % n];
+            var current = Vertices[i];
+            var next = Vertices[(i + 1) % n];
             
             if (current.Y <= point.Y)
             {
@@ -58,10 +58,10 @@ public class Polygon
     {
 
             
-        float minX = Vertices.Min(v => v.X);
-        float minY = Vertices.Min(v => v.Y);
-        float maxX = Vertices.Max(v => v.X);
-        float maxY = Vertices.Max(v => v.Y);
+        var minX = Vertices.Min(v => v.X);
+        var minY = Vertices.Min(v => v.Y);
+        var maxX = Vertices.Max(v => v.X);
+        var maxY = Vertices.Max(v => v.Y);
         
         return (new Vector2(minX, minY), new Vector2(maxX, maxY));
     }

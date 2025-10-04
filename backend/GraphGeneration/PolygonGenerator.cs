@@ -1,9 +1,5 @@
 ﻿using VoronatorSharp;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace GraphGeneration;
 
 
@@ -23,7 +19,7 @@ public class PolygonGenerator
         var allPois = new List<Vector2>();
         
         // Генерируем полигоны
-        for (int i = 0; i < polygonCount; i++)
+        for (var i = 0; i < polygonCount; i++)
         {
             var polygon = GenerateRandomPolygon();
             polygons.Add(polygon);
@@ -59,7 +55,7 @@ public class PolygonGenerator
         else
         {
             // Трапеция
-            float offset = width * 0.2f;
+            var offset = width * 0.2f;
             vertices.Add(new Vector2(startX + offset, startY));
             vertices.Add(new Vector2(startX + width - offset, startY));
             vertices.Add(new Vector2(startX + width, startY + height));
@@ -75,10 +71,10 @@ public class PolygonGenerator
         var pois = new List<Vector2>();
         var bounds = GetPolygonBounds(polygon);
         
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
             Vector2 point;
-            int attempts = 0;
+            var attempts = 0;
             
             // Пытаемся найти точку внутри полигона
             do
@@ -99,7 +95,7 @@ public class PolygonGenerator
             while (!IsPointInPolygon(point, polygon));
             
             // Генерируем случайный вес от 0.1 до 2.0
-            float weight = (float)(0.1 + _random.NextDouble() * 1.9);
+            var weight = (float)(0.1 + _random.NextDouble() * 1.9);
             var poi = new Vector2(startId + i, point.X, point.Y, weight);
             pois.Add(poi);
         }
@@ -130,9 +126,9 @@ public class PolygonGenerator
         float centroidY = 0;
         var vertices = polygon.Vertices.ToArray();
         
-        for (int i = 0; i < vertices.Length - 1; i++)
+        for (var i = 0; i < vertices.Length - 1; i++)
         {
-            float cross = vertices[i].X * vertices[i + 1].Y - vertices[i + 1].X * vertices[i].Y;
+            var cross = vertices[i].X * vertices[i + 1].Y - vertices[i + 1].X * vertices[i].Y;
             area += cross;
             centroidX += (vertices[i].X + vertices[i + 1].X) * cross;
             centroidY += (vertices[i].Y + vertices[i + 1].Y) * cross;
@@ -148,7 +144,7 @@ public class PolygonGenerator
     // Алгоритм проверки нахождения точки в полигоне
     private bool IsPointInPolygon(Vector2 point, Polygon polygon)
     {
-        bool inside = false;
+        var inside = false;
         var vertices = polygon.Vertices.ToArray();
         
         for (int i = 0, j = vertices.Length - 1; i < vertices.Length; j = i++)

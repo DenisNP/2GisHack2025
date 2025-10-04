@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Text;
 using AntAlgorithm;
 using AntAlgorithm.Abstractions;
 using GraphGeneration;
-using Microsoft.AspNetCore.Mvc;
 using VoronatorSharp;
 using Path = AntAlgorithm.Path;
 
@@ -13,27 +11,27 @@ namespace WebApplication2;
 
 public static class GraphGen
 {
-    public static Path GetBestPath(Zone[] zones, Poi[] pois, IAntColonyAlgorithm algorithm)
+    public static Path GetBestPath(Zone[] zones, Poi[] poi, IAntColonyAlgorithm algorithm)
     {
-        var polygons = zones.Select(z => new Polygon(
-            z.Region.Select(v => new Vector2((float)v.X, (float)v.Y)), z.ZoneType)).ToList();
+        var polygons = zones
+            .Select(zone => new Polygon(
+            zone.Region.Select(region => new Vector2(region.Id, (float)region.X, (float)region.Y, 0)), zone.ZoneType)
+            )
+            .ToList();
 
-        List<Vector2> pp  =pois.Select(pp =>new Vector2(pp.Id, (float)pp.Point.X,  (float)pp.Point.Y, pp.Weight)).ToList();
-
-        
+        var points = poi.Select(pp => new Vector2(pp.Id, (float)pp.Point.X,  (float)pp.Point.Y, pp.Weight)).ToList();
         
         foreach (var zone in polygons)
         {
             zone.Vertices.Add(zone.Vertices.First());
-            
         }
 
-        var result = GraphGenerator.Generate2(polygons, pp);
+        var svg = GraphGenerator.GenerateSvg(polygons, points);
         
-        File.WriteAllText("multi_polygon_graph.svg", result, Encoding.UTF8);
+        File.WriteAllText("multi_polygon_graph.svg", svg, Encoding.UTF8);
         
-        var result2 = GraphGenerator.Generate(polygons, pp);
+        var edges = GraphGenerator.GenerateEdges(polygons, points);
 
-        return algorithm.GetBestWay(result2);
+        return algorithm.GetBestWay(edges);
     }
 }

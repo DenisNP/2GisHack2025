@@ -101,7 +101,7 @@ namespace VoronatorSharp
             var i2 = 0;
 
             // pick a seed point close to the center
-            for (int i = 0; i < n; i++)
+            for (var i = 0; i < n; i++)
             {
                 var d = Dist(cx, cy, coords[2 * i], coords[2 * i + 1]);
                 if (d < minDist)
@@ -116,7 +116,7 @@ namespace VoronatorSharp
             minDist = double.PositiveInfinity;
 
             // find the point closest to the seed
-            for (int i = 0; i < n; i++)
+            for (var i = 0; i < n; i++)
             {
                 if (i == i0) continue;
                 var d = Dist(i0x, i0y, coords[2 * i], coords[2 * i + 1]);
@@ -133,7 +133,7 @@ namespace VoronatorSharp
             var minRadius = double.PositiveInfinity;
 
             // find the third point which forms the smallest circumcircle with the first two
-            for (int i = 0; i < n; i++)
+            for (var i = 0; i < n; i++)
             {
                 if (i == i0 || i == i1) continue;
                 var r = Circumradius(i0x, i0y, i1x, i1y, coords[2 * i], coords[2 * i + 1]);
@@ -358,7 +358,7 @@ namespace VoronatorSharp
                  *          \||/                  \  /
                  *           pr                    pr
                  */
-                int a0 = a - a % 3;
+                var a0 = a - a % 3;
                 ar = a0 + (a + 2) % 3;
 
                 if (b == -1)

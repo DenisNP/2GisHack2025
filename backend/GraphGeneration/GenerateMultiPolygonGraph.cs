@@ -8,18 +8,18 @@ namespace GraphGeneration;
 public static class GenerateMultiPolygonGraph
 {
     public static Edge[] GenerateMultiPolygonGraphSvg(
-        List<NetTopologySuite.Geometries.Polygon> ignor,
+        List<NetTopologySuite.Geometries.Polygon> restricts,
         Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon,
-        Delaunator voronator,
+        Delaunator delaunator,
         float hexSize)
     {
         var result = new List<Edge>();
-        var triangles = voronator.GetTriangles();
+        var triangles = delaunator.GetTriangles();
         var sr = HexagonalGridGenerator.CalculateExpectedHexDistance(hexSize);
 
         foreach (var triangle in triangles)
         {
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 var tPoints = triangle.ToList();
                 var t1 = tPoints[i];
@@ -31,15 +31,14 @@ public static class GenerateMultiPolygonGraph
                 }
 
                 // Создаем геометрическое представление ребра
-                var lineString = new LineString(new Coordinate[]
-                {
+                var lineString = new LineString([
                     new Coordinate(t1.x, t1.y),
                     new Coordinate(t2.x, t2.y)
-                });
+                ]);
 
                 // Проверяем, пересекает ли ребро любой из игнорируемых полигонов
-                bool intersectsIgnoredPolygon = false;
-                foreach (var polygon in ignor)
+                var intersectsIgnoredPolygon = false;
+                foreach (var polygon in restricts)
                 {
                     if (lineString.Crosses(polygon) || polygon.Contains(lineString))
                     {
@@ -67,7 +66,7 @@ public static class GenerateMultiPolygonGraph
     }
 
     // Вспомогательные функции
-    static NetTopologySuite.Geometries.Polygon? GetPointPolygon(Point point, Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon)
+    private static NetTopologySuite.Geometries.Polygon? GetPointPolygon(Point point, Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon)
     {
         foreach (var kvp in pointsByPolygon)
         {

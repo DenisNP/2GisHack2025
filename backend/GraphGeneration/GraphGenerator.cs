@@ -7,7 +7,7 @@ namespace GraphGeneration;
 
 public static class GraphGenerator
 {
-    public static Edge[] Generate(List<Polygon> polygons, List<Vector2> pois)
+    public static Edge[] GenerateEdges(List<Polygon> polygons, List<Vector2> pois)
     {
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
@@ -24,7 +24,7 @@ public static class GraphGenerator
         var hexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(polygons.Where(p => p.Zone != ZoneType.Restricted).ToList(), settings);
         
         // Создаем общую диаграмму Вороного/Делоне для всех точек
-        var vectorPoints = hexPoints.Select(p => new VoronatorSharp.Vector2((float)p.X, (float)p.Y)).ToArray();
+        var vectorPoints = hexPoints.Select(p => new Vector2((float)p.X, (float)p.Y)).ToArray();
         var voronator = new Voronator(vectorPoints.Concat(pois).ToArray());
 
         // var graphNodes = DelaunayGraph.BuildGraphFromDelaunay(voronator.Delaunator);
@@ -48,7 +48,7 @@ public static class GraphGenerator
         return svgContent;
     }
     
-    public static string Generate2(List<Polygon> polygons, List<Vector2> pois)
+    public static string GenerateSvg(List<Polygon> polygons, List<Vector2> pois)
     {
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
@@ -65,7 +65,7 @@ public static class GraphGenerator
         var hexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(polygons.Where(p => p.Zone != ZoneType.Restricted).ToList(), settings);
         
         // Создаем общую диаграмму Вороного/Делоне для всех точек
-        var vectorPoints = hexPoints.Select(p => new VoronatorSharp.Vector2((float)p.X, (float)p.Y)).ToArray();
+        var vectorPoints = hexPoints.Select(p => new Vector2((float)p.X, (float)p.Y)).ToArray();
         var voronator = new Voronator(vectorPoints.Concat(pois).ToArray());
 
         // var graphNodes = DelaunayGraph.BuildGraphFromDelaunay(voronator.Delaunator);
@@ -83,7 +83,7 @@ public static class GraphGenerator
                 ignore.Add(polygonPoints);
         }
         
-        var svgContent = Generatesvg.GenerateMultiPolygonGraphSvg(ignore, pointsByPolygon.Keys.ToList(), pointsByPolygon, voronator.Delaunator, 50, settings.HexSize);
+        var svgContent = GraphGeneration.GenerateSvg.GenerateMultiPolygonGraphSvg(ignore, pointsByPolygon.Keys.ToList(), pointsByPolygon, voronator.Delaunator, 50, settings.HexSize);
 
         return svgContent;
     }

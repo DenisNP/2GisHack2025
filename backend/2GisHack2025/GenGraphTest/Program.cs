@@ -5,9 +5,7 @@
         using System.Text.Json;
         using AntAlgorithm;
         using GraphGeneration;
-        using NetTopologySuite.Geometries;
         using VoronatorSharp;
-        using Point = NetTopologySuite.Geometries.Point;
         using Polygon = GraphGeneration.Polygon;
 
         var polygons = new List<Polygon>
@@ -51,7 +49,7 @@
         
         File.WriteAllText("multi_polygon_graph.json", ff, Encoding.UTF8);
         
-        string svgContent = GraphGenerator.Generate2(rr.polygons, rr.pois);
+        var svgContent = GraphGenerator.GenerateSvg(rr.polygons, rr.pois);
         File.WriteAllText("multi_polygon_graph.svg", svgContent, Encoding.UTF8);
         
 

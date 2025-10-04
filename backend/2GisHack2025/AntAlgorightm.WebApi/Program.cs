@@ -89,7 +89,7 @@ Path GetBestPath2(IAntColonyAlgorithm algorithm)
 
     List<Vector2> pois = [new Vector2(10001, 1, 2, 1), new Vector2(10002, 39, 18, 0.5)];
 
-    var result = GraphGenerator.Generate2(polygons, pois);
+    var result = GraphGenerator.GenerateSvg(polygons, pois);
     
     return new Path();
 }

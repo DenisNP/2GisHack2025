@@ -1,6 +1,7 @@
 ﻿
 
 
+using AntAlgorithm;
 using VoronatorSharp;
 
 namespace GraphGeneration;
@@ -14,8 +15,8 @@ public class HexagonalGridGenerator
         // 1. Расстояние между соседями в одном ряду (horizontalSpacing)
         // 2. Расстояние между соседями в соседних рядах
     
-        float horizontalSpacing = hexSize * 2f;
-        float verticalSpacing = hexSize * (float)Math.Sqrt(3);
+        var horizontalSpacing = hexSize * 2f;
+        var verticalSpacing = hexSize * (float)Math.Sqrt(3);
     
         // Для гексагональной сетки среднее расстояние можно аппроксимировать
         // как среднее между основными расстояниями между соседями
@@ -24,7 +25,7 @@ public class HexagonalGridGenerator
         // - 2 соседа на расстоянии horizontalSpacing
         // - 4 соседа на расстоянии sqrt((horizontalSpacing/2)^2 + verticalSpacing^2)
     
-        float diagonalDistance = (float)Math.Sqrt(
+        var diagonalDistance = (float)Math.Sqrt(
             Math.Pow(horizontalSpacing * 0.5f, 2) + 
             Math.Pow(verticalSpacing, 2)
         );
@@ -39,31 +40,32 @@ public class HexagonalGridGenerator
         var (min, max) = polygon.GetBoundingBox();
         
         // Расстояния между центрами шестиугольников
-        float horizontalSpacing = hexSize * 2f;
-        float verticalSpacing = hexSize * (float)Math.Sqrt(3);
+        var horizontalSpacing = hexSize * 2f;
+        var verticalSpacing = hexSize * (float)Math.Sqrt(3);
         
         // Добавляем отступ для краев
-        float padding = hexSize;
+        var padding = hexSize;
         min.X -= padding;
         min.Y -= padding;
         max.X += padding;
         max.Y += padding;
         
-        int row = 0;
+        var row = 0;
         
-        for (float y = min.Y; y <= max.Y; y += verticalSpacing, row++)
+        for (var y = min.Y; y <= max.Y; y += verticalSpacing, row++)
         {
             // Смещение для нечетных рядов
-            float xOffset = (row % 2 == 1) ? horizontalSpacing * 0.5f : 0f;
+            var xOffset = (row % 2 == 1) ? horizontalSpacing * 0.5f : 0f;
              
-            for (float x = min.X + xOffset; x <= max.X; x += horizontalSpacing)
+            for (var x = min.X + xOffset; x <= max.X; x += horizontalSpacing)
             {
                 var randomNumber = () => (float)(Random.Shared.NextDouble() * 0.6f) - 0.3f;
                 var point = new Vector2(x + randomNumber(), y + randomNumber());
-                if (polygon.ContainsPoint(point))
+                if (polygon.ContainsPoint(point) && polygon.Zone == ZoneType.Restricted)
                 {
-                    points.Add(point);
+                    continue;
                 }
+                points.Add(point);
             }
         }
         
@@ -79,9 +81,9 @@ public class HexagonalGridGenerator
             return GenerateHexagonalGridInPolygon(polygon, hexSize);
         
         // Генерируем несколько слоев со смещением для лучшего покрытия
-        for (int layer = 0; layer < density; layer++)
+        for (var layer = 0; layer < density; layer++)
         {
-            float layerOffset = hexSize * layer / density;
+            var layerOffset = hexSize * layer / density;
             points.AddRange(GenerateHexagonalGridWithOffset(polygon, hexSize, layerOffset));
         }
         
@@ -93,22 +95,22 @@ public class HexagonalGridGenerator
         var points = new List<Vector2>();
         var (min, max) = polygon.GetBoundingBox();
         
-        float horizontalSpacing = hexSize * 2.5f;
-        float verticalSpacing = hexSize * (float)Math.Sqrt(3);
+        var horizontalSpacing = hexSize * 2.5f;
+        var verticalSpacing = hexSize * (float)Math.Sqrt(3);
         
-        float padding = hexSize * 2f;
+        var padding = hexSize * 2f;
         min.X -= padding;
         min.Y -= padding;
         max.X += padding;
         max.Y += padding;
         
-        int row = 0;
+        var row = 0;
         
-        for (float y = min.Y + offset; y <= max.Y; y += verticalSpacing, row++)
+        for (var y = min.Y + offset; y <= max.Y; y += verticalSpacing, row++)
         {
-            float xOffset = (row % 2 == 1) ? horizontalSpacing * 0.5f : 0f;
+            var xOffset = (row % 2 == 1) ? horizontalSpacing * 0.5f : 0f;
             
-            for (float x = min.X + xOffset + offset; x <= max.X; x += horizontalSpacing)
+            for (var x = min.X + xOffset + offset; x <= max.X; x += horizontalSpacing)
             {
                 var point = new Vector2(x, y);
                 if (polygon.ContainsPoint(point))
