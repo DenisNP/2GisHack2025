@@ -7,7 +7,6 @@ import { ZoneDrawer, ZoneData } from './components/ZoneDrawer';
 import { ZoneType } from './types/Zone';
 import { 
     Box, 
-    Drawer, 
     Typography, 
     Stack,
     CssBaseline,
@@ -20,8 +19,7 @@ import {
     Block as BlockIcon,
     CheckCircle as CheckCircleIcon,
     DirectionsWalk as DirectionsWalkIcon,
-    Close as CloseIcon,
-    LocationCity as LocationCityIcon
+    Close as CloseIcon
 } from '@mui/icons-material';
 
 function App() {
@@ -109,74 +107,73 @@ function App() {
         <MapglContextProvider>
             <CssBaseline />
             <Box sx={{ display: 'flex', height: '100vh' }}>
-                {/* Узкая вертикальная панель слева */}
-                <Paper 
-                    elevation={3}
-                    sx={{
-                        width: sidebarWidth,
-                        flexShrink: 0,
-                        zIndex: 1200,
-                        borderRadius: 0,
-                    }}
-                >
-                    <Stack spacing={1} sx={{ p: 1, pt: 2 }}>
-                        {menuItems.map((item) => (
-                            <Tooltip key={item.id} title={item.label} placement="right">
-                                <IconButton
-                                    onClick={() => handleMenuClick(item.id)}
-                                    sx={{
-                                        width: 60,
-                                        height: 60,
-                                        borderRadius: 2,
-                                        backgroundColor: openPanel === item.id ? item.color : 'transparent',
-                                        color: openPanel === item.id ? 'white' : 'text.primary',
-                                        fontSize: '24px',
-                                        '&:hover': {
-                                            backgroundColor: openPanel === item.id ? item.color : 'action.hover',
-                                        },
-                                        flexDirection: 'column',
-                                        gap: 0.5
-                                    }}
-                                >
-                                    <item.icon />
-                                    <Typography variant="caption" sx={{ fontSize: '10px', lineHeight: 1 }}>
-                                        {item.label.split(' ')[0]}
-                                    </Typography>
-                                </IconButton>
-                            </Tooltip>
-                        ))}
-                    </Stack>
-                </Paper>
-
-                {/* Выезжающая панель */}
-                <Drawer
-                    variant="persistent"
-                    anchor="left"
-                    open={openPanel !== null}
-                    sx={{
-                        width: openPanel ? drawerWidth : 0,
-                        flexShrink: 0,
-                        '& .MuiDrawer-paper': {
-                            width: drawerWidth,
-                            boxSizing: 'border-box',
-                            left: sidebarWidth,
+                {/* Контейнер для левой части (узкая панель + выезжающая панель) */}
+                <Box sx={{ display: 'flex', flexShrink: 0 }}>
+                    {/* Узкая вертикальная панель слева */}
+                    <Paper 
+                        elevation={3}
+                        sx={{
+                            width: sidebarWidth,
+                            flexShrink: 0,
+                            zIndex: 1200,
                             borderRadius: 0,
-                        },
-                    }}
-                >
-                    <Box sx={{ p: 2, height: '100%', overflow: 'auto' }}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                            <Typography variant="h6">
-                                {menuItems.find(item => item.id === openPanel)?.label}
-                            </Typography>
-                            <IconButton onClick={() => setOpenPanel(null)} size="small">
-                                <CloseIcon />
-                            </IconButton>
+                        }}
+                    >
+                        <Stack spacing={1} sx={{ p: 1, pt: 2 }}>
+                            {menuItems.map((item) => (
+                                <Tooltip key={item.id} title={item.label} placement="right">
+                                    <IconButton
+                                        onClick={() => handleMenuClick(item.id)}
+                                        sx={{
+                                            width: 60,
+                                            height: 60,
+                                            borderRadius: 2,
+                                            backgroundColor: openPanel === item.id ? item.color : 'transparent',
+                                            color: openPanel === item.id ? 'white' : 'text.primary',
+                                            fontSize: '24px',
+                                            '&:hover': {
+                                                backgroundColor: openPanel === item.id ? item.color : 'action.hover',
+                                            },
+                                            flexDirection: 'column',
+                                            gap: 0.5
+                                        }}
+                                    >
+                                        <item.icon />
+                                        <Typography variant="caption" sx={{ fontSize: '10px', lineHeight: 1 }}>
+                                            {item.label.split(' ')[0]}
+                                        </Typography>
+                                    </IconButton>
+                                </Tooltip>
+                            ))}
                         </Stack>
-                        <Divider sx={{ mb: 2 }} />
-                        {renderPanelContent()}
+                    </Paper>
+
+                    {/* Выезжающая панель рядом с узкой панелью */}
+                    <Box
+                        sx={{
+                            width: openPanel ? drawerWidth : 0,
+                            transition: 'width 0.3s ease',
+                            overflow: 'hidden',
+                            backgroundColor: 'background.paper',
+                            borderRight: openPanel ? '1px solid rgba(0, 0, 0, 0.12)' : 'none',
+                        }}
+                    >
+                        {openPanel && (
+                            <Box sx={{ width: drawerWidth, height: '100%', p: 2, overflow: 'auto' }}>
+                                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                                    <Typography variant="h6">
+                                        {menuItems.find(item => item.id === openPanel)?.label}
+                                    </Typography>
+                                    <IconButton onClick={() => setOpenPanel(null)} size="small">
+                                        <CloseIcon />
+                                    </IconButton>
+                                </Stack>
+                                <Divider sx={{ mb: 2 }} />
+                                {renderPanelContent()}
+                            </Box>
+                        )}
                     </Box>
-                </Drawer>
+                </Box>
 
                 {/* Основная область с картой */}
                 <Box 
@@ -185,8 +182,6 @@ function App() {
                         flexGrow: 1, 
                         height: '100vh',
                         position: 'relative',
-                        marginLeft: openPanel ? 0 : `-${sidebarWidth}px`,
-                        transition: 'margin-left 0.3s ease',
                     }}
                 >
                     <Mapgl />
