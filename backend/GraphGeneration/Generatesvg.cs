@@ -8,6 +8,7 @@ namespace GraphGeneration;
 public static class Generatesvg
 {
     public static string GenerateMultiPolygonGraphSvg(
+        List<NetTopologySuite.Geometries.Polygon> ignor, 
     List<NetTopologySuite.Geometries.Polygon> polygons, 
     Dictionary<NetTopologySuite.Geometries.Polygon, List<NetTopologySuite.Geometries.Point>> pointsByPolygon,
     Delaunator voronator, 
@@ -68,17 +69,35 @@ public static class Generatesvg
     {
         for (int i = 0; i < 3; i++)
         {
-            
-     
             var tPoints = triangle.ToList();
             var t1 = tPoints[i];
-            // var point1 = allPoints.Find(p => Math.Abs(p.X - t1.x) < 0.1 &&  Math.Abs(p.Y - t1.y) < 0.1);
             var t2 = tPoints[(i + 1) % 3];
-            // var point2 = allPoints.Find(p => Math.Abs(p.X - t2.x) < 0.1 &&  Math.Abs(p.Y - t2.y) < 0.1);
-            var (x1, y1) = transform(t1.x, t1.y);
-            var (x2, y2) = transform(t2.x, t2.y);
 
             if (sr * 1.2 < Vector2.Distance(t1, t2))
+            {
+                continue;
+            }
+
+// Создаем геометрическое представление ребра
+            var lineString = new LineString(new Coordinate[]
+            {
+                new Coordinate(t1.x, t1.y),
+                new Coordinate(t2.x, t2.y)
+            });
+
+            // Проверяем, пересекает ли ребро любой из игнорируемых полигонов
+            bool intersectsIgnoredPolygon = false;
+            foreach (var polygon in ignor)
+            {
+                if (lineString.Crosses(polygon) || polygon.Contains(lineString))
+                {
+                    intersectsIgnoredPolygon = true;
+                    break;
+                }
+            }
+
+            // Если ребро пересекает игнорируемый полигон, пропускаем его
+            if (intersectsIgnoredPolygon)
             {
                 continue;
             }
@@ -87,6 +106,9 @@ public static class Generatesvg
             var polygon1 = GetPointPolygon(new NetTopologySuite.Geometries.Point(t1.x, t1.y), pointsByPolygon);
             var polygon2 = GetPointPolygon(new NetTopologySuite.Geometries.Point(t2.x, t2.y), pointsByPolygon);
             bool isCrossPolygon = polygon1 == polygon2 && (polygon2 != null || polygon1 != null);
+            
+            var (x1, y1) = transform(t1.x, t1.y);
+            var (x2, y2) = transform(t2.x, t2.y);
             
             if (polygon1 == polygon2)
                 svg.AppendLine($@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" class=""{"graph-edges"}""/>");;
@@ -117,6 +139,25 @@ public static class Generatesvg
     foreach (var point in voronator.Points)
     {
         var (x, y) = transform(point.X, point.Y);
+
+        var lineString = new Point(x, y);
+
+        // Проверяем, пересекает ли ребро любой из игнорируемых полигонов
+        bool intersectsIgnoredPolygon = false;
+        foreach (var polygon in ignor)
+        {
+            if (lineString.Crosses(polygon) || polygon.Contains(lineString))
+            {
+                intersectsIgnoredPolygon = true;
+                break;
+            }
+        }
+
+        // Если ребро пересекает игнорируемый полигон, пропускаем его
+        if (intersectsIgnoredPolygon)
+        {
+            continue;
+        }
     
         // Определяем цвет и размер в зависимости от веса
         string fillColor = "#d32f2f"; // красный по умолчанию

@@ -1,18 +1,25 @@
 ﻿// using System.Numerics;
 
+using System.Text.Json.Serialization;
+using AntAlgorithm;
 using VoronatorSharp;
 
 namespace GraphGeneration;
 
 public class Polygon
 {
+    [JsonPropertyName("region")]
     public List<Vector2> Vertices { get; set; } = new List<Vector2>();
     
     public Polygon() { }
     
-    public Polygon(IEnumerable<Vector2> vertices)
+    [JsonPropertyName("zone_type")]
+    public ZoneType Zone { get; set; }
+    
+    public Polygon(IEnumerable<Vector2> vertices, ZoneType zone = ZoneType.Available)
     {
         Vertices = vertices.Select((i,v) => new Vector2() { Id = v, x = i.X, y = i.y, Weight = 0 }).ToList();
+        Zone = zone;
     }
     
     // Проверка, находится ли точка внутри полигона (алгоритм winding number)

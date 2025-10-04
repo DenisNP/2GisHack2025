@@ -2,6 +2,8 @@
         // Создаем тестовые полигоны
 
         using System.Text;
+        using System.Text.Json;
+        using AntAlgorithm;
         using GraphGeneration;
         using NetTopologySuite.Geometries;
         using VoronatorSharp;
@@ -35,9 +37,21 @@
         
         List<Vector2> pois = [new Vector2(10001, 1, 2, 1), new Vector2(10002, 39, 18, 0.5)];
 
+        var rr = new PolygonGenerator().GeneratePolygonsWithPois(4, 6);
+
+        var ff = JsonSerializer.Serialize(new InputData()
+        {
+            Pois = rr.pois.Select(dd=> new Poi() { Id = dd.Id, Weight = dd.Weight, Point = new AntAlgorithm.Point() { X = dd.X, Y = dd.Y}}).ToArray(),
+            Zones = rr.polygons.Select(ee => new Zone()
+            {
+                Region = ee.Vertices.Select(dd => new AntAlgorithm.Point() { X = dd.X, Y = dd.Y}).ToArray(),
+                ZoneType = ee.Zone,
+            }).ToArray(),
+        });
         
+        File.WriteAllText("multi_polygon_graph.json", ff, Encoding.UTF8);
         
-        string svgContent = GraphGenerator.Generate2(polygons, pois);
+        string svgContent = GraphGenerator.Generate2(rr.polygons, rr.pois);
         File.WriteAllText("multi_polygon_graph.svg", svgContent, Encoding.UTF8);
         
 

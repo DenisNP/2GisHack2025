@@ -1,8 +1,13 @@
+using System.Collections.Generic;
 using AntAlgorithm;
 using AntAlgorithm.Abstractions;
 using GraphGeneration;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using VoronatorSharp;
+using WebApplication2;
 using Path = AntAlgorithm.Path;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +45,7 @@ app.UseHttpsRedirection();
 app.MapPost("/getAllWays", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetAllWays(edges, algorithm));
 app.MapPost("/getBestPath", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetBestPath(edges, algorithm));
 app.MapPost("/getBestPath2", (IAntColonyAlgorithm algorithm) => GetBestPath2(algorithm));
+app.MapPost("/getBestPath3", ([FromBody]InputData data, IAntColonyAlgorithm algorithm) => GraphGen.GetBestPath(data.Zones, data.Pois, algorithm));
 app.UseCors();
 app.Run();
 
@@ -83,7 +89,7 @@ Path GetBestPath2(IAntColonyAlgorithm algorithm)
 
     List<Vector2> pois = [new Vector2(10001, 1, 2, 1), new Vector2(10002, 39, 18, 0.5)];
 
-    var result = GraphGenerator.Generate(polygons, pois);
+    var result = GraphGenerator.Generate2(polygons, pois);
     
-    return algorithm.GetBestWay(result);
+    return new Path();
 }
