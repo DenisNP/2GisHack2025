@@ -1,12 +1,12 @@
 ﻿using System.Text;
 using AntAlgorithm;
-using NetTopologySuite.Geometries;
 using VoronatorSharp;
+using Point = NetTopologySuite.Geometries.Point;
 using Triangle = VoronatorSharp.Triangle;
 
 namespace GraphGeneration;
 
-public class GenerateMultiPolygonGraph
+public static class GenerateMultiPolygonGraph
 {
     public static Edge[] GenerateMultiPolygonGraphSvg(
     List<NetTopologySuite.Geometries.Polygon> polygons, 
