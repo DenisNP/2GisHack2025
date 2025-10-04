@@ -108,3 +108,7 @@ using Geometry;
             var poi = pois.First(p => p.Id == id);
             Console.WriteLine($"POI {id} (weight {poi.Weight}): {count} выборов");
         }
+        
+        // Экспорт во все форматы
+        Console.WriteLine("\n=== ЭКСПОРТ ДАННЫХ ===");
+        FileExportService.ExportToFiles(zones, graphPoints, pois, "export");

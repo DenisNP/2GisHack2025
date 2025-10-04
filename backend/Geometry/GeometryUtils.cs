@@ -7,8 +7,7 @@ namespace Geometry;
 
 public static class GeometryUtils
 {
-    // Улучшенный алгоритм проверки точки в многоугольнике (Ray Casting)
-    public static bool IsPointInPolygon(Point point, List<Point> polygon)
+        public static bool IsPointInPolygon(Point point, List<Point> polygon)
     {
         if (polygon.Count < 3)
             return false;
@@ -32,7 +31,6 @@ public static class GeometryUtils
         return inside;
     }
 
-    // Проверка, лежит ли точка на отрезке
     public static bool IsPointOnSegment(Point point, Point segmentStart, Point segmentEnd)
     {
         // Проверяем коллинеарность
@@ -54,6 +52,28 @@ public static class GeometryUtils
         
         return dotProduct <= squaredLength;
     }
+
+    // Добавляем метод для проверки валидности полигона
+    public static bool IsPolygonValid(List<Point> polygon)
+    {
+        if (polygon.Count < 3)
+        {
+            Console.WriteLine("Полигон должен иметь至少 3 точки");
+            return false;
+        }
+
+        // Проверяем, что все точки уникальны
+        var distinctPoints = polygon.Distinct().ToList();
+        if (distinctPoints.Count != polygon.Count)
+        {
+            Console.WriteLine("Полигон содержит дублирующиеся точки");
+            return false;
+        }
+
+        return true;
+    }
+
+
 
     // Проверка, находится ли точка в любой из restricted зон
     public static bool IsPointInRestrictedZone(Point point, List<Zone> restrictedZones)
