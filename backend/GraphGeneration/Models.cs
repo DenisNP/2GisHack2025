@@ -6,7 +6,6 @@ namespace GraphGeneration;
 
 
 // 
-public record Point(double X, double Y);
 
 public enum ZoneType
 {
@@ -15,12 +14,6 @@ public enum ZoneType
     Available      // газоны
 }
 
-public class Zone
-{
-    public int Id { get; set; }
-    public List<Point> Region { get; set; } = new();
-    public ZoneType Type { get; set; }
-}
 
 
 public class GraphEnrichmentConfig
