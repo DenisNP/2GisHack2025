@@ -13,9 +13,10 @@ public static class GraphGen
 {
     public static Path GetBestPath(Zone[] zones, Poi[] poi, IAntColonyAlgorithm algorithm)
     {
+        var maxId = poi.Max(p => p.Id);
         var polygons = zones
-            .Select(zone => new Polygon(
-            zone.Region.Select(region => new Vector2(region.Id, (float)region.X, (float)region.Y, 0)), zone.ZoneType)
+            .Select((zone, j) => new Polygon(
+            zone.Region.Select((region, i) => new Vector2(maxId + i, (float)region.X, (float)region.Y, 0)), zone.ZoneType)
             )
             .ToList();
 
@@ -26,12 +27,10 @@ public static class GraphGen
             zone.Vertices.Add(zone.Vertices.First());
         }
 
-        var svg = GraphGenerator.GenerateSvg(polygons, points);
+        var (svg, edges) = GraphGenerator.GenerateSvg(polygons, points);
         
         File.WriteAllText("multi_polygon_graph.svg", svg, Encoding.UTF8);
-        
-        var edges = GraphGenerator.GenerateEdges(polygons, points);
 
-        return algorithm.GetBestWay(edges);
+        return new Path();
     }
 }

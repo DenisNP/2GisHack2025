@@ -49,7 +49,7 @@
         
         File.WriteAllText("multi_polygon_graph.json", ff, Encoding.UTF8);
         
-        var svgContent = GraphGenerator.GenerateSvg(rr.polygons, rr.pois);
+        var (svgContent, _) = GraphGenerator.GenerateSvg(rr.polygons, rr.pois);
         File.WriteAllText("multi_polygon_graph.svg", svgContent, Encoding.UTF8);
         
 

@@ -34,7 +34,7 @@ public class HexagonalGridGenerator
         return (horizontalSpacing * 2 + diagonalDistance * 4) / 6f;
     }
     
-    public static List<Vector2> GenerateHexagonalGridInPolygon(Polygon polygon, float hexSize)
+    public static List<Vector2> GenerateHexagonalGridInPolygon(int maxId, Polygon polygon, float hexSize)
     {
         var points = new List<Vector2>();
         var (min, max) = polygon.GetBoundingBox();
@@ -60,7 +60,7 @@ public class HexagonalGridGenerator
             for (var x = min.X + xOffset; x <= max.X; x += horizontalSpacing)
             {
                 var randomNumber = () => (float)(Random.Shared.NextDouble() * 0.6f) - 0.3f;
-                var point = new Vector2(x + randomNumber(), y + randomNumber());
+                var point = new Vector2(maxId++, x + randomNumber(), y + randomNumber(), 0);
                 if (polygon.ContainsPoint(point) && polygon.Zone == ZoneType.Restricted)
                 {
                     continue;
@@ -73,12 +73,12 @@ public class HexagonalGridGenerator
     }
     
     // Альтернативный метод: гексагональная сетка с дополнительными точками на границах
-    public static List<Vector2> GenerateDenseHexagonalGrid(Polygon polygon, float hexSize, int density = 1)
+    public static List<Vector2> GenerateDenseHexagonalGrid(int maxId, Polygon polygon, float hexSize, int density = 1)
     {
         var points = new List<Vector2>();
         
         if (density <= 1)
-            return GenerateHexagonalGridInPolygon(polygon, hexSize);
+            return GenerateHexagonalGridInPolygon(maxId, polygon, hexSize);
         
         // Генерируем несколько слоев со смещением для лучшего покрытия
         for (var layer = 0; layer < density; layer++)
