@@ -1,24 +1,22 @@
-﻿using System.Text;
-using AntAlgorithm;
+﻿using AntAlgorithm;
 using VoronatorSharp;
 using Point = NetTopologySuite.Geometries.Point;
-using Triangle = VoronatorSharp.Triangle;
 
 namespace GraphGeneration;
 
 public static class GenerateMultiPolygonGraph
 {
     public static Edge[] GenerateMultiPolygonGraphSvg(
-    List<NetTopologySuite.Geometries.Polygon> polygons, 
+    List<NetTopologySuite.Geometries.Polygon> ignor, 
     Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon,
     Delaunator voronator, 
-        float HexSize )
+        float hexSize )
 {
     var result = new List<Edge>();
 
     var triangles = voronator.GetTriangles();
 
-    var sr = HexagonalGridGenerator.CalculateExpectedHexDistance(HexSize);
+    var sr = HexagonalGridGenerator.CalculateExpectedHexDistance(hexSize);
 
     foreach (var triangle in triangles)
     {

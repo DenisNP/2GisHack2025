@@ -5,17 +5,6 @@ using VoronatorSharp;
 namespace GraphGeneration;
 
 
-// 
-
-public enum ZoneType
-{
-    Restricted,    // непроходимая область
-    Urban,         // тротуары
-    Available      // газоны
-}
-
-
-
 public class GraphEnrichmentConfig
 {
     public double GridStep { get; set; } = 15.0; // метров

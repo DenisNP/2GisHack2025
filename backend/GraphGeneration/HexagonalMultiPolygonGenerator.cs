@@ -1,4 +1,5 @@
 ﻿
+using AntAlgorithm;
 using VoronatorSharp;
 
 namespace GraphGeneration;
@@ -17,14 +18,12 @@ public class HexagonalMultiPolygonGenerator
     
     public static List<Vector2> GenerateHexagonalPoints(
         List<Polygon> sourcePolygons,
-        HexagonalSettings settings = null)
+        HexagonalSettings settings)
     {
-        settings ??= new HexagonalSettings();
-        
         var points = new List<Vector2>();
         
         // 1. Находим общий ограничивающий полигон
-        Polygon boundingPolygon = settings.UseConvexHull
+        var boundingPolygon = settings.UseConvexHull
             ? CalculateConvexHull(GetAllVertices(sourcePolygons))
             : CalculateBoundingPolygon(sourcePolygons);
         
@@ -102,7 +101,7 @@ public class HexagonalMultiPolygonGenerator
         if (points.Count < 3)
             return new Polygon(points);
             
-        Vector2 pivot = points.OrderBy(p => p.Y).ThenBy(p => p.X).First();
+        var pivot = points.OrderBy(p => p.Y).ThenBy(p => p.X).First();
         
         var sortedPoints = points
             .Where(p => p != pivot)
@@ -113,9 +112,9 @@ public class HexagonalMultiPolygonGenerator
         hull.Push(pivot);
         hull.Push(sortedPoints[0]);
         
-        for (int i = 1; i < sortedPoints.Count; i++)
+        for (var i = 1; i < sortedPoints.Count; i++)
         {
-            Vector2 top = hull.Pop();
+            var top = hull.Pop();
             
             while (hull.Count > 0 && Cross(hull.Peek(), top, sortedPoints[i]) <= 0)
             {
@@ -136,20 +135,19 @@ public class HexagonalMultiPolygonGenerator
             
         var allVertices = GetAllVertices(polygons);
         
-        float minX = allVertices.Min(v => v.X);
-        float minY = allVertices.Min(v => v.Y);
-        float maxX = allVertices.Max(v => v.X);
-        float maxY = allVertices.Max(v => v.Y);
+        var minX = allVertices.Min(v => v.X);
+        var minY = allVertices.Min(v => v.Y);
+        var maxX = allVertices.Max(v => v.X);
+        var maxY = allVertices.Max(v => v.Y);
         
-        float padding = Math.Min(maxX - minX, maxY - minY) * 0.1f;
+        var padding = Math.Min(maxX - minX, maxY - minY) * 0.1f;
         
-        return new Polygon(new[]
-        {
+        return new Polygon([
             new Vector2(minX - padding, minY - padding),
             new Vector2(maxX + padding, minY - padding),
             new Vector2(maxX + padding, maxY + padding),
             new Vector2(minX - padding, maxY + padding)
-        });
+        ]);
     }
     
     private static List<Vector2> GetAllVertices(List<Polygon> polygons)
@@ -159,7 +157,7 @@ public class HexagonalMultiPolygonGenerator
     
     private static List<Vector2> FilterPointsBySourcePolygons(List<Vector2> points, List<Polygon> sourcePolygons)
     {
-        return points.Where(point => sourcePolygons.Any(polygon => polygon.ContainsPoint(point))).ToList();
+        return points.Where(point => sourcePolygons.Any(polygon => polygon.Zone != ZoneType.Restricted && polygon.ContainsPoint(point))).ToList();
     }
     
     private static float Cross(Vector2 o, Vector2 a, Vector2 b)

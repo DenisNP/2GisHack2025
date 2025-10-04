@@ -35,9 +35,10 @@
         
         List<Vector2> pois = [new Vector2(10001, 1, 2, 1), new Vector2(10002, 39, 18, 0.5)];
 
+        var rr = new PolygonGenerator().GeneratePolygonsWithPois(4, 6);
         
         
-        string svgContent = GraphGenerator.Generate2(polygons, pois);
+        string svgContent = GraphGenerator.Generate2(rr.polygons, rr.pois);
         File.WriteAllText("multi_polygon_graph.svg", svgContent, Encoding.UTF8);
         
 

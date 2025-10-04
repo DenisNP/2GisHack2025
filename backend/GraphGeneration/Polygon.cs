@@ -1,5 +1,6 @@
 ﻿// using System.Numerics;
 
+using AntAlgorithm;
 using VoronatorSharp;
 
 namespace GraphGeneration;
@@ -10,9 +11,12 @@ public class Polygon
     
     public Polygon() { }
     
-    public Polygon(IEnumerable<Vector2> vertices)
+    public ZoneType Zone { get; set; }
+    
+    public Polygon(IEnumerable<Vector2> vertices, ZoneType zone = ZoneType.Available)
     {
         Vertices = vertices.Select((i,v) => new Vector2() { Id = v, x = i.X, y = i.y, Weight = 0 }).ToList();
+        Zone = zone;
     }
     
     // Проверка, находится ли точка внутри полигона (алгоритм winding number)
