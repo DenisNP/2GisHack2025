@@ -14,7 +14,8 @@ import {
     IconButton,
     Tooltip,
     Paper,
-    Divider
+    Divider,
+    Button
 } from '@mui/material';
 import {
     Block as BlockIcon,
@@ -24,8 +25,11 @@ import {
     Place as PlaceIcon
 } from '@mui/icons-material';
 import { useZones } from './hooks/useZones';
+import { useUnit } from 'effector-react';
+import { events } from './stores/globalState';
 
 function App() {
+    const getJson = useUnit(events.getJson)
     const {availableZones, restrictedZones, sidewalks, setAvailableZones, setRestrictedZones, setSidewalks} = useZones();
 
     // Состояние для открытой панели
@@ -194,6 +198,7 @@ function App() {
                         position: 'relative',
                     }}
                 >
+                    <Button onClick={getJson}>GET JSON</Button>
                     <Mapgl />
                     
                     {/* Все компоненты всегда смонтированы для отрисовки на карте */}
