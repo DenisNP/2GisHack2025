@@ -10,8 +10,54 @@ using System.Collections.Generic;
 using System.Linq;
 using VoronatorSharp;
 
-public class DelaunayBasedFilling
+public partial class DelaunayBasedFilling
 {
+    /// <summary>
+    /// Заполняет несколько многоугольников точками и строит триангуляцию Делоне
+    /// Точки добавляются ТОЛЬКО внутри полигонов
+    /// </summary>
+    // public static (List<Vector2> points, List<Triangle> triangles) FillMultiplePolygonsWithDelaunay(
+    //     List<List<Vector2>> polygons,
+    //     double pointDensity)
+    // {
+    //     var allPoints = new List<Vector2>();
+    //
+    //     // Собираем ВСЕ точки из ВСЕХ многоугольников (только внутри)
+    //     foreach (var polygon in polygons)
+    //     {
+    //         var polygonPoints = FillPolygonWithPoints(polygon, pointDensity);
+    //         allPoints.AddRange(polygonPoints);
+    //     
+    //         // НЕ добавляем вершины полигонов - только сгенерированные точки внутри
+    //         // allPoints.AddRange(polygon); // ← закомментировано!
+    //     }
+    //
+    //     // Фильтруем точки - оставляем только те, что внутри хотя бы одного полигона
+    //     var filteredPoints = allPoints.Where(p => IsPointInAnyPolygon(p, polygons)).ToList();
+    //
+    //     // Если точек слишком мало, добавляем несколько вершин для стабильности триангуляции
+    //     if (filteredPoints.Count < 3)
+    //     {
+    //         foreach (var polygon in polygons)
+    //         {
+    //             filteredPoints.AddRange(polygon.Take(3)); // добавляем первые 3 вершины каждого полигона
+    //         }
+    //     }
+    //
+    //     // Строим триангуляцию Делоне
+    //     var delaunay = new Delaunator(filteredPoints.ToArray());
+    //     var triangles = GetTriangles(delaunay);
+    //
+    //     // Фильтруем треугольники - оставляем только те, чьи центроиды внутри полигонов
+    //     var filteredTriangles = triangles.Where(t => 
+    //     {
+    //         var centroid = GetTriangleCentroid(t);
+    //         return IsPointInAnyPolygon(centroid, polygons);
+    //     }).ToList();
+    //
+    //     return (filteredPoints, filteredTriangles);
+    // }
+    
     /// <summary>
     /// Генерирует точки внутри полигонов на основе центроидов треугольников Делоне
     /// </summary>
@@ -248,7 +294,7 @@ public class DelaunayBasedFilling
     }
     
     // Остальные вспомогательные методы остаются без изменений
-    private static Vector2 GetTriangleCentroid(Triangle triangle)
+    public static Vector2 GetTriangleCentroid(Triangle triangle)
     {
         return new Vector2(
             (triangle.Point1.x + triangle.Point2.x + triangle.Point3.x) / 3,
@@ -303,7 +349,7 @@ public class DelaunayBasedFilling
         points.Add(new Vector2(maxX + width * 0.1f, maxY + height * 0.1f));
     }
     
-    private static bool IsPointInAnyPolygon(Vector2 point, List<List<Vector2>> polygons)
+    public static bool IsPointInAnyPolygon(Vector2 point, List<List<Vector2>> polygons)
     {
         return polygons.Any(polygon => IsPointInPolygon(point, polygon));
     }

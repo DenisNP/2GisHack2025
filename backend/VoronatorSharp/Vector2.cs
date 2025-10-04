@@ -16,7 +16,10 @@ namespace VoronatorSharp
         {
             this.x = x;
             this.y = y;
+            this.Weight = 0;
+            this.Id = 0;
         }
+        
         public float x { get; set; }
         public float y { get; set; }
 
