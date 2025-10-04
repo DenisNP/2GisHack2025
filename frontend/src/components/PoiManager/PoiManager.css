@@ -1,0 +1,33 @@
+.poi-marker {
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.poi-marker:hover {
+    transform: scale(1.2);
+}
+
+.poi-marker-high {
+    width: 20px;
+    height: 20px;
+    background-color: #FF0000;
+}
+
+.poi-marker-medium {
+    width: 16px;
+    height: 16px;
+    background-color: #FFA500;
+}
+
+.poi-marker-low {
+    width: 12px;
+    height: 12px;
+    background-color: #FFFF00;
+}
+

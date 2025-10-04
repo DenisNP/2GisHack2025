@@ -10,7 +10,7 @@ const $mapStore = createStore<MapStore>({
 });
 
 /*events*/
-export const setMap = createEvent<MapGl>();
+export const setMap = createEvent<MapGl | undefined>();
 export const setOrigin = createEvent<GeoPoint>();
 
 /*store*/
@@ -24,3 +24,4 @@ $mapStore.on(setOrigin, (state, origin) => ({
 }));
 
 export const stores = { $mapStore };
+export const events = { setMap, setOrigin };
