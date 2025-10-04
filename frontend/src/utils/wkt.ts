@@ -70,7 +70,6 @@ export function parseWktPolygon(wktPolygon: string): GeoPoint[] {
         const coords = cleanPair.split(/\s+/);
         
         if (coords.length !== 2) {
-            console.warn(`Пропускаем неверную пару координат: ${cleanPair}`);
             continue;
         }
         
@@ -78,7 +77,6 @@ export function parseWktPolygon(wktPolygon: string): GeoPoint[] {
         const lat = parseFloat(coords[1]);
         
         if (isNaN(lng) || isNaN(lat)) {
-            console.warn(`Пропускаем неверные координаты: ${cleanPair}`);
             continue;
         }
         
@@ -139,7 +137,6 @@ export function parseWktMultiPolygon(wktMultiPolygon: string): GeoPoint[][] {
             const coords = cleanPair.split(/\s+/);
             
             if (coords.length !== 2) {
-                console.warn(`Пропускаем неверную пару координат в MULTIPOLYGON: ${cleanPair}`);
                 continue;
             }
             
@@ -147,7 +144,6 @@ export function parseWktMultiPolygon(wktMultiPolygon: string): GeoPoint[][] {
             const lat = parseFloat(coords[1]);
             
             if (isNaN(lng) || isNaN(lat)) {
-                console.warn(`Пропускаем неверные координаты в MULTIPOLYGON: ${cleanPair}`);
                 continue;
             }
             
@@ -156,8 +152,6 @@ export function parseWktMultiPolygon(wktMultiPolygon: string): GeoPoint[][] {
         
         if (polygonPoints.length >= 3) {
             polygons.push(polygonPoints);
-        } else if (polygonPoints.length > 0) {
-            console.warn(`Пропускаем полигон с недостаточным количеством точек: ${polygonPoints.length}`);
         }
     }
     

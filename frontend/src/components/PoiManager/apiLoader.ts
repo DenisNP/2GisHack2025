@@ -6,6 +6,8 @@ import { typeByRubric } from './PoiManager.constants';
 import { events } from './models';
 import { PoiType } from '../../types/Poi';
 import { getBoundingBox } from '../../utils/getBoundingBox';
+import { events as zoneEvents } from '../../stores/zonesStore';
+import { ZoneType } from '../../types/Zone';
 
 /**
  * Проверяет, попадает ли точка в bounding box
@@ -82,15 +84,22 @@ async function processBuilding(
         // Преобразуем WKT в массив GeoPoint (поддерживаем POLYGON и MULTIPOLYGON)
         if (hoverWkt.toUpperCase().startsWith('MULTIPOLYGON')) {
             const polygons = parseWktMultiPolygon(hoverWkt);
-            // TODO: Дальнейшая обработка polygons
-            console.log(`Building (MULTIPOLYGON): получено ${polygons.length} полигонов`);
-            polygons.forEach((polygon, index) => {
-                console.log(`  Полигон ${index + 1}: ${polygon.length} точек`);
+            
+            // Добавляем каждый полигон как Restricted зону
+            polygons.forEach((polygon) => {
+                zoneEvents.addZone({
+                    type: ZoneType.Restricted,
+                    coords: polygon
+                });
             });
         } else if (hoverWkt.toUpperCase().startsWith('POLYGON')) {
             const geoPoints = parseWktPolygon(hoverWkt);
-            // TODO: Дальнейшая обработка geoPoints
-            console.log(`Building (POLYGON): получено ${geoPoints.length} точек`);
+            
+            // Добавляем полигон как Restricted зону
+            zoneEvents.addZone({
+                type: ZoneType.Restricted,
+                coords: geoPoints
+            });
         } else {
             console.warn(`Неизвестный формат geometry.hover: ${hoverWkt.substring(0, 50)}...`);
             return;
@@ -186,23 +195,22 @@ export async function loadAllPages(): Promise<void> {
         return;
     }
     
+    console.log('Начало загрузки POI из 2GIS API...');
     let currentPage = 1;
+    let totalItems = 0;
     
     while (true) {
-        console.log(`Загрузка страницы ${currentPage}...`);
-        
         // Получаем данные со страницы
         const response = await fetchJsonFromApi(currentPage);
         
         // Если получили null, останавливаем цикл
         if (!response) {
-            console.log('Загрузка завершена: получен null');
             break;
         }
         
         // Обрабатываем все элементы на странице
         const items = response.result?.items || [];
-        console.log(`Обработка ${items.length} элементов со страницы ${currentPage}`);
+        totalItems += items.length;
         
         for (const item of items) {
             await processItem(item, boundingBox);
@@ -211,5 +219,7 @@ export async function loadAllPages(): Promise<void> {
         // Переходим к следующей странице
         currentPage++;
     }
+    
+    console.log(`Загрузка завершена. Обработано страниц: ${currentPage - 1}, элементов: ${totalItems}`);
 }
 

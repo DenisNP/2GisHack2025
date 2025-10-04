@@ -67,7 +67,7 @@ const $allZones = combine([$availableZones, $restrictedZones, $urbanZones, $side
 sample({
     clock: addZone,
     source: $newZoneId,
-    filter: (_, data)=> data.type !== ZoneType.Available,
+    filter: (_, data) => data.type === ZoneType.Available,
     fn: (newZoneId, {coords}): ZoneData =>({id: newZoneId, coords}),
     target: [addAvailabelZone, incrementZoneId]
 })
@@ -75,7 +75,7 @@ sample({
 sample({
     clock: addZone,
     source: $newZoneId,
-    filter: (_, data)=> data.type !== ZoneType.Restricted,
+    filter: (_, data) => data.type === ZoneType.Restricted,
     fn: (newZoneId, {coords}): ZoneData =>({id: newZoneId, coords}),
     target: [addRestrictedZone, incrementZoneId]
 })
@@ -83,7 +83,7 @@ sample({
 sample({
     clock: addZone,
     source: $newZoneId,
-    filter: (_, data)=> data.type !== ZoneType.Urban,
+    filter: (_, data) => data.type === ZoneType.Urban,
     fn: (newZoneId, {coords}): ZoneData =>({id: newZoneId, coords}),
     target: [addUrbanZone, incrementZoneId]
 })
