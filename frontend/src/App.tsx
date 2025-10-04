@@ -30,7 +30,15 @@ import { events } from './stores/globalState';
 
 function App() {
     const getJson = useUnit(events.getJson)
-    const {availableZones, restrictedZones, sidewalks, setAvailableZones, setRestrictedZones, setSidewalks} = useZones();
+    const {
+        availableZones, 
+        restrictedZones, 
+        urbanZones,
+        sidewalks, 
+        setAvailableZones, 
+        setRestrictedZones, 
+        setUrbanZones,
+        setSidewalks} = useZones();
 
     // Состояние для открытой панели
     const [openPanel, setOpenPanel] = useState<string | null>(null);
@@ -52,6 +60,12 @@ function App() {
             color: '#00b450' 
         },
         { 
+            id: 'urban', 
+            label: 'Общая зона', 
+            icon: DirectionsWalkIcon,
+            color: '#FFA500' 
+        },
+        { 
             id: 'sidewalks', 
             label: 'Тротуары', 
             icon: DirectionsWalkIcon,
@@ -69,52 +83,22 @@ function App() {
         setOpenPanel(openPanel === itemId ? null : itemId);
     };
 
-    const renderPanelContent = () => {
-        switch (openPanel) {
-            case 'restricted':
-                return (
-                    <Stack spacing={2}>
-                        <Typography variant="h6">Запрещенные зоны</Typography>
-                        <ZoneDrawer 
-                            type={ZoneType.Restricted} 
-                            zones={restrictedZones} 
-                            onZonesChanged={setRestrictedZones} 
-                        />
-                    </Stack>
-                );
-            case 'available':
-                return (
-                    <Stack spacing={2}>
-                        <Typography variant="h6">Разрешенные зоны</Typography>
-                        <ZoneDrawer 
-                            type={ZoneType.Available} 
-                            zones={availableZones} 
-                            onZonesChanged={setAvailableZones} 
-                        />
-                    </Stack>
-                );
-            case 'sidewalks':
-                return (
-                    <Stack spacing={2}>
-                        <Typography variant="h6">Управление тротуарами</Typography>
-                        <UrbanDrawer 
-                            width={3} 
-                            color='#FFD700' 
-                            label='Тротуары' 
-                            sidewalks={sidewalks} 
-                            onSidewalksChanged={setSidewalks} 
-                        />
-                    </Stack>
-                );
-            case 'poi':
-                return (
-                    <Stack spacing={2}>
-                        <PoiManager showPanel={true} />
-                    </Stack>
-                );
-            default:
-                return null;
-        }
+    // Компонент-обертка для управления видимостью панели
+    const PanelWrapper: React.FC<{ 
+        panelId: string; 
+        children: React.ReactNode; 
+    }> = ({ panelId, children }) => {
+        const isVisible = openPanel === panelId;
+        
+        return (
+            <Box 
+                sx={{ 
+                    display: isVisible ? 'block' : 'none'
+                }}
+            >
+                {children}
+            </Box>
+        );
     };
 
     return (
@@ -172,20 +156,51 @@ function App() {
                             borderRight: openPanel ? '1px solid rgba(0, 0, 0, 0.12)' : 'none',
                         }}
                     >
-                        {openPanel && (
-                            <Box sx={{ width: drawerWidth, height: '100%', p: 2, overflow: 'auto' }}>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                                    <Typography variant="h6">
-                                        {menuItems.find(item => item.id === openPanel)?.label}
-                                    </Typography>
-                                    <IconButton onClick={() => setOpenPanel(null)} size="small">
-                                        <CloseIcon />
-                                    </IconButton>
-                                </Stack>
-                                <Divider sx={{ mb: 2 }} />
-                                {renderPanelContent()}
-                            </Box>
-                        )}
+                        <Box sx={{ width: drawerWidth, height: '100%', p: 2, overflow: 'auto', display: openPanel ? 'block' : 'none' }}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                                <Typography variant="h6">
+                                    {menuItems.find(item => item.id === openPanel)?.label}
+                                </Typography>
+                                <IconButton onClick={() => setOpenPanel(null)} size="small">
+                                    <CloseIcon />
+                                </IconButton>
+                            </Stack>
+                            <Divider sx={{ mb: 2 }} />
+                            {/* Отображается панель только активного компонента */}
+                            <PanelWrapper panelId="restricted">
+                                <ZoneDrawer 
+                                    type={ZoneType.Restricted} 
+                                    zones={restrictedZones} 
+                                    onZonesChanged={setRestrictedZones}
+                                />
+                            </PanelWrapper>
+                            <PanelWrapper panelId="available">
+                                <ZoneDrawer 
+                                    type={ZoneType.Available} 
+                                    zones={availableZones} 
+                                    onZonesChanged={setAvailableZones}
+                                />
+                            </PanelWrapper>
+                            <PanelWrapper panelId="urban">
+                                <ZoneDrawer 
+                                    type={ZoneType.Urban} 
+                                    zones={urbanZones} 
+                                    onZonesChanged={setUrbanZones}
+                                />
+                            </PanelWrapper>
+                            <PanelWrapper panelId="sidewalks">
+                                <UrbanDrawer 
+                                    width={3} 
+                                    color='#FFD700' 
+                                    label='Тротуары' 
+                                    sidewalks={sidewalks} 
+                                    onSidewalksChanged={setSidewalks}
+                                />
+                            </PanelWrapper>
+                            <PanelWrapper panelId="poi">
+                                <PoiManager />
+                            </PanelWrapper>
+                        </Box>
                     </Box>
                 </Box>
 
@@ -200,30 +215,6 @@ function App() {
                 >
                     <Button onClick={getJson}>GET JSON</Button>
                     <Mapgl />
-                    
-                    {/* Все компоненты всегда смонтированы для отрисовки на карте */}
-                    <Box sx={{ display: 'none' }}>
-                        <ZoneDrawer 
-                            type={ZoneType.Restricted} 
-                            zones={restrictedZones} 
-                            onZonesChanged={setRestrictedZones} 
-                        />
-                        <ZoneDrawer 
-                            type={ZoneType.Available} 
-                            zones={availableZones} 
-                            onZonesChanged={setAvailableZones} 
-                        />
-                        <UrbanDrawer 
-                            width={3} 
-                            color='#FFD700' 
-                            label='Тротуары' 
-                            sidewalks={sidewalks} 
-                            onSidewalksChanged={setSidewalks} 
-                        />
-                    </Box>
-                    
-                    {/* POI Manager всегда активен для отрисовки маркеров */}
-                    <PoiManager showPanel={false} />
                 </Box>
             </Box>
         </MapglContextProvider>

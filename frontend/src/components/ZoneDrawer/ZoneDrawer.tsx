@@ -3,6 +3,7 @@ import { useMapglContext } from "../../MapglContext";
 import { ZoneDrawerProps, ZoneData, ZonePolygon } from "./ZoneDrawer.types";
 import { GeoPoint } from "../../types/GeoPoint";
 import { ZONE_TYPES_COLOR } from "./ZoneDrawer.constants";
+import { useZoneId} from "../../hooks/useZoneId";
 
 // color helpers
 function clamp(v: number, lo = 0, hi = 255) { return Math.max(lo, Math.min(hi, Math.round(v))); }
@@ -63,7 +64,7 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
     const [isDrawing, setIsDrawing] = useState(false);
     const [currentPoints, setCurrentPoints] = useState<GeoPoint[]>([]);
     const polygonsRef = useRef<Array<ZonePolygon>>([]);
-    const nextPolygonIndexRef = useRef<number>(1);
+    const getNewZoneId = useZoneId();
     const [selectedPolygonId, setSelectedPolygonId] = useState<number | null>(null);
     const currentPointsRef = useRef<GeoPoint[]>([]);
     const currentZonesRef = useRef<ZoneData[]>([]);
@@ -101,10 +102,9 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
             coordinates: [coords], // MapGL expects array of rings: [[[lng,lat],...]]
             color: fillColor,
             strokeColor,
-            interactive: true,
+            interactive: false, // делаем некликабельными
         });
         try { newInst.userData = newInst.userData || {}; newInst.userData._coords = coords; } catch (e) {}
-        try { newInst.on && newInst.on('click', () => setSelectedPolygonId((prev) => (prev === pEntry.id ? null : pEntry.id))); } catch (e) {}
         pEntry.instance = newInst;
     }, [mapglInstance, mapgl, colorRgb]);
 
@@ -117,7 +117,7 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
             const currentPointsValue = currentPointsRef.current;
             if (currentPointsValue.length >= 3) {
                 const coords = closeRing(currentPointsValue);
-                const id = nextPolygonIndexRef.current++;
+                const id = getNewZoneId();
                 const newEntry: ZoneData = { id, coords };
                 const newList = [...currentZonesRef.current, newEntry];
                 onZonesChanged(newList);
@@ -138,7 +138,7 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
             }
             setIsDrawing(false);
             setCurrentPoints([]);
-        }, [onZonesChanged]);
+        }, [onZonesChanged, getNewZoneId]);
 
     const createFirstPointMarker = useCallback((firstPoint: GeoPoint) => {
             if (!mapglInstance || !mapgl) return;
@@ -266,9 +266,8 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
                     coordinates: [coords], // MapGL expects array of rings: [[[lng,lat],...]]
                     color: colorDerived.normalFill,
                     strokeColor: colorDerived.normalStroke,
-                    interactive: true,
+                    interactive: false, // делаем некликабельными
                 });
-                try { inst.on && inst.on('click', () => setSelectedPolygonId((prev) => (prev === id ? null : id))); } catch (e) {}
                 polygonsRef.current.push({ id, instance: inst, coords: z.coords, rgb: colorRgb });
             } catch (e) {}
         });
@@ -379,7 +378,6 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
         const newList = zones.filter((p) => p.id !== id);
         onZonesChanged(newList);
         if (selectedPolygonId === id) setSelectedPolygonId(null);
-        if (newList.length === 0) nextPolygonIndexRef.current = 1;
     }
 
     function deleteSelected() {

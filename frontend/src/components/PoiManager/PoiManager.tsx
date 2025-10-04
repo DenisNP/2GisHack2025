@@ -23,11 +23,7 @@ const getAnchor = (type: PoiType): [number, number] => {
     }
 };
 
-interface PoiManagerProps {
-    showPanel?: boolean;
-}
-
-export function PoiManager({ showPanel = false }: PoiManagerProps) {
+export function PoiManager() {
     const { mapglInstance, mapgl } = useMapglContext();
     const store = useUnit(stores.$store);
     
@@ -91,7 +87,7 @@ export function PoiManager({ showPanel = false }: PoiManagerProps) {
                 console.error('Ошибка при создании маркера POI:', e);
             }
         });
-    }, [store.poi, mapglInstance, mapgl, isDeletionMode]);
+    }, [store, mapglInstance, mapgl, isDeletionMode]);
 
     // Обработка кликов по карте для добавления POI
     useEffect(() => {
@@ -153,11 +149,6 @@ export function PoiManager({ showPanel = false }: PoiManagerProps) {
             setAddingMode(null);
         }
     };
-    
-    // Если панель не нужно показывать, возвращаем null (маркеры всё равно отрисуются через useEffect)
-    if (!showPanel) {
-        return null;
-    }
     
     return (
         <div className="poi-manager-panel">
