@@ -13,6 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\GraphGeneration\GraphGeneration.csproj" />
+      <ProjectReference Include="..\and.Models\and.Models.csproj" />
       <ProjectReference Include="..\AntAlgorithm\AntAlgorithm.csproj" />
     </ItemGroup>
 

@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="NetTopologySuite" Version="2.6.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\2GisHack2025\and.Models\and.Models.csproj" />
+      <ProjectReference Include="..\VoronatorSharp\VoronatorSharp.csproj" />
+    </ItemGroup>
+
+</Project>

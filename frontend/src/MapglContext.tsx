@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
-import {Map as MapGl} from '@2gis/mapgl/types';
+import { Map as MapGl } from '@2gis/mapgl/types';
 
 const MapglContext = createContext<{
     mapgl?: typeof mapgl;
