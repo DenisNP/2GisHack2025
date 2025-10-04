@@ -5,6 +5,7 @@ import { MapglContextProvider } from './MapglContext';
 import { UrbanDrawer, SidewalkData } from './components/UrbanDrawer';
 import { ZoneDrawer, ZoneData } from './components/ZoneDrawer';
 import { ZoneType } from './types/Zone';
+import { PoiManager } from './components/PoiManager/PoiManager';
 import { 
     Box, 
     Typography, 
@@ -19,7 +20,9 @@ import {
     Block as BlockIcon,
     CheckCircle as CheckCircleIcon,
     DirectionsWalk as DirectionsWalkIcon,
-    Close as CloseIcon
+    Close as CloseIcon,
+    LocationCity as LocationCityIcon,
+    Place as PlaceIcon
 } from '@mui/icons-material';
 
 function App() {
@@ -54,6 +57,12 @@ function App() {
             label: 'Тротуары', 
             icon: DirectionsWalkIcon,
             color: '#FFA500' 
+        },
+        { 
+            id: 'poi', 
+            label: 'Точки интереса', 
+            icon: PlaceIcon,
+            color: '#007acc' 
         }
     ];
 
@@ -96,6 +105,13 @@ function App() {
                             sidewalks={sidewalks} 
                             onSidewalksChanged={setSidewalks} 
                         />
+                    </Stack>
+                );
+            case 'poi':
+                return (
+                    <Stack spacing={2}>
+                        <Typography variant="h6">Точки интереса (POI)</Typography>
+                        <PoiManager showPanel={true} />
                     </Stack>
                 );
             default:
@@ -186,7 +202,7 @@ function App() {
                 >
                     <Mapgl />
                     
-                    {/* Все ZoneDrawer компоненты всегда смонтированы, но скрыты */}
+                    {/* Все компоненты всегда смонтированы для отрисовки на карте */}
                     <Box sx={{ display: 'none' }}>
                         <ZoneDrawer 
                             type={ZoneType.Restricted} 
@@ -206,6 +222,9 @@ function App() {
                             onSidewalksChanged={setSidewalks} 
                         />
                     </Box>
+                    
+                    {/* POI Manager всегда активен для отрисовки маркеров */}
+                    <PoiManager showPanel={false} />
                 </Box>
             </Box>
         </MapglContextProvider>

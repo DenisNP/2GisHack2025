@@ -3,35 +3,32 @@ import { useMapglContext } from '../../MapglContext';
 import { useUnit } from 'effector-react';
 import { stores, events } from './models';
 import { Poi, PoiType } from '../../types/Poi';
+import { setMap } from '../../stores/mapStore';
 import './PoiManager.css';
 
-// Цвета для разных типов POI
-const POI_COLORS = {
-    [PoiType.High]: '#FF0000',    // красный
-    [PoiType.Medium]: '#FFA500',  // оранжевый
-    [PoiType.Low]: '#FFFF00',     // желтый
+// Вспомогательная функция для получения anchor (точка привязки к карте)
+// Размеры должны соответствовать CSS
+const getAnchor = (type: PoiType): [number, number] => {
+    switch (type) {
+        case PoiType.High: return [13, 13];    // центр кружочка
+        case PoiType.Medium: return [11, 11];
+        case PoiType.Low: return [8, 8];
+    }
 };
 
-// Размеры маркеров в зависимости от типа (для anchor)
-const POI_SIZES = {
-    [PoiType.High]: 20,
-    [PoiType.Medium]: 16,
-    [PoiType.Low]: 12,
-};
+interface PoiManagerProps {
+    showPanel?: boolean;
+}
 
-// CSS классы для разных типов маркеров
-const POI_MARKER_CLASSES = {
-    [PoiType.High]: 'poi-marker poi-marker-high',
-    [PoiType.Medium]: 'poi-marker poi-marker-medium',
-    [PoiType.Low]: 'poi-marker poi-marker-low',
-};
-
-export function PoiManager() {
+export function PoiManager({ showPanel = false }: PoiManagerProps) {
     const { mapglInstance, mapgl } = useMapglContext();
     const store = useUnit(stores.$store);
     
     // Режим добавления POI
     const [addingMode, setAddingMode] = useState<PoiType | null>(null);
+    
+    // Режим удаления POI
+    const [isDeletionMode, setIsDeletionMode] = useState(false);
     
     // Храним ссылки на маркеры POI
     const markersRef = useRef<Array<{ id: number; marker: any }>>([]);
@@ -53,25 +50,30 @@ export function PoiManager() {
         // Создаем новые маркеры для каждого POI
         store.poi.forEach((poi: Poi) => {
             try {
-                const size = POI_SIZES[poi.type] || POI_SIZES[PoiType.Low];
-                const markerClass = POI_MARKER_CLASSES[poi.type] || POI_MARKER_CLASSES[PoiType.Low];
+                const markerClass = `poi-marker poi-marker-${poi.type}`;
                 
                 // Создаем HTML элемент для маркера
                 const html = document.createElement('div');
                 html.className = markerClass;
                 
-                // Обработчик удаления POI при клике
-                html.addEventListener('click', (e) => {
+                // Обработчик удаления POI при клике (только в режиме удаления)
+                const clickHandler = (e: MouseEvent) => {
                     e.stopPropagation(); // Предотвращаем всплытие события к карте
-                    events.removePoiById(poi.id);
-                });
+                    if (isDeletionMode) {
+                        events.removePoiById(poi.id);
+                    }
+                };
+                html.addEventListener('click', clickHandler);
+                
+                // Обновляем стиль курсора в зависимости от режима
+                html.style.cursor = isDeletionMode ? 'pointer' : 'default';
                 
                 // Создаем маркер на карте
                 const marker = new (mapgl as any).HtmlMarker(mapglInstance, {
                     coordinates: [poi.geoPoint.lng, poi.geoPoint.lat],
                     html,
-                    anchor: [size / 2, size / 2],
-                    interactive: true,
+                    anchor: getAnchor(poi.type),
+                    interactive: isDeletionMode,
                     zIndex: 1000,
                 });
                 
@@ -80,7 +82,7 @@ export function PoiManager() {
                 console.error('Ошибка при создании маркера POI:', e);
             }
         });
-    }, [store.poi, mapglInstance, mapgl]);
+    }, [store.poi, mapglInstance, mapgl, isDeletionMode]);
 
     // Обработка кликов по карте для добавления POI
     useEffect(() => {
@@ -95,9 +97,6 @@ export function PoiManager() {
                 geoPoint: { lng: lngLat[0], lat: lngLat[1] },
                 type: addingMode,
             });
-            
-            // Отключаем режим добавления после клика
-            setAddingMode(null);
         };
         
         mapglInstance.on('click', onMapClick);
@@ -125,65 +124,72 @@ export function PoiManager() {
         };
     }, []);
     
-    // Обработчик клика по кнопке
+    // Обработчик клика по кнопке добавления
     const toggleAddingMode = (type: PoiType) => {
         if (addingMode === type) {
             // Отжимаем кнопку
             setAddingMode(null);
         } else {
-            // Включаем режим добавления
+            // Включаем режим добавления и отключаем режим удаления
             setAddingMode(type);
+            setIsDeletionMode(false);
         }
     };
     
-    const boxStyle: React.CSSProperties = {
-        position: 'absolute',
-        right: 12,
-        top: 12,
-        zIndex: 1000,
-        background: 'white',
-        padding: 8,
-        borderRadius: 6,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
+    // Обработчик клика по кнопке удаления
+    const toggleDeletionMode = () => {
+        setIsDeletionMode(!isDeletionMode);
+        // Отключаем режим добавления при включении удаления
+        if (!isDeletionMode) {
+            setAddingMode(null);
+        }
     };
     
-    const buttonStyle = (type: PoiType): React.CSSProperties => ({
-        padding: '8px 16px',
-        border: '2px solid',
-        borderColor: addingMode === type ? POI_COLORS[type] : '#ccc',
-        borderRadius: 4,
-        background: addingMode === type ? POI_COLORS[type] : 'white',
-        color: addingMode === type ? 'white' : '#333',
-        cursor: 'pointer',
-        fontWeight: addingMode === type ? 'bold' : 'normal',
-    });
+    // Если панель не нужно показывать, возвращаем null (маркеры всё равно отрисуются через useEffect)
+    if (!showPanel) {
+        return null;
+    }
     
     return (
-        <div style={boxStyle}>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>Добавить POI</div>
+        <div className="poi-manager-panel">
+            <div className="poi-manager-title">Управление POI</div>
+            
+            <div style={{ marginBottom: 8, fontWeight: 600, fontSize: 12 }}>Добавить:</div>
             <button
                 onClick={() => toggleAddingMode(PoiType.High)}
-                style={buttonStyle(PoiType.High)}
+                className={`poi-button poi-button-high ${addingMode === PoiType.High ? 'active' : ''}`}
             >
                 Высокий приоритет
             </button>
             <button
                 onClick={() => toggleAddingMode(PoiType.Medium)}
-                style={buttonStyle(PoiType.Medium)}
+                className={`poi-button poi-button-medium ${addingMode === PoiType.Medium ? 'active' : ''}`}
             >
                 Средний приоритет
             </button>
             <button
                 onClick={() => toggleAddingMode(PoiType.Low)}
-                style={buttonStyle(PoiType.Low)}
+                className={`poi-button poi-button-low ${addingMode === PoiType.Low ? 'active' : ''}`}
             >
                 Низкий приоритет
             </button>
+            
+            <div style={{ marginTop: 12, marginBottom: 8, fontWeight: 600, fontSize: 12 }}>Удалить:</div>
+            <button
+                onClick={toggleDeletionMode}
+                className={`poi-button poi-button-delete ${isDeletionMode ? 'active' : ''}`}
+            >
+                {isDeletionMode ? '✓ Режим удаления' : 'Режим удаления'}
+            </button>
+            
             {addingMode && (
-                <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                <div className="poi-hint">
                     💡 Кликните на карту для добавления точки
+                </div>
+            )}
+            {isDeletionMode && (
+                <div className="poi-hint" style={{ color: '#d32f2f' }}>
+                    🗑️ Кликните на маркер для удаления
                 </div>
             )}
         </div>
