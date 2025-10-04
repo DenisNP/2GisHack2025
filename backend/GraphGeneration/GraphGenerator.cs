@@ -12,7 +12,7 @@ public static class GraphGenerator
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
         {
-            HexSize = 1,
+            HexSize = 2,
             Density = 1,
             UseConvexHull = false,
             AddPolygonVertices = false,
@@ -53,7 +53,7 @@ public static class GraphGenerator
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
         {
-            HexSize = 1,
+            HexSize = 2,
             Density = 1,
             UseConvexHull = false,
             AddPolygonVertices = false,

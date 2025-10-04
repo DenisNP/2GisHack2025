@@ -10,6 +10,7 @@ public class Zone
     [JsonPropertyName("region")]
     public IEnumerable<Point> Region { get; set; }
     
-    [JsonPropertyName("zone_type")]
+    [JsonPropertyName("type")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public ZoneType ZoneType { get; set; }
 }
