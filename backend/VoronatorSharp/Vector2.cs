@@ -6,6 +6,11 @@ namespace VoronatorSharp
 #if !UNITY_2019_1_OR_NEWER
     public struct Vector2
     {
+        
+        public int Id { get; set; }
+        
+        public double Weight { get; set; }
+        
         [DebuggerStepThrough]
         public Vector2(float x, float y)
         {
@@ -14,6 +19,15 @@ namespace VoronatorSharp
         }
         public float x { get; set; }
         public float y { get; set; }
+
+        public float X
+        {
+            get => x; set => x = value;
+        }
+        public float Y
+        {
+            get => y; set => y = value;
+        }
         public float this[int index]
         {
             get { switch (index) { case 0: return x; case 1: return y; ; default: throw new IndexOutOfRangeException(); } }
