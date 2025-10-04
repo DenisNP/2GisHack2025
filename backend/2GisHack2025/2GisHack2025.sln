@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "and.Models", "and.Models\an
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoronatorSharp", "..\VoronatorSharp\VoronatorSharp.csproj", "{EEC9DCCF-2D19-4859-B355-F734393E8B6A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenGraphTest", "GenGraphTest\GenGraphTest.csproj", "{8C2A6F5D-C8E6-43DD-8F1C-37AC492506A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{EEC9DCCF-2D19-4859-B355-F734393E8B6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EEC9DCCF-2D19-4859-B355-F734393E8B6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EEC9DCCF-2D19-4859-B355-F734393E8B6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C2A6F5D-C8E6-43DD-8F1C-37AC492506A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C2A6F5D-C8E6-43DD-8F1C-37AC492506A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C2A6F5D-C8E6-43DD-8F1C-37AC492506A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C2A6F5D-C8E6-43DD-8F1C-37AC492506A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
