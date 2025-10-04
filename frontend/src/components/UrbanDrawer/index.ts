@@ -1,2 +1,3 @@
 export { UrbanDrawer } from "./UrbanDrawer";
-export type { SidewalkData } from "./UrbanDrawer.types";
+export { default as UrbanDrawerDefault } from "./UrbanDrawer";
+export type { SidewalkData, UrbanDrawerProps } from "./UrbanDrawer.types";

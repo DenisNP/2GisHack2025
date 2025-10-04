@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMapglContext } from '../../MapglContext';
 import { UrbanDrawerProps, SidewalkData } from "./UrbanDrawer.types";
-
-type LonLat = [number, number];
+import { GeoPoint } from "../../types/GeoPoint";
 
 // Утилиты для работы с цветом
 function clamp(v: number, lo = 0, hi = 255) { return Math.max(lo, Math.min(hi, Math.round(v))); }
@@ -48,86 +47,154 @@ function parseHexColor(hex: string) {
     return BASE_COLOR_RGB;
 }
 
-// Функция для создания полигона тротуара из линии
-function createSidewalkPolygon(line: LonLat[], widthMeters: number): LonLat[] {
+// Функции для конвертации между GeoPoint и MapGL координатами
+function geoPointToMapGL(point: GeoPoint): [number, number] {
+    return [point.lng, point.lat];
+}
+
+function geoPointArrayToMapGL(points: GeoPoint[]): [number, number][] {
+    return points.map(geoPointToMapGL);
+}
+
+// Улучшенная функция для создания полигона тротуара с правильной шириной
+function createSidewalkPolygon(line: GeoPoint[], widthMeters: number): GeoPoint[] {
     if (line.length < 2) return [];
     
-    const EARTH_RADIUS = 6378137; // радиус Земли в метрах
-    
-    // Конвертируем ширину в градусы (приблизительно)
-    const halfWidthDegrees = (widthMeters / 2) / (EARTH_RADIUS * Math.PI / 180);
-    
-    const leftSide: LonLat[] = [];
-    const rightSide: LonLat[] = [];
+    const leftSide: GeoPoint[] = [];
+    const rightSide: GeoPoint[] = [];
     
     for (let i = 0; i < line.length; i++) {
         const current = line[i];
-        let perpendicular: [number, number];
+        let perpVector: { lat: number; lng: number };
         
         if (i === 0) {
             // Первая точка - используем направление к следующей точке
             const next = line[i + 1];
-            const direction = [next[0] - current[0], next[1] - current[1]];
-            const length = Math.sqrt(direction[0] * direction[0] + direction[1] * direction[1]);
-            if (length === 0) continue;
-            
-            const normalized = [direction[0] / length, direction[1] / length];
-            perpendicular = [-normalized[1], normalized[0]];
+            perpVector = getPerpendicularVector(current, next, widthMeters);
         } else if (i === line.length - 1) {
             // Последняя точка - используем направление от предыдущей точки
             const prev = line[i - 1];
-            const direction = [current[0] - prev[0], current[1] - prev[1]];
-            const length = Math.sqrt(direction[0] * direction[0] + direction[1] * direction[1]);
-            if (length === 0) continue;
-            
-            const normalized = [direction[0] / length, direction[1] / length];
-            perpendicular = [-normalized[1], normalized[0]];
+            perpVector = getPerpendicularVector(prev, current, widthMeters);
         } else {
-            // Средние точки - простое усреднение направлений
+            // Средние точки - используем биссектрису угла
             const prev = line[i - 1];
             const next = line[i + 1];
-            
-            const dir1 = [current[0] - prev[0], current[1] - prev[1]];
-            const len1 = Math.sqrt(dir1[0] * dir1[0] + dir1[1] * dir1[1]);
-            const dir2 = [next[0] - current[0], next[1] - current[1]];
-            const len2 = Math.sqrt(dir2[0] * dir2[0] + dir2[1] * dir2[1]);
-            
-            if (len1 === 0 || len2 === 0) continue;
-            
-            const norm1 = [dir1[0] / len1, dir1[1] / len1];
-            const norm2 = [dir2[0] / len2, dir2[1] / len2];
-            
-            // Усредняем направления
-            const avgDir = [(norm1[0] + norm2[0]) / 2, (norm1[1] + norm2[1]) / 2];
-            const avgLen = Math.sqrt(avgDir[0] * avgDir[0] + avgDir[1] * avgDir[1]);
-            
-            if (avgLen === 0) {
-                // Если точки на одной линии, используем перпендикуляр
-                const direction = [next[0] - prev[0], next[1] - prev[1]];
-                const dirLen = Math.sqrt(direction[0] * direction[0] + direction[1] * direction[1]);
-                if (dirLen === 0) continue;
-                const normalized = [direction[0] / dirLen, direction[1] / dirLen];
-                perpendicular = [-normalized[1], normalized[0]];
-            } else {
-                const normalizedAvg = [avgDir[0] / avgLen, avgDir[1] / avgLen];
-                perpendicular = [-normalizedAvg[1], normalizedAvg[0]];
-            }
+            perpVector = getBisectorVector(prev, current, next, widthMeters);
         }
         
         // Добавляем точки с обеих сторон
-        leftSide.push([
-            current[0] + perpendicular[0] * halfWidthDegrees,
-            current[1] + perpendicular[1] * halfWidthDegrees
-        ]);
+        leftSide.push({
+            lat: current.lat + perpVector.lat,
+            lng: current.lng + perpVector.lng
+        });
         
-        rightSide.push([
-            current[0] - perpendicular[0] * halfWidthDegrees,
-            current[1] - perpendicular[1] * halfWidthDegrees
-        ]);
+        rightSide.push({
+            lat: current.lat - perpVector.lat,
+            lng: current.lng - perpVector.lng
+        });
     }
     
     // Соединяем левую и правую стороны в замкнутый полигон
     return [...leftSide, ...rightSide.reverse()];
+}
+
+// Функция для получения перпендикулярного вектора между двумя точками
+function getPerpendicularVector(point1: GeoPoint, point2: GeoPoint, widthMeters: number): { lat: number; lng: number } {
+    // Направление от point1 к point2
+    const direction = {
+        lat: point2.lat - point1.lat,
+        lng: point2.lng - point1.lng
+    };
+    
+    // Длина направления
+    const length = Math.sqrt(direction.lat * direction.lat + direction.lng * direction.lng);
+    if (length === 0) return { lat: 0, lng: 0 };
+    
+    // Нормализованное направление
+    const normalized = {
+        lat: direction.lat / length,
+        lng: direction.lng / length
+    };
+    
+    // Перпендикулярный вектор (поворот на 90 градусов)
+    const perpendicular = {
+        lat: -normalized.lng,
+        lng: normalized.lat
+    };
+    
+    // Конвертируем ширину в градусы (приблизительно для данной широты)
+    const metersToDegreesLat = widthMeters / 111000; // примерно 111 км на градус широты
+    const metersToDegreesLng = widthMeters / (111000 * Math.cos(point1.lat * Math.PI / 180)); // корректировка для долготы
+    
+    return {
+        lat: perpendicular.lat * metersToDegreesLat / 2,
+        lng: perpendicular.lng * metersToDegreesLng / 2
+    };
+}
+
+// Функция для получения биссектрисы угла (для равномерной ширины на поворотах)
+function getBisectorVector(prev: GeoPoint, current: GeoPoint, next: GeoPoint, widthMeters: number): { lat: number; lng: number } {
+    // Направления к соседним точкам
+    const dir1 = {
+        lat: current.lat - prev.lat,
+        lng: current.lng - prev.lng
+    };
+    const dir2 = {
+        lat: next.lat - current.lat,
+        lng: next.lng - current.lng
+    };
+    
+    // Нормализуем направления
+    const len1 = Math.sqrt(dir1.lat * dir1.lat + dir1.lng * dir1.lng);
+    const len2 = Math.sqrt(dir2.lat * dir2.lat + dir2.lng * dir2.lng);
+    
+    if (len1 === 0 || len2 === 0) {
+        return getPerpendicularVector(prev, next, widthMeters);
+    }
+    
+    const norm1 = { lat: dir1.lat / len1, lng: dir1.lng / len1 };
+    const norm2 = { lat: dir2.lat / len2, lng: dir2.lng / len2 };
+    
+    // Биссектриса - усредненное направление
+    let bisector = {
+        lat: (norm1.lat + norm2.lat) / 2,
+        lng: (norm1.lng + norm2.lng) / 2
+    };
+    
+    const bisectorLen = Math.sqrt(bisector.lat * bisector.lat + bisector.lng * bisector.lng);
+    
+    if (bisectorLen === 0) {
+        // Если точки на одной линии, используем обычный перпендикуляр
+        return getPerpendicularVector(prev, next, widthMeters);
+    }
+    
+    // Нормализуем биссектрису
+    bisector = {
+        lat: bisector.lat / bisectorLen,
+        lng: bisector.lng / bisectorLen
+    };
+    
+    // Перпендикуляр к биссектрисе
+    const perpendicular = {
+        lat: -bisector.lng,
+        lng: bisector.lat
+    };
+    
+    // Вычисляем коэффициент для сохранения ширины на поворотах
+    const angle = Math.acos(Math.max(-1, Math.min(1, norm1.lat * norm2.lat + norm1.lng * norm2.lng)));
+    const widthMultiplier = 1 / Math.sin(Math.PI / 2 - angle / 2);
+    
+    // Ограничиваем множитель, чтобы избежать слишком длинных выступов на острых углах
+    const limitedMultiplier = Math.min(widthMultiplier, 3);
+    
+    // Конвертируем ширину в градусы
+    const metersToDegreesLat = (widthMeters * limitedMultiplier) / 111000;
+    const metersToDegreesLng = (widthMeters * limitedMultiplier) / (111000 * Math.cos(current.lat * Math.PI / 180));
+    
+    return {
+        lat: perpendicular.lat * metersToDegreesLat / 2,
+        lng: perpendicular.lng * metersToDegreesLng / 2
+    };
 }
 
 export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
@@ -140,7 +207,7 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
 }) => {
     const { mapglInstance, mapgl } = useMapglContext();
     const [isDrawing, setIsDrawing] = useState(false);
-    const [currentPoints, setCurrentPoints] = useState<LonLat[]>([]);
+    const [currentPoints, setCurrentPoints] = useState<GeoPoint[]>([]);
     const sidewalksRef = useRef<Array<{ id: string; polygonInstance: any; lineInstance: any; data: SidewalkData }>>([]);
     const nextSidewalkIndexRef = useRef<number>(1);
     const [selectedSidewalkId, setSelectedSidewalkId] = useState<string | null>(null);
@@ -167,7 +234,7 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
         
         // Создаем полигон тротуара
         const newPolygonInst = new (mapgl as any).Polygon(mapglInstance, {
-            coordinates: sEntry.data.polygon,
+            coordinates: [geoPointArrayToMapGL(sEntry.data.polygon[0])],
             color: fillColor,
             strokeColor,
             interactive: true,
@@ -175,7 +242,7 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
         
         // Создаем линию центра
         const newLineInst = new (mapgl as any).Polyline(mapglInstance, {
-            coordinates: sEntry.data.centerLine,
+            coordinates: geoPointArrayToMapGL(sEntry.data.centerLine),
             width: 2,
             color: strokeColor,
         });
@@ -227,14 +294,14 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
                 const data = s;
                 
                 const polygonInst = new (mapgl as any).Polygon(mapglInstance, {
-                    coordinates: s.polygon,
+                    coordinates: [geoPointArrayToMapGL(s.polygon[0])],
                     color: colorDerived.normalFill,
                     strokeColor: colorDerived.normalStroke,
                     interactive: true,
                 });
                 
                 const lineInst = new (mapgl as any).Polyline(mapglInstance, {
-                    coordinates: s.centerLine,
+                    coordinates: geoPointArrayToMapGL(s.centerLine),
                     width: 2,
                     color: colorDerived.normalStroke,
                 });
@@ -260,7 +327,7 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
             const lngLat: number[] = e.lngLat;
             if (!Array.isArray(lngLat) || lngLat.length < 2) return;
             
-            const point: LonLat = [lngLat[0], lngLat[1]];
+            const point: GeoPoint = { lng: lngLat[0], lat: lngLat[1] };
             setCurrentPoints((prev) => [...prev, point]);
         };
         
@@ -352,7 +419,7 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
             html.addEventListener('click', handler);
             
             firstPointMarkerRef.current = new (mapgl as any).HtmlMarker(mapglInstance, {
-                coordinates: first,
+                coordinates: geoPointToMapGL(first),
                 html,
                 anchor: [9, 9],
                 interactive: true,
@@ -368,7 +435,7 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
         if (currentPoints.length >= 2) {
             try {
                 tempLineRef.current = new (mapgl as any).Polyline(mapglInstance, {
-                    coordinates: currentPoints,
+                    coordinates: geoPointArrayToMapGL(currentPoints),
                     width: 3,
                     color: colorDerived.tempColor,
                 });
@@ -628,3 +695,6 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
         </div>
     );
 };
+
+// Явный экспорт для отладки
+export default UrbanDrawer;

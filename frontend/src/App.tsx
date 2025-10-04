@@ -90,7 +90,7 @@ function App() {
                     <Stack spacing={2}>
                         <Typography variant="h6">Управление тротуарами</Typography>
                         <UrbanDrawer 
-                            width={2} 
+                            width={3} 
                             color='#FFD700' 
                             label='Тротуары' 
                             sidewalks={sidewalks} 
@@ -199,7 +199,7 @@ function App() {
                             onZonesChanged={setAvailableZones} 
                         />
                         <UrbanDrawer 
-                            width={2} 
+                            width={3} 
                             color='#FFD700' 
                             label='Тротуары' 
                             sidewalks={sidewalks} 
