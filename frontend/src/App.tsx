@@ -27,6 +27,7 @@ import {
 import { useZones } from './hooks/useZones';
 import { useUnit } from 'effector-react';
 import { events } from './stores/globalState';
+import { useSaveRestoreZones } from './hooks/useSaveRestoreZones';
 
 function App() {
     const getJson = useUnit(events.getJson)
@@ -39,6 +40,8 @@ function App() {
         setRestrictedZones, 
         setUrbanZones,
         setSidewalks} = useZones();
+    
+    const {saveZones, restoreZones} = useSaveRestoreZones()
 
     // Состояние для открытой панели
     const [openPanel, setOpenPanel] = useState<string | null>(null);
@@ -214,6 +217,8 @@ function App() {
                     }}
                 >
                     <Button onClick={getJson}>GET JSON</Button>
+                    <Button onClick={saveZones}>SAVE ZONES</Button>
+                    <Button onClick={restoreZones}>RESTORE ZONES</Button>
                     <Mapgl />
                 </Box>
             </Box>
