@@ -6,13 +6,13 @@ namespace GraphGeneration;
 
 public class Polygon
 {
-    public List<Poi> Vertices { get; set; } = new List<Poi>();
+    public List<Vector2> Vertices { get; set; } = new List<Vector2>();
     
     public Polygon() { }
     
     public Polygon(IEnumerable<Vector2> vertices)
     {
-        Vertices = vertices.Select((i,v) => new Poi() { Id = v, Point = i, Weight = 0 }).ToList();
+        Vertices = vertices.Select((i,v) => new Vector2() { Id = v, x = i.X, y = i.y, Weight = 0 }).ToList();
     }
     
     // Проверка, находится ли точка внутри полигона (алгоритм winding number)
@@ -23,8 +23,8 @@ public class Polygon
         
         for (int i = 0; i < n; i++)
         {
-            Vector2 current = Vertices[i].Point;
-            Vector2 next = Vertices[(i + 1) % n].Point;
+            Vector2 current = Vertices[i];
+            Vector2 next = Vertices[(i + 1) % n];
             
             if (current.Y <= point.Y)
             {
@@ -51,10 +51,10 @@ public class Polygon
     {
 
             
-        float minX = Vertices.Min(v => v.Point.X);
-        float minY = Vertices.Min(v => v.Point.Y);
-        float maxX = Vertices.Max(v => v.Point.X);
-        float maxY = Vertices.Max(v => v.Point.Y);
+        float minX = Vertices.Min(v => v.X);
+        float minY = Vertices.Min(v => v.Y);
+        float maxX = Vertices.Max(v => v.X);
+        float maxY = Vertices.Max(v => v.Y);
         
         return (new Vector2(minX, minY), new Vector2(maxX, maxY));
     }

@@ -1,11 +1,12 @@
-﻿using NetTopologySuite.Geometries;
+﻿using AntAlgorithm;
+using NetTopologySuite.Geometries;
 using VoronatorSharp;
 
 namespace GraphGeneration;
 
-public class GraphGenerator
+public static class GraphGenerator
 {
-    public Edge[] Generate(List<Polygon> polygons, List<Vector2> pois)
+    public static Edge[] Generate(List<Polygon> polygons, List<Vector2> pois)
     {
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
@@ -32,8 +33,8 @@ public class GraphGenerator
         foreach (var polygon in polygons)
         {
             var polygonPoints = new NetTopologySuite.Geometries.Polygon(new LinearRing(
-                polygon.Vertices.Select(v => new Coordinate(v.Point.X, v.Point.Y)).ToArray()));
-            pointsByPolygon[polygonPoints] = polygon.Vertices.Select(v => new Point(v.Point.X, v.Point.Y)).ToList();
+                polygon.Vertices.Select(v => new Coordinate(v.X, v.Y)).ToArray()));
+            pointsByPolygon[polygonPoints] = polygon.Vertices.Select(v => new Point(v.X, v.Y)).ToList();
         }
         
         var svgContent = GenerateMultiPolygonGraph.GenerateMultiPolygonGraphSvg(pointsByPolygon.Keys.ToList(), pointsByPolygon, voronator.Delaunator, settings.HexSize);

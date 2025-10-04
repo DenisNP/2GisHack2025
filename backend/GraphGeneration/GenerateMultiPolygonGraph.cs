@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using AntAlgorithm;
 using NetTopologySuite.Geometries;
 using VoronatorSharp;
 using Triangle = VoronatorSharp.Triangle;
@@ -18,7 +19,7 @@ public class GenerateMultiPolygonGraph
     var triangles = voronator.GetTriangles();
 
     var sr = HexagonalGridGenerator.CalculateExpectedHexDistance(HexSize);
-    
+
     foreach (var triangle in triangles)
     {
         for (int i = 0; i < 3; i++)
@@ -31,17 +32,16 @@ public class GenerateMultiPolygonGraph
             {
                 continue;
             }
-            
+
             // Определяем, является ли ребро межполигональным
             var polygon1 = GetPointPolygon(new Point(t1.x, t1.y), pointsByPolygon);
             var polygon2 = GetPointPolygon(new Point(t2.x, t2.y), pointsByPolygon);
-            
+
             if (polygon1 == polygon2)
-                result.Add(new Edge(new Poi(t1), new Poi(t2)));
+                result.Add(new Edge(new Poi(t1.Id, t1.X, t1.Y, t1.Weight), new Poi(t2.Id, t2.X, t2.Y, t2.Weight)));
         }
     }
-    
-    
+
     return result.ToArray();
 }
 
