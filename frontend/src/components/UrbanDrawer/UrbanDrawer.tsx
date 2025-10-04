@@ -208,9 +208,9 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
     const { mapglInstance, mapgl } = useMapglContext();
     const [isDrawing, setIsDrawing] = useState(false);
     const [currentPoints, setCurrentPoints] = useState<GeoPoint[]>([]);
-    const sidewalksRef = useRef<Array<{ id: string; polygonInstance: any; lineInstance: any; data: SidewalkData }>>([]);
+    const sidewalksRef = useRef<Array<{ id: number; polygonInstance: any; lineInstance: any; data: SidewalkData }>>([]);
     const nextSidewalkIndexRef = useRef<number>(1);
-    const [selectedSidewalkId, setSelectedSidewalkId] = useState<string | null>(null);
+    const [selectedSidewalkId, setSelectedSidewalkId] = useState<number | null>(null);
     
     // uncontrolled storage когда prop sidewalks не предоставлен
     const [localSidewalks, setLocalSidewalks] = useState<SidewalkData[]>([]);
@@ -224,7 +224,7 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
     const firstPointClickHandlerRef = useRef<((e: MouseEvent) => void) | null>(null);
     
     // Пересоздание тротуара с подсветкой или без
-    const recreateSidewalk = React.useCallback((sEntry: { id: string; polygonInstance: any; lineInstance: any; data: SidewalkData }, highlight: boolean) => {
+    const recreateSidewalk = React.useCallback((sEntry: { id: number; polygonInstance: any; lineInstance: any; data: SidewalkData }, highlight: boolean) => {
         try { sEntry.polygonInstance && sEntry.polygonInstance.destroy(); } catch (e) {}
         try { sEntry.lineInstance && sEntry.lineInstance.destroy(); } catch (e) {}
         
@@ -234,7 +234,7 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
         
         // Создаем полигон тротуара
         const newPolygonInst = new (mapgl as any).Polygon(mapglInstance, {
-            coordinates: [geoPointArrayToMapGL(sEntry.data.polygon[0])],
+            coordinates: [geoPointArrayToMapGL(sEntry.data.polygon)],
             color: fillColor,
             strokeColor,
             interactive: true,
@@ -294,7 +294,7 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
                 const data = s;
                 
                 const polygonInst = new (mapgl as any).Polygon(mapglInstance, {
-                    coordinates: [geoPointArrayToMapGL(s.polygon[0])],
+                    coordinates: [geoPointArrayToMapGL(s.polygon)],
                     color: colorDerived.normalFill,
                     strokeColor: colorDerived.normalStroke,
                     interactive: true,
@@ -384,12 +384,12 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
                 if (currentPoints.length >= 2) {
                     // Прямой вызов логики завершения без зависимости от функции
                     const polygon = createSidewalkPolygon(currentPoints, width);
-                    const id = String(nextSidewalkIndexRef.current++);
+                    const id = nextSidewalkIndexRef.current++;
                     
                     const newSidewalk: SidewalkData = {
                         id,
                         centerLine: [...currentPoints],
-                        polygon: [polygon],
+                        polygon: polygon,
                         width
                     };
                     
@@ -503,12 +503,12 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
         }
         
         const polygon = createSidewalkPolygon(currentPoints, width);
-        const id = String(nextSidewalkIndexRef.current++);
+        const id = nextSidewalkIndexRef.current++;
         
         const newSidewalk: SidewalkData = {
             id,
             centerLine: [...currentPoints],
-            polygon: [polygon], // оборачиваем в массив для внешнего контура
+            polygon: polygon, // оборачиваем в массив для внешнего контура
             width
         };
         
@@ -555,7 +555,7 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
         setSelectedSidewalkId(null);
     }
     
-    function deleteSidewalkById(id: string) {
+    function deleteSidewalkById(id: number) {
         // Удаляем экземпляр если есть
         const pos = sidewalksRef.current.findIndex((s) => s.id === id);
         if (pos !== -1) {

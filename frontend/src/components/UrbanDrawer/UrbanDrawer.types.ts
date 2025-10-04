@@ -1,9 +1,9 @@
 import { GeoPoint } from "../../types/GeoPoint";
 
 export type SidewalkData = {
-    id: string;
+    id: number;
     centerLine: GeoPoint[];
-    polygon: GeoPoint[][];
+    polygon: GeoPoint[];
     width: number;
 };
 

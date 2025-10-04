@@ -2,8 +2,8 @@ import './App.css';
 import React, { useState } from 'react';
 import Mapgl from './Mapgl';
 import { MapglContextProvider } from './MapglContext';
-import { UrbanDrawer, SidewalkData } from './components/UrbanDrawer';
-import { ZoneDrawer, ZoneData } from './components/ZoneDrawer';
+import { UrbanDrawer } from './components/UrbanDrawer';
+import { ZoneDrawer } from './components/ZoneDrawer';
 import { ZoneType } from './types/Zone';
 import { PoiManager } from './components/PoiManager/PoiManager';
 import { 
@@ -21,17 +21,12 @@ import {
     CheckCircle as CheckCircleIcon,
     DirectionsWalk as DirectionsWalkIcon,
     Close as CloseIcon,
-    LocationCity as LocationCityIcon,
     Place as PlaceIcon
 } from '@mui/icons-material';
+import { useZones } from './hooks/useZones';
 
 function App() {
-    // controlled sidewalks list
-    const [sidewalks, setSidewalks] = useState<SidewalkData[]>([]);
-    
-    // controlled zones lists for different zone types
-    const [availableZones, setAvailableZones] = useState<ZoneData[]>([]);
-    const [restrictedZones, setRestrictedZones] = useState<ZoneData[]>([]);
+    const {availableZones, restrictedZones, sidewalks, setAvailableZones, setRestrictedZones, setSidewalks} = useZones();
 
     // Состояние для открытой панели
     const [openPanel, setOpenPanel] = useState<string | null>(null);
