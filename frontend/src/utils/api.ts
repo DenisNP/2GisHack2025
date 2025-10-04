@@ -5,8 +5,8 @@ const API_KEY = process.env.REACT_APP_MAPGL_API_KEY || '';
 const API_ENDPOINT = 'https://catalog.api.2gis.com/3.0/items';
 const API_LOCALE = 'ru_RU';
 const API_FIELDS = 'items.point,items.caption,items.links,items.links.database_entrances,items.geometry.hover,items.rubrics';
-const API_TYPE = 'branch,building,station_platform,station.metro,station_entrance,gate';
-const API_PAGE_SIZE = 10;
+const API_TYPE = 'branch,building,station_platform,station.metro,station_entrance';
+const API_PAGE_SIZE = 20;
 
 /**
  * Выполняет GET запрос к API 2GIS каталога с фиксированными параметрами
@@ -68,12 +68,12 @@ export async function fetchJsonFromApi(page?: number): Promise<ApiResponse | nul
     try {
         const response = await fetchFromApi(page);
         const data: ApiResponse = await response.json();
-        
+
         // Проверяем, что items существует и не пустой
         if (!data.result?.items || data.result.items.length === 0) {
             return null;
         }
-        
+
         return data;
     } catch (error) {
         console.error('Ошибка при парсинге ответа API:', error);

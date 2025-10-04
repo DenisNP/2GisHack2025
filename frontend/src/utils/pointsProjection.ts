@@ -26,14 +26,25 @@ export const projectPoint = (point: GeoPoint, origin: GeoPoint, map: MapGl): Poi
 /**
  * Превратить точку виртуального пространства, с которым работает бэк, в точку на карте
  * @param point точка виртуального пространства
+ * @param origin начало координат на карте, от которого всё считается
  * @param map экземпляр карты в текущем масштабе
  */
-export const unprojectPoint = (point: Point, map: MapGl): GeoPoint => {
-    // Найдём отклонения пришедшей точки в пикселях относительно начала координат
+export const unprojectPoint = (point: Point, origin: GeoPoint, map: MapGl): GeoPoint => {
+    // Коэффициент преобразования в метры
     const ratio = getPixelsToMetersRatio(map);
-    const geomPoint: Point = { x: point.x * ratio.x, y: point.y * ratio.y };
+    // Превращаем метры в пиксели относительно origin
+    const xPixels = point.x * ratio.x;
+    const yPixels = point.y * ratio.y;
+    
+    // Получаем позицию origin в пикселях
+    const geomOrigin = map.project([origin.lng, origin.lat]);
+    
+    // Добавляем смещение к origin
+    const absoluteX = geomOrigin[0] + xPixels;
+    const absoluteY = geomOrigin[1] + yPixels;
+    
     // Спроецируем на карту
-    const projected = map.unproject([geomPoint.x, geomPoint.y]);
+    const projected = map.unproject([absoluteX, absoluteY]);
     return { lng: projected[0], lat: projected[1] };
 }
 

@@ -36,7 +36,7 @@ export const getBoundingBox = (): { topLeft: GeoPoint; bottomRight: GeoPoint } |
         return null;
     }
 
-    // Находим крайние координаты
+    // Находим крайние координаты в экранных координатах (метрах)
     let minX = Infinity;
     let maxX = -Infinity;
     let minY = Infinity;
@@ -50,12 +50,12 @@ export const getBoundingBox = (): { topLeft: GeoPoint; bottomRight: GeoPoint } |
     });
 
     // Создаем точки: левая верхняя и правая нижняя
-    const topLeft: Point = { x: minX, y: maxY };
-    const bottomRight: Point = { x: maxX, y: minY };
+    const topLeft: Point = { x: minX, y: minY };
+    const bottomRight: Point = { x: maxX, y: maxY };
 
-    // Конвертируем в GeoPoint через unprojectPoint
-    const topLeftGeo = unprojectPoint(topLeft, mapStore.map);
-    const bottomRightGeo = unprojectPoint(bottomRight, mapStore.map);
+    // Конвертируем в GeoPoint через unprojectPoint (теперь с правильным учётом origin)
+    const topLeftGeo = unprojectPoint(topLeft, mapStore.origin, mapStore.map!);
+    const bottomRightGeo = unprojectPoint(bottomRight, mapStore.origin, mapStore.map!);
 
     return {
         topLeft: topLeftGeo,

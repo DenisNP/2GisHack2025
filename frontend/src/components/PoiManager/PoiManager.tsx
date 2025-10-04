@@ -9,9 +9,11 @@ import {
     Person as PersonIcon, 
     PersonOutline as PersonOutlineIcon,
     TouchApp as TouchAppIcon,
-    DeleteSweep as DeleteSweepIcon
+    DeleteSweep as DeleteSweepIcon,
+    CloudDownload as CloudDownloadIcon
 } from '@mui/icons-material';
 import './PoiManager.css';
+import { loadAllPages } from './apiLoader';
 
 // Вспомогательная функция для получения anchor (точка привязки к карте)
 // Размеры должны соответствовать CSS
@@ -33,6 +35,9 @@ export function PoiManager() {
     // Режим удаления POI
     const [isDeletionMode, setIsDeletionMode] = useState(false);
     
+    // Состояние загрузки из API
+    const [isLoading, setIsLoading] = useState(false);
+    
     // Храним ссылки на маркеры POI
     const markersRef = useRef<Array<{ id: number; marker: any }>>([]);
 
@@ -53,24 +58,24 @@ export function PoiManager() {
         // Создаем новые маркеры для каждого POI
         store.poi.forEach((poi: Poi) => {
             try {
-                const markerClass = `poi-marker poi-marker-${poi.type}`;
-                
+                const markerClass = `poi-marker poi-marker-${poi.type.toLowerCase()}`;
+
                 // Создаем HTML элемент для маркера
                 const html = document.createElement('div');
                 html.className = markerClass;
-                
+
                 // Обработчик удаления POI при клике (только в режиме удаления)
-                const clickHandler = (e: MouseEvent) => {
-                    e.stopPropagation(); // Предотвращаем всплытие события к карте
-                    if (isDeletionMode) {
+                if (isDeletionMode) {
+                    const clickHandler = (e: MouseEvent) => {
+                        e.stopPropagation(); // Предотвращаем всплытие события к карте
                         events.removePoiById(poi.id);
-                    }
-                };
-                html.addEventListener('click', clickHandler);
-                
+                    };
+                    html.addEventListener('click', clickHandler);
+                }
+
                 // Обновляем стиль курсора в зависимости от режима
                 html.style.cursor = isDeletionMode ? 'pointer' : 'default';
-                
+
                 // Создаем маркер на карте
                 const marker = new (mapgl as any).HtmlMarker(mapglInstance, {
                     coordinates: [poi.geoPoint.lng, poi.geoPoint.lat],
@@ -79,7 +84,7 @@ export function PoiManager() {
                     interactive: isDeletionMode,
                     zIndex: 1000,
                 });
-                
+
                 markersRef.current.push({ id: poi.id, marker });
             } catch (e) {
                 console.error('Ошибка при создании маркера POI:', e);
@@ -148,6 +153,18 @@ export function PoiManager() {
         }
     };
     
+    // Обработчик загрузки из API
+    const handleLoadFromApi = async () => {
+        setIsLoading(true);
+        try {
+            await loadAllPages();
+        } catch (error) {
+            console.error('Ошибка при загрузке из API:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
     return (
         <div className="poi-manager-panel">
             <div className="poi-manager-title">Добавить</div>
@@ -172,6 +189,16 @@ export function PoiManager() {
             >
                 <PersonOutlineIcon style={{ marginRight: 8, fontSize: 20 }} />
                 Второстепенные точки интереса
+            </button>
+
+            <div className="poi-manager-title" style={{ marginTop: 20 }}>Загрузка из API</div>
+            <button
+                onClick={handleLoadFromApi}
+                className="poi-button poi-button-api"
+                disabled={isLoading}
+            >
+                <CloudDownloadIcon style={{ marginRight: 8, fontSize: 20 }} />
+                {isLoading ? 'Загрузка...' : 'Загрузить POI из 2GIS'}
             </button>
 
             <div className="poi-manager-title" style={{ marginTop: 20 }}>Удалить</div>

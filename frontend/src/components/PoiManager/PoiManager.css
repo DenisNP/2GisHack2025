@@ -80,6 +80,24 @@
     font-weight: bold;
 }
 
+/* Кнопка загрузки из API */
+.poi-button-api {
+    border-color: #2e7d32;
+    background-color: white;
+    color: #2e7d32;
+    font-weight: 500;
+}
+
+.poi-button-api:hover:not(:disabled) {
+    background-color: #2e7d32;
+    color: white;
+}
+
+.poi-button-api:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* Кнопка удаления */
 .poi-button-delete.active {
     border-color: #d32f2f;
