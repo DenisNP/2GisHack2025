@@ -21,6 +21,7 @@ export default function Mapgl() {
                 center: MAP_CENTER,
                 zoom: 18,
                 key: process.env.REACT_APP_MAPGL_API_KEY || '',
+                style: process.env.REACT_APP_MAPGL_STYLE_ID,
             });
 
             setMapglContext({
