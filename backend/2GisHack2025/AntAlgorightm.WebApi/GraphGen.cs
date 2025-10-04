@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using AntAlgorithm;
 using AntAlgorithm.Abstractions;
 using GraphGeneration;
@@ -18,8 +20,10 @@ public static class GraphGen
 
         List<Vector2> pp  =pois.Select(pp =>new Vector2(pp.Id, (float)pp.Point.X,  (float)pp.Point.Y, pp.Weight)).ToList();
 
-        var result = GraphGenerator.Generate(polygons.ToList(), pp);
-    
-        return algorithm.GetBestWay(result);
+        var result = GraphGenerator.Generate2(polygons.ToList(), pp);
+        
+        File.WriteAllText("multi_polygon_graph.svg", result, Encoding.UTF8);
+
+        return new Path(); //algorithm.GetBestWay(result);
     }
 }

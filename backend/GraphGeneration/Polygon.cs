@@ -1,5 +1,6 @@
 ﻿// using System.Numerics;
 
+using System.Text.Json.Serialization;
 using AntAlgorithm;
 using VoronatorSharp;
 
@@ -7,10 +8,12 @@ namespace GraphGeneration;
 
 public class Polygon
 {
+    [JsonPropertyName("region")]
     public List<Vector2> Vertices { get; set; } = new List<Vector2>();
     
     public Polygon() { }
     
+    [JsonPropertyName("zone_type")]
     public ZoneType Zone { get; set; }
     
     public Polygon(IEnumerable<Vector2> vertices, ZoneType zone = ZoneType.Available)
