@@ -3,6 +3,7 @@ import { useMapglContext } from "../../MapglContext";
 import { ZoneDrawerProps, ZoneData, ZonePolygon } from "./ZoneDrawer.types";
 import { GeoPoint } from "../../types/GeoPoint";
 import { ZONE_TYPES_COLOR } from "./ZoneDrawer.constants";
+import { useZoneId} from "../../hooks/useZoneId";
 
 // color helpers
 function clamp(v: number, lo = 0, hi = 255) { return Math.max(lo, Math.min(hi, Math.round(v))); }
@@ -61,13 +62,12 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
 
     const { mapglInstance, mapgl } = useMapglContext();
     const [isDrawing, setIsDrawing] = useState(false);
+    const [isDeletionMode, setIsDeletionMode] = useState(false);
     const [currentPoints, setCurrentPoints] = useState<GeoPoint[]>([]);
     const polygonsRef = useRef<Array<ZonePolygon>>([]);
-    const nextPolygonIndexRef = useRef<number>(1);
-    const [selectedPolygonId, setSelectedPolygonId] = useState<number | null>(null);
+    const getNewZoneId = useZoneId();
     const currentPointsRef = useRef<GeoPoint[]>([]);
     const currentZonesRef = useRef<ZoneData[]>([]);
-
 
     const colorRgb = parseHexColor(ZONE_TYPES_COLOR.get(type)!);
     const colorDerived = colorsFromRgb(colorRgb);
@@ -82,32 +82,6 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
         currentZonesRef.current = zones;
     }, [zones]);
 
-    const recreatePolygon = useCallback((pEntry: ZonePolygon, highlight: boolean) => {
-        if(!mapglInstance)
-        {
-            return;
-        }
-        // destroy old instance and create a new one with highlight or normal style
-        try { pEntry.instance && pEntry.instance.destroy(); } catch (e) {}
-        const rgb = pEntry.rgb || colorRgb || BASE_COLOR_RGB;
-        const { normalFill, normalStroke, highlightFill, highlightStroke } = colorsFromRgb(rgb);
-        const fillColor = highlight ? highlightFill : normalFill;
-        const strokeColor = highlight ? highlightStroke : normalStroke;
-
-        // Convert GeoPoint[] to [lng, lat][] format for MapGL
-        const coords = pEntry.coords.map(point => [point.lng, point.lat]);
-            
-        const newInst = new (mapgl as any).Polygon(mapglInstance, {
-            coordinates: [coords], // MapGL expects array of rings: [[[lng,lat],...]]
-            color: fillColor,
-            strokeColor,
-            interactive: true,
-        });
-        try { newInst.userData = newInst.userData || {}; newInst.userData._coords = coords; } catch (e) {}
-        try { newInst.on && newInst.on('click', () => setSelectedPolygonId((prev) => (prev === pEntry.id ? null : pEntry.id))); } catch (e) {}
-        pEntry.instance = newInst;
-    }, [mapglInstance, mapgl, colorRgb]);
-
     const tempLineRef = useRef<any | null>(null);
     const firstPointMarkerRef = useRef<any | null>(null);
     const firstPointHtmlRef = useRef<HTMLElement | null>(null);
@@ -117,7 +91,7 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
             const currentPointsValue = currentPointsRef.current;
             if (currentPointsValue.length >= 3) {
                 const coords = closeRing(currentPointsValue);
-                const id = nextPolygonIndexRef.current++;
+                const id = getNewZoneId();
                 const newEntry: ZoneData = { id, coords };
                 const newList = [...currentZonesRef.current, newEntry];
                 onZonesChanged(newList);
@@ -138,7 +112,7 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
             }
             setIsDrawing(false);
             setCurrentPoints([]);
-        }, [onZonesChanged]);
+        }, [onZonesChanged, getNewZoneId]);
 
     const createFirstPointMarker = useCallback((firstPoint: GeoPoint) => {
             if (!mapglInstance || !mapgl) return;
@@ -229,26 +203,19 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
             });
         }, [createFirstPointMarker]);
 
-    // react to selection changes: unhighlight previous, highlight current
-    useEffect(() => {
-        if (!mapglInstance || !mapgl) return;
-        // find all entries
-        const entries = polygonsRef.current;
-        // unhighlight others
-        entries.forEach((p) => {
-            if (p.id !== selectedPolygonId) {
-                try {
-                    // recreate with normal style
-                    recreatePolygon(p, false);
-                } catch (e) {}
-            }
-        });
-        // highlight selected
-        if (selectedPolygonId) {
-            const sel = entries.find((p) => p.id === selectedPolygonId);
-            if (sel) try { recreatePolygon(sel, true); } catch (e) {}
-        }
-    }, [selectedPolygonId, recreatePolygon, mapglInstance, mapgl]);
+    const deletePolygonById = useCallback((id: number) => {
+        // destroy instance if present
+        // const pos = polygonsRef.current.findIndex((p) => p.id === id);
+        // if (pos !== -1) {
+        //     const pInst = polygonsRef.current[pos];
+        //     try { pInst.instance && pInst.instance.destroy(); } catch (e) {}
+        //     polygonsRef.current.splice(pos, 1);
+        // }
+        // update logical list
+        const newList = currentZonesRef.current.filter((p) => p.id !== id);
+        onZonesChanged(newList);
+        console.log("DELETE")
+    }, [onZonesChanged]);
 
     // keep map polygon instances in sync with zones
     useEffect(() => {
@@ -266,14 +233,21 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
                     coordinates: [coords], // MapGL expects array of rings: [[[lng,lat],...]]
                     color: colorDerived.normalFill,
                     strokeColor: colorDerived.normalStroke,
-                    interactive: true,
+                    interactive: isDeletionMode,
                 });
-                try { inst.on && inst.on('click', () => setSelectedPolygonId((prev) => (prev === id ? null : id))); } catch (e) {}
+                
+                // Добавляем обработчик клика для удаления
+                try {
+                    inst.on && inst.on('click', (e: any) => {
+                            deletePolygonById(id);
+                    });
+                } catch (e) {}
+                
                 polygonsRef.current.push({ id, instance: inst, coords: z.coords, rgb: colorRgb });
             } catch (e) {}
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [zones, mapglInstance, mapgl, type]);
+    }, [zones, mapglInstance, mapgl, type, isDeletionMode]);
 
     const handleMapClick = useCallback((e: any) => {
         // Проверяем, что мы в режиме рисования
@@ -346,7 +320,12 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
         }
     }, []);
 
-    function startDrawing() { setCurrentPoints([]); setIsDrawing(true); }
+    function startDrawing() { 
+        setCurrentPoints([]); 
+        setIsDrawing(true); 
+        setIsDeletionMode(false); // отключаем режим удаления при начале рисования
+    }
+    
     function cancelDrawing() {
         setIsDrawing(false); setCurrentPoints([]);
         if (tempLineRef.current) { try { tempLineRef.current.destroy(); } catch (e) {} tempLineRef.current = null; }
@@ -357,6 +336,17 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
         }
     }
 
+    function toggleDeletionMode() {
+        setIsDeletionMode((prevIsDeletionMode) => {
+            // отключаем режим рисования при включении удаления
+            if (!prevIsDeletionMode) {
+                setIsDrawing(false);
+                setCurrentPoints([]);
+            }
+            return !prevIsDeletionMode
+        });
+    }
+
     // finishPolygon removed: finishing is handled by clicking the first point marker or proximity while drawing
 
     function clearAll() {
@@ -365,26 +355,6 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
         polygonsRef.current = [];
         // clear logical list
         onZonesChanged([]);
-    }
-
-    function deletePolygonById(id: number) {
-        // destroy instance if present
-        const pos = polygonsRef.current.findIndex((p) => p.id === id);
-        if (pos !== -1) {
-            const pInst = polygonsRef.current[pos];
-            try { pInst.instance && pInst.instance.destroy(); } catch (e) {}
-            polygonsRef.current.splice(pos, 1);
-        }
-        // update logical list
-        const newList = zones.filter((p) => p.id !== id);
-        onZonesChanged(newList);
-        if (selectedPolygonId === id) setSelectedPolygonId(null);
-        if (newList.length === 0) nextPolygonIndexRef.current = 1;
-    }
-
-    function deleteSelected() {
-        if (!selectedPolygonId) return;
-        deletePolygonById(selectedPolygonId);
     }
 
     const boxStyle: React.CSSProperties = {
@@ -413,30 +383,21 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
             <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
                 <button onClick={startDrawing} disabled={isDrawing} title='Начать добавление'>Добавить</button>
                 <button onClick={cancelDrawing} disabled={!isDrawing} title='Отменить добавление'>Отмена</button>
+                <button 
+                    onClick={toggleDeletionMode} 
+                    disabled={isDrawing}
+                    style={{ 
+                        backgroundColor: isDeletionMode ? '#f44336' : '#fafafa',
+                        color: isDeletionMode ? 'white' : 'black'
+                    }}
+                    title='Режим удаления - кликните на полигон для удаления'
+                >
+                    {isDeletionMode ? 'Выйти из удаления' : 'Удаление'}
+                </button>
                 <button onClick={clearAll} title='Удалить все полигоны'>Очистить всё</button>
-                <div style={{ marginTop: 6, fontSize: 12 }}>{isDrawing ? `Точек: ${currentPoints.length}` : ''}</div>
-                <div style={{ marginTop: 8, borderTop: '1px solid #eee', paddingTop: 8 }}>
-                    <div style={{ fontSize: 12, marginBottom: 6, fontWeight: 600 }}>Полигоны</div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 160, overflow: 'auto' }}>
-                        {polygonsRef.current.length === 0 ? (
-                            <div style={{ fontSize: 12, color: '#666' }}>Полигонов нет</div>
-                        ) : (
-                            zones.map((p) => {
-                                const pRgb = (polygonsRef.current.find(pp => pp.id === p.id) || { rgb: colorRgb }).rgb || colorRgb;
-                                const pColor = colorsFromRgb(pRgb).normalStroke;
-                                return (
-                                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                            <button onClick={() => setSelectedPolygonId(p.id)} style={{ padding: '2px 6px', background: selectedPolygonId === p.id ? pColor : '#f0f0f0', color: selectedPolygonId === p.id ? 'white' : 'black', border: 'none', borderRadius: 4 }}>{selectedPolygonId === p.id ? 'Выбран' : 'Выбрать'}</button>
-                                    <div style={{ fontSize: 12, flex: 1 }}>#{p.id}</div>
-                                    <button onClick={() => deletePolygonById(p.id)} style={{ padding: '2px 6px' }}>Удалить</button>
-                                </div>
-                                );
-                            })
-                        )}
-                    </div>
-                    <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                        <button onClick={deleteSelected} disabled={!selectedPolygonId}>Удалить выбранный</button>
-                    </div>
+                <div style={{ marginTop: 6, fontSize: 12 }}>
+                    {isDrawing ? `Точек: ${currentPoints.length}` : ''}
+                    {isDeletionMode ? 'Кликните на полигон для удаления' : ''}
                 </div>
             </div>
         </div>
