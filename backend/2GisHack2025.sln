@@ -8,6 +8,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Geometries.Tests", "Geometr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Geometries.App", "Geometries.App\Geometries.App.csproj", "{2E92C71B-A2BA-421A-821C-8CF6D0AF40C5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoronatorSharp", "VoronatorSharp\VoronatorSharp.csproj", "{0E0E989A-BE9F-45AF-ABCE-22C4658A1936}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoronatorApp", "VoronatorApp\VoronatorApp.csproj", "{DD8CA49D-B71F-4EDC-81D6-98190526D799}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +34,13 @@ Global
 		{2E92C71B-A2BA-421A-821C-8CF6D0AF40C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E92C71B-A2BA-421A-821C-8CF6D0AF40C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E92C71B-A2BA-421A-821C-8CF6D0AF40C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E0E989A-BE9F-45AF-ABCE-22C4658A1936}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E0E989A-BE9F-45AF-ABCE-22C4658A1936}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E0E989A-BE9F-45AF-ABCE-22C4658A1936}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E0E989A-BE9F-45AF-ABCE-22C4658A1936}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD8CA49D-B71F-4EDC-81D6-98190526D799}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD8CA49D-B71F-4EDC-81D6-98190526D799}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD8CA49D-B71F-4EDC-81D6-98190526D799}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD8CA49D-B71F-4EDC-81D6-98190526D799}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
