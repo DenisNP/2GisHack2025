@@ -13,6 +13,7 @@ internal sealed class AntColonyAlgorithm : IAntColonyAlgorithm
     // Параметры алгоритма
     private readonly double _alpha;
     private readonly double _beta;
+    private readonly double _gamma;
     private readonly double _evaporation;
     private readonly double _q;
     private readonly int _maxIterations;
@@ -23,37 +24,38 @@ internal sealed class AntColonyAlgorithm : IAntColonyAlgorithm
     {
         _alpha = configuration.Value.Alpha;
         _beta = configuration.Value.Beta;
+        _gamma = configuration.Value.Gamma;
         _evaporation = configuration.Value.Evaporation;
         _q = configuration.Value.Q;
         _maxIterations = configuration.Value.MaxIterations;
     }
 
-    public List<Result> GetAllWays(Poi[] points)
+    public List<Result> GetAllWays(Edge[] edges)
     {
-        Init(points);
+        Init(edges);
         return Calculate().allWays;
     }
 
-    public Path GetBestWay(Poi[] points)
+    public Path GetBestWay(Edge[] edges)
     {
-        Init(points);
+        Init(edges);
         return Calculate().path;
     }
 
-    private void Init(Poi[] points)
+    private void Init(Edge[] edges)
     {
         // Создадим матрицу дистанций до городов
-        _distances = new DistanceWeight[points.Length,points.Length];
-        for (var i = 0; i < points.Length; i++)
+        _distances = new DistanceWeight[edges.Length,edges.Length];
+        for (var i = 0; i < edges.Length; i++)
         {
-            for (var j = 0; j < points.Length; j++)
+            for (var j = 0; j < edges.Length; j++)
             {
                 _distances[i, j] = new DistanceWeight
                 {
-                    Distance = MathExtensions.CalculateDistance(points[i].Point, points[j].Point),
-                    Weight = points[j].Weight,
-                    From = points[i],
-                    To =  points[j],
+                    Distance = MathExtensions.CalculateDistance(edges[i].From.Point, edges[j].To.Point),
+                    Weight = edges[j].To.Weight,
+                    From = edges[i].From,
+                    To =  edges[j].To,
                 };
             }
         }
@@ -140,7 +142,7 @@ internal sealed class AntColonyAlgorithm : IAntColonyAlgorithm
             var nextCity = ChooseNextCity(currentCityNumber, visited);
             // Следующий шаг пути
             path[step] = nextCity;
-            
+            // Вот тут убрать посещение одного и того же
             // все посещенные на данный момент города + следующий, который будет посещенным
             visited[nextCity] = true;
             
@@ -165,22 +167,45 @@ internal sealed class AntColonyAlgorithm : IAntColonyAlgorithm
         for (var city = 0; city < _cityCount; city++)
         {
             // Если город, для которого высчитываем вероятность посещён - пропускаем его
-            if (!visited[city])
-            {
+            // if (!visited[city])
+            // {
                 // Тут высчитываем количество феромонов на текущем ребре. Как подстраивается под формулу: 
                 // t - _pheromones, i - currentCity, city - m
                 var pheromone = Math.Pow(_pheromones[currentCity, city], _alpha);
                 
                 // Здесь высчитываем близость вершины графа. Как подстраивается под формулу:
                 // n - _distances, i - currentCity, city - m
-                var distance = Math.Pow(1.0 / _distances[currentCity, city].Distance, _beta);
+
+                double distance;
+                double weight;
+                
+                if (_distances[currentCity, city].Distance == 0)
+                {
+                    distance = 0;
+                }
+                else
+                {
+                    distance = Math.Pow(_distances[currentCity, city].Distance, _beta);
+                }
+                
+                if (_distances[currentCity, city].Weight == 0)
+                {
+                    weight = 1;
+                }
+                else
+                {
+                    weight = Math.Pow(_distances[currentCity, city].Weight, _gamma);
+                }
+
+                // Добавляем вес следующей вершины
+                
                 
                 // Шанс перейти в город city (m)
-                probabilities[city] = pheromone * distance;
+                probabilities[city] = pheromone * distance * weight;
                 
                 // сумма всех шансов, чтобы с помощью этого делить. 
                 sum += probabilities[city];
-            }
+           //}
         }
         
         // С каким шансом муравей перейдет в следующий город
@@ -191,14 +216,14 @@ internal sealed class AntColonyAlgorithm : IAntColonyAlgorithm
         
         for (var city = 0; city < _cityCount; city++)
         {
-            if (!visited[city])
-            {
+            //if (!visited[city])
+            //{
                 cumulative += probabilities[city];
                 if (cumulative >= randomValue)
                 {
                     return city;
                 }
-            }
+            //}
         }
         
         // Если что-то пошло не так, возвращаем первый непосещенный город
