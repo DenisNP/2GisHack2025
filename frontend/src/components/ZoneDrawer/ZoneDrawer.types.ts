@@ -9,12 +9,12 @@ export type ZoneDrawerProps = {
 
 export type ZoneData = { 
     id: number; 
-    coords: GeoPoint[][] 
+    coords: GeoPoint[] 
 };
 
 export type ZonePolygon = {
     id: number;
     instance: any; 
-    coords: number[][][]; 
+    coords: GeoPoint[]; 
     rgb?: { r:number; g:number; b:number }
 }

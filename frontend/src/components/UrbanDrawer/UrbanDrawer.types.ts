@@ -1,9 +1,9 @@
-type LonLat = [number, number];
+import { GeoPoint } from "../../types/GeoPoint";
 
 export type SidewalkData = {
-    id: string;
-    centerLine: LonLat[];
-    polygon: LonLat[][];
+    id: number;
+    centerLine: GeoPoint[];
+    polygon: GeoPoint[];
     width: number;
 };
 

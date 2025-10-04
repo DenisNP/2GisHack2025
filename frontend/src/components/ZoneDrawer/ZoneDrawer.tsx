@@ -94,13 +94,16 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
         const fillColor = highlight ? highlightFill : normalFill;
         const strokeColor = highlight ? highlightStroke : normalStroke;
 
+        // Convert GeoPoint[] to [lng, lat][] format for MapGL
+        const coords = pEntry.coords.map(point => [point.lng, point.lat]);
+            
         const newInst = new (mapgl as any).Polygon(mapglInstance, {
-            coordinates: pEntry.coords,
+            coordinates: [coords], // MapGL expects array of rings: [[[lng,lat],...]]
             color: fillColor,
             strokeColor,
             interactive: true,
         });
-        try { newInst.userData = newInst.userData || {}; newInst.userData._coords = pEntry.coords; } catch (e) {}
+        try { newInst.userData = newInst.userData || {}; newInst.userData._coords = coords; } catch (e) {}
         try { newInst.on && newInst.on('click', () => setSelectedPolygonId((prev) => (prev === pEntry.id ? null : pEntry.id))); } catch (e) {}
         pEntry.instance = newInst;
     }, [mapglInstance, mapgl, colorRgb]);
@@ -113,7 +116,7 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
     const finishPolygon = useCallback(() => {
             const currentPointsValue = currentPointsRef.current;
             if (currentPointsValue.length >= 3) {
-                const coords = [closeRing(currentPointsValue)];
+                const coords = closeRing(currentPointsValue);
                 const id = nextPolygonIndexRef.current++;
                 const newEntry: ZoneData = { id, coords };
                 const newList = [...currentZonesRef.current, newEntry];
@@ -257,16 +260,16 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
         zones.forEach((z) => {
             try {
                 // Convert GeoPoint[] to [lng, lat][] format for MapGL
-                const coords = z.coords.map(ring => ring.map(point => [point.lng, point.lat]));
+                const coords = z.coords.map(point => [point.lng, point.lat]);
                 const id = z.id;
                 const inst = new (mapgl as any).Polygon(mapglInstance, {
-                    coordinates: coords,
+                    coordinates: [coords], // MapGL expects array of rings: [[[lng,lat],...]]
                     color: colorDerived.normalFill,
                     strokeColor: colorDerived.normalStroke,
                     interactive: true,
                 });
                 try { inst.on && inst.on('click', () => setSelectedPolygonId((prev) => (prev === id ? null : id))); } catch (e) {}
-                polygonsRef.current.push({ id, instance: inst, coords, rgb: colorRgb });
+                polygonsRef.current.push({ id, instance: inst, coords: z.coords, rgb: colorRgb });
             } catch (e) {}
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
