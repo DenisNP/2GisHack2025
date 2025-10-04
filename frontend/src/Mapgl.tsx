@@ -3,8 +3,6 @@ import { load } from '@2gis/mapgl';
 import { useMapglContext } from './MapglContext';
 import {Map as MapGl} from '@2gis/mapgl/types';
 // Ruler plugin removed — drawing is handled by PolygonDrawer
-import { useControlRotateClockwise } from './useControlRotateClockwise';
-import { ControlRotateCounterclockwise } from './ControlRotateConterclockwise';
 import { MapWrapper } from './MapWrapper';
 
 export const MAP_CENTER = [30.349213, 59.937766];
@@ -22,8 +20,6 @@ export default function Mapgl() {
                 key: process.env.REACT_APP_MAPGL_API_KEY || '',
             });
 
-            map.on('click', (e) => console.log(e));
-
             setMapglContext({
                 mapglInstance: map,
                 mapgl,
@@ -37,12 +33,9 @@ export default function Mapgl() {
         };
     }, [setMapglContext]);
 
-    useControlRotateClockwise();
-
     return (
         <>
             <MapWrapper />
-            <ControlRotateCounterclockwise />
         </>
     );
 }

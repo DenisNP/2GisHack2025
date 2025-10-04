@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useMapglContext } from '../../MapglContext';
-import { events, stores } from './models';
-import { useUnit } from 'effector-react';
-
-type LonLat = [number, number];
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useMapglContext } from "../../MapglContext";
+import { ZoneDrawerProps, ZoneData, ZonePolygon } from "./ZoneDrawer.types";
+import { GeoPoint } from "../../types/GeoPoint";
+import { ZONE_TYPES_COLOR } from "./ZoneDrawer.constants";
 
 // color helpers
 function clamp(v: number, lo = 0, hi = 255) { return Math.max(lo, Math.min(hi, Math.round(v))); }
@@ -11,7 +10,6 @@ function rgbToHex(r: number, g: number, b: number) {
     return '#' + [r, g, b].map((n) => clamp(n).toString(16).padStart(2, '0')).join('');
 }
 
-// Base color configuration and utilities
 const BASE_COLOR_RGB = { r: 0, g: 122, b: 204 }; // base blue fallback
 
 function rgbaStringFromRgb(rgb: { r: number; g: number; b: number }, alpha = 1) {
@@ -50,48 +48,45 @@ function parseHexColor(hex: string) {
     return BASE_COLOR_RGB;
 }
 
-
-
-function closeRing(coords: LonLat[]) {
+function closeRing(coords: GeoPoint[]) {
     if (coords.length === 0) return coords;
     const first = coords[0];
     const last = coords[coords.length - 1];
-    if (first[0] === last[0] && first[1] === last[1]) return coords;
+    if (first.lat === last.lat && first.lng === last.lng) return coords;
     return [...coords, first];
 }
-export type PolygonData = { id: string; coords: LonLat[][] };
 
-interface PolygonDrawerProps {
-    color?: string; // hex like '#007acc'
-    label?: string;
-    polygons?: PolygonData[]; // controlled list
-    onPolygonsChanged?: (polygons: PolygonData[]) => void;
-    position?: { left?: number; top?: number };
-}
 
-export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, onPolygonsChanged, position }: PolygonDrawerProps) {
-    const [click, countClick] = useUnit([events.click, stores.$countClick])
+export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChanged}) =>{
+
     const { mapglInstance, mapgl } = useMapglContext();
     const [isDrawing, setIsDrawing] = useState(false);
-    const [currentPoints, setCurrentPoints] = useState<LonLat[]>([]);
-    const polygonsRef = useRef<Array<{ id: string; instance: any; coords?: any; rgb?: { r:number; g:number; b:number } }>>([]);
+    const [currentPoints, setCurrentPoints] = useState<GeoPoint[]>([]);
+    const polygonsRef = useRef<Array<ZonePolygon>>([]);
     const nextPolygonIndexRef = useRef<number>(1);
-    const [selectedPolygonId, setSelectedPolygonId] = useState<string | null>(null);
-    const [, setPolygonsVersion] = useState(0);
-    const currentPointsRef = useRef<LonLat[]>([]);
+    const [selectedPolygonId, setSelectedPolygonId] = useState<number | null>(null);
+    const currentPointsRef = useRef<GeoPoint[]>([]);
+    const currentZonesRef = useRef<ZoneData[]>([]);
 
-    // uncontrolled storage when `polygons` prop is not provided
-    const [localPolygons, setLocalPolygons] = useState<PolygonData[]>([]);
-    const effectivePolygons = polygons ?? localPolygons;
-    const colorRgb = parseHexColor(color);
+
+    const colorRgb = parseHexColor(ZONE_TYPES_COLOR.get(type)!);
     const colorDerived = colorsFromRgb(colorRgb);
-    
+
     // Обновляем ref при изменении currentPoints
     useEffect(() => {
         currentPointsRef.current = currentPoints;
     }, [currentPoints]);
 
-    const recreatePolygon = React.useCallback((pEntry: { id: string; instance: any; coords?: any; rgb?: { r:number; g:number; b:number } }, highlight: boolean) => {
+    // Обновляем ref при изменении zones
+    useEffect(() => {
+        currentZonesRef.current = zones;
+    }, [zones]);
+
+    const recreatePolygon = useCallback((pEntry: ZonePolygon, highlight: boolean) => {
+        if(!mapglInstance)
+        {
+            return;
+        }
         // destroy old instance and create a new one with highlight or normal style
         try { pEntry.instance && pEntry.instance.destroy(); } catch (e) {}
         const rgb = pEntry.rgb || colorRgb || BASE_COLOR_RGB;
@@ -109,6 +104,127 @@ export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, o
         try { newInst.on && newInst.on('click', () => setSelectedPolygonId((prev) => (prev === pEntry.id ? null : pEntry.id))); } catch (e) {}
         pEntry.instance = newInst;
     }, [mapglInstance, mapgl, colorRgb]);
+
+    const tempLineRef = useRef<any | null>(null);
+    const firstPointMarkerRef = useRef<any | null>(null);
+    const firstPointHtmlRef = useRef<HTMLElement | null>(null);
+    const firstPointClickHandlerRef = useRef<((e: MouseEvent) => void) | null>(null);
+
+    const finishPolygon = useCallback(() => {
+            const currentPointsValue = currentPointsRef.current;
+            if (currentPointsValue.length >= 3) {
+                const coords = [closeRing(currentPointsValue)];
+                const id = nextPolygonIndexRef.current++;
+                const newEntry: ZoneData = { id, coords };
+                const newList = [...currentZonesRef.current, newEntry];
+                onZonesChanged(newList);
+            }
+            
+            // Очищаем всё
+            if (tempLineRef.current) { try { tempLineRef.current.destroy(); } catch (e) {} tempLineRef.current = null; }
+            if (firstPointMarkerRef.current) {
+                try {
+                    if (firstPointHtmlRef.current && firstPointClickHandlerRef.current) {
+                        firstPointHtmlRef.current.removeEventListener('click', firstPointClickHandlerRef.current);
+                    }
+                } catch (e) {}
+                try { firstPointMarkerRef.current.destroy(); } catch (e) {}
+                firstPointMarkerRef.current = null;
+                firstPointHtmlRef.current = null;
+                firstPointClickHandlerRef.current = null;
+            }
+            setIsDrawing(false);
+            setCurrentPoints([]);
+        }, [onZonesChanged]);
+
+    const createFirstPointMarker = useCallback((firstPoint: GeoPoint) => {
+            if (!mapglInstance || !mapgl) return;
+            
+            // Очищаем предыдущий маркер если есть
+            if (firstPointMarkerRef.current) {
+                try {
+                    if (firstPointHtmlRef.current && firstPointClickHandlerRef.current) {
+                        firstPointHtmlRef.current.removeEventListener('click', firstPointClickHandlerRef.current);
+                    }
+                } catch (e) {}
+                try { firstPointMarkerRef.current.destroy(); } catch (e) {}
+                firstPointMarkerRef.current = null;
+                firstPointHtmlRef.current = null;
+                firstPointClickHandlerRef.current = null;
+            }
+            
+            try {
+                const html = document.createElement('div');
+                html.style.width = '18px';
+                html.style.height = '18px';
+                html.style.borderRadius = '9px';
+                html.style.background = colorDerived.normalStroke;
+                html.style.display = 'flex';
+                html.style.alignItems = 'center';
+                html.style.justifyContent = 'center';
+                html.style.color = 'white';
+                html.style.fontSize = '11px';
+                html.style.fontWeight = '600';
+                html.style.cursor = 'pointer';
+                html.style.border = '2px solid white';
+                html.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+                
+                // Обработчик клика по маркеру - просто завершаем полигон
+                const handler = (ev: MouseEvent) => {
+                    try { ev.stopPropagation(); ev.preventDefault(); } catch (e) {}
+                    finishPolygon();
+                };
+                
+                firstPointHtmlRef.current = html;
+                firstPointClickHandlerRef.current = handler;
+                html.addEventListener('click', handler);
+                
+                firstPointMarkerRef.current = new mapgl.HtmlMarker(mapglInstance, {
+                    coordinates: [firstPoint.lng, firstPoint.lat],
+                    html,
+                    anchor: [9, 9],
+                    interactive: true,
+                    zIndex: 1000,
+                });
+            } catch (err) {
+                firstPointMarkerRef.current = null;
+                firstPointHtmlRef.current = null;
+                firstPointClickHandlerRef.current = null;
+            }
+        }, [mapglInstance, mapgl, colorDerived, finishPolygon]);
+
+    const isClickNearFirstPoint = useCallback((clickPoint: GeoPoint): boolean => {
+            const currentPointsValue = currentPointsRef.current;
+            if (currentPointsValue.length === 0) return false;
+            
+            try {
+                const firstPoint = currentPointsValue[0];
+                const clickPx = mapglInstance!.project([clickPoint.lng, clickPoint.lat]);
+                const firstPx = mapglInstance!.project([firstPoint.lng, firstPoint.lat]);
+                
+                const dx = clickPx[0] - firstPx[0];
+                const dy = clickPx[1] - firstPx[1];
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                return distance < 12; // 12 пикселей
+            } catch (err) {
+                return false;
+            }
+        }, [mapglInstance]);
+
+    // Добавляем новую точку в полигон
+        const addPointToPolygon = useCallback((point: GeoPoint) => {
+            setCurrentPoints((prev) => {
+                const newPoints = [...prev, point];
+                
+                // Если это первая точка, создаем маркер
+                if (newPoints.length === 1) {
+                    createFirstPointMarker(point);
+                }
+                
+                return newPoints;
+            });
+        }, [createFirstPointMarker]);
 
     // react to selection changes: unhighlight previous, highlight current
     useEffect(() => {
@@ -130,141 +246,19 @@ export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, o
             if (sel) try { recreatePolygon(sel, true); } catch (e) {}
         }
     }, [selectedPolygonId, recreatePolygon, mapglInstance, mapgl]);
-    const tempLineRef = useRef<any | null>(null);
-    const firstPointMarkerRef = useRef<any | null>(null);
-    const firstPointHtmlRef = useRef<HTMLElement | null>(null);
-    const firstPointClickHandlerRef = useRef<((e: MouseEvent) => void) | null>(null);
 
-    const finishPolygon = React.useCallback(() => {
-        const currentPointsValue = currentPointsRef.current;
-        if (currentPointsValue.length >= 3) {
-            const coords = [closeRing(currentPointsValue)];
-            const id = String(nextPolygonIndexRef.current++);
-            const newEntry = { id, coords };
-            const newList = [...effectivePolygons, newEntry];
-            if (onPolygonsChanged) onPolygonsChanged(newList);
-            if (!polygons) setLocalPolygons(newList);
-            setPolygonsVersion((v) => v + 1);
-        }
-        
-        // Очищаем всё
-        if (tempLineRef.current) { try { tempLineRef.current.destroy(); } catch (e) {} tempLineRef.current = null; }
-        if (firstPointMarkerRef.current) {
-            try {
-                if (firstPointHtmlRef.current && firstPointClickHandlerRef.current) {
-                    firstPointHtmlRef.current.removeEventListener('click', firstPointClickHandlerRef.current);
-                }
-            } catch (e) {}
-            try { firstPointMarkerRef.current.destroy(); } catch (e) {}
-            firstPointMarkerRef.current = null;
-            firstPointHtmlRef.current = null;
-            firstPointClickHandlerRef.current = null;
-        }
-        setIsDrawing(false);
-        setCurrentPoints([]);
-    }, [effectivePolygons, onPolygonsChanged, polygons]);
-
-    const createFirstPointMarker = React.useCallback((firstPoint: LonLat) => {
-        if (!mapglInstance || !mapgl) return;
-        
-        // Очищаем предыдущий маркер если есть
-        if (firstPointMarkerRef.current) {
-            try {
-                if (firstPointHtmlRef.current && firstPointClickHandlerRef.current) {
-                    firstPointHtmlRef.current.removeEventListener('click', firstPointClickHandlerRef.current);
-                }
-            } catch (e) {}
-            try { firstPointMarkerRef.current.destroy(); } catch (e) {}
-            firstPointMarkerRef.current = null;
-            firstPointHtmlRef.current = null;
-            firstPointClickHandlerRef.current = null;
-        }
-        
-        try {
-            const html = document.createElement('div');
-            html.style.width = '18px';
-            html.style.height = '18px';
-            html.style.borderRadius = '9px';
-            html.style.background = colorDerived.normalStroke;
-            html.style.display = 'flex';
-            html.style.alignItems = 'center';
-            html.style.justifyContent = 'center';
-            html.style.color = 'white';
-            html.style.fontSize = '11px';
-            html.style.fontWeight = '600';
-            html.style.cursor = 'pointer';
-            html.style.border = '2px solid white';
-            html.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-            
-            // Обработчик клика по маркеру - просто завершаем полигон
-            const handler = (ev: MouseEvent) => {
-                try { ev.stopPropagation(); ev.preventDefault(); } catch (e) {}
-                finishPolygon();
-            };
-            
-            firstPointHtmlRef.current = html;
-            firstPointClickHandlerRef.current = handler;
-            html.addEventListener('click', handler);
-            
-            firstPointMarkerRef.current = new (mapgl as any).HtmlMarker(mapglInstance, {
-                coordinates: firstPoint,
-                html,
-                anchor: [9, 9],
-                interactive: true,
-                zIndex: 1000,
-            });
-        } catch (err) {
-            firstPointMarkerRef.current = null;
-            firstPointHtmlRef.current = null;
-            firstPointClickHandlerRef.current = null;
-        }
-    }, [mapglInstance, mapgl, colorDerived, finishPolygon]);
-
-    // Проверяем, находится ли клик рядом с первой точкой
-    const isClickNearFirstPoint = React.useCallback((clickPoint: LonLat): boolean => {
-        const currentPointsValue = currentPointsRef.current;
-        if (currentPointsValue.length === 0) return false;
-        
-        try {
-            const firstPoint = currentPointsValue[0];
-            const clickPx = mapglInstance!.project(clickPoint);
-            const firstPx = mapglInstance!.project(firstPoint);
-            
-            const dx = clickPx[0] - firstPx[0];
-            const dy = clickPx[1] - firstPx[1];
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            return distance < 12; // 12 пикселей
-        } catch (err) {
-            return false;
-        }
-    }, [mapglInstance]);
-
-    // Добавляем новую точку в полигон
-    const addPointToPolygon = React.useCallback((point: LonLat) => {
-        setCurrentPoints((prev) => {
-            const newPoints = [...prev, point];
-            
-            // Если это первая точка, создаем маркер
-            if (newPoints.length === 1) {
-                createFirstPointMarker(point);
-            }
-            
-            return newPoints;
-        });
-    }, [createFirstPointMarker]);
-
-    // keep map polygon instances in sync with effectivePolygons
+    // keep map polygon instances in sync with zones
     useEffect(() => {
         if (!mapglInstance || !mapgl) return;
         // destroy existing
         polygonsRef.current.forEach((p) => { try { p.instance && p.instance.destroy(); } catch (e) {} });
         polygonsRef.current = [];
-        // recreate from effectivePolygons
-        effectivePolygons.forEach((p) => {
+        // recreate from zones
+        zones.forEach((z) => {
             try {
-                const coords = p.coords;
-                const id = p.id;
+                // Convert GeoPoint[] to [lng, lat][] format for MapGL
+                const coords = z.coords.map(ring => ring.map(point => [point.lng, point.lat]));
+                const id = z.id;
                 const inst = new (mapgl as any).Polygon(mapglInstance, {
                     coordinates: coords,
                     color: colorDerived.normalFill,
@@ -275,38 +269,37 @@ export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, o
                 polygonsRef.current.push({ id, instance: inst, coords, rgb: colorRgb });
             } catch (e) {}
         });
-        setPolygonsVersion((v) => v + 1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [effectivePolygons, mapglInstance, mapgl, color]);
+    }, [zones, mapglInstance, mapgl, type]);
+
+    const handleMapClick = useCallback((e: any) => {
+        // Проверяем, что мы в режиме рисования
+        if (!isDrawing) return;
+        
+        // Получаем координаты клика
+        const lngLat: number[] = e.lngLat;
+        if (!Array.isArray(lngLat) || lngLat.length < 2) return;
+        const clickPoint: GeoPoint = { lng: lngLat[0], lat: lngLat[1] };
+
+        // Проверяем, находится ли клик рядом с первой точкой
+        if (isClickNearFirstPoint(clickPoint)) {
+            finishPolygon(); // Замыкаем полигон
+            return;
+        }
+
+        // Добавляем новую точку
+        addPointToPolygon(clickPoint);
+    }, [isClickNearFirstPoint, isDrawing, finishPolygon, addPointToPolygon]);
 
     // Обработчик кликов по карте
     useEffect(() => {
         if (!mapglInstance || !mapgl) return;
         
-        const handleMapClick = (e: any) => {
-            // Проверяем, что мы в режиме рисования
-            if (!isDrawing) return;
-            
-            // Получаем координаты клика
-            const lngLat: number[] = e.lngLat;
-            if (!Array.isArray(lngLat) || lngLat.length < 2) return;
-            const clickPoint: LonLat = [lngLat[0], lngLat[1]];
-
-            // Проверяем, находится ли клик рядом с первой точкой
-            if (isClickNearFirstPoint(clickPoint)) {
-                finishPolygon(); // Замыкаем полигон
-                return;
-            }
-
-            // Добавляем новую точку
-            addPointToPolygon(clickPoint);
-        };
-        
         mapglInstance.on('click', handleMapClick);
         return () => {
             try { mapglInstance.off('click', handleMapClick); } catch (e) {}
         };
-    }, [mapglInstance, mapgl, isDrawing, isClickNearFirstPoint, finishPolygon, addPointToPolygon]);
+    }, [mapglInstance, mapgl, handleMapClick]);
 
     // Эффект для отображения временной линии - оптимизированный
     useEffect(() => {
@@ -322,8 +315,10 @@ export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, o
         if (currentPoints.length >= 2) {
             try {
                 const tempColor = colorDerived.tempColor;
+                // Преобразуем GeoPoint в [lng, lat] формат для MapGL
+                const coordinates = currentPoints.map(point => [point.lng, point.lat]);
                 tempLineRef.current = new (mapgl as any).Polyline(mapglInstance, {
-                    coordinates: currentPoints,
+                    coordinates,
                     width: 3,
                     color: tempColor,
                 });
@@ -366,14 +361,10 @@ export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, o
         polygonsRef.current.forEach((p) => { try { p.instance && p.instance.destroy(); } catch (e) {} });
         polygonsRef.current = [];
         // clear logical list
-        const newList: PolygonData[] = [];
-        if (onPolygonsChanged) onPolygonsChanged(newList);
-        if (!polygons) setLocalPolygons(newList);
-        nextPolygonIndexRef.current = 1;
-        setPolygonsVersion((v) => v + 1);
+        onZonesChanged([]);
     }
 
-    function deletePolygonById(id: string) {
+    function deletePolygonById(id: number) {
         // destroy instance if present
         const pos = polygonsRef.current.findIndex((p) => p.id === id);
         if (pos !== -1) {
@@ -382,12 +373,10 @@ export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, o
             polygonsRef.current.splice(pos, 1);
         }
         // update logical list
-        const newList = effectivePolygons.filter((p) => p.id !== id);
-        if (onPolygonsChanged) onPolygonsChanged(newList);
-        if (!polygons) setLocalPolygons(newList);
+        const newList = zones.filter((p) => p.id !== id);
+        onZonesChanged(newList);
         if (selectedPolygonId === id) setSelectedPolygonId(null);
         if (newList.length === 0) nextPolygonIndexRef.current = 1;
-        setPolygonsVersion((v) => v + 1);
     }
 
     function deleteSelected() {
@@ -395,15 +384,7 @@ export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, o
         deletePolygonById(selectedPolygonId);
     }
 
-    const boxStyle: React.CSSProperties = position ? {
-        position: 'absolute',
-        left: position.left ?? 12,
-        top: position.top ?? 12,
-        zIndex: 1000,
-        background: 'white',
-        padding: 8,
-        borderRadius: 6,
-    } : {
+    const boxStyle: React.CSSProperties = {
         background: 'white',
         padding: 8,
         borderRadius: 6,
@@ -424,7 +405,7 @@ export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, o
                         boxShadow: '0 0 0 2px rgba(0,0,0,0.04) inset',
                     }}
                 />
-                <span>Панель: {label}</span>
+                <span>Панель: {type}</span>
             </div>
             <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
                 <button onClick={startDrawing} disabled={isDrawing} title='Начать добавление'>Добавить</button>
@@ -437,7 +418,7 @@ export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, o
                         {polygonsRef.current.length === 0 ? (
                             <div style={{ fontSize: 12, color: '#666' }}>Полигонов нет</div>
                         ) : (
-                            effectivePolygons.map((p) => {
+                            zones.map((p) => {
                                 const pRgb = (polygonsRef.current.find(pp => pp.id === p.id) || { rgb: colorRgb }).rgb || colorRgb;
                                 const pColor = colorsFromRgb(pRgb).normalStroke;
                                 return (
@@ -452,11 +433,9 @@ export function PolygonDrawer({ color = '#007acc', label = 'Тип', polygons, o
                     </div>
                     <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                         <button onClick={deleteSelected} disabled={!selectedPolygonId}>Удалить выбранный</button>
-                        <button onClick={click}>TEST {countClick}</button>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
-

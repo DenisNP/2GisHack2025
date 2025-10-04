@@ -512,14 +512,20 @@ export const UrbanDrawer: React.FC<UrbanDrawerProps> = ({
         deleteSidewalkById(selectedSidewalkId);
     }
     
-    const boxStyle: React.CSSProperties = {
+    const boxStyle: React.CSSProperties = position ? {
         position: 'absolute',
-        left: position?.left ?? 12,
-        top: position?.top ?? 220,
+        left: position.left ?? 12,
+        top: position.top ?? 220,
         zIndex: 1000,
         background: 'white',
         padding: 8,
         borderRadius: 6,
+        minWidth: 200
+    } : {
+        background: 'white',
+        padding: 8,
+        borderRadius: 6,
+        border: '1px solid #e0e0e0',
         minWidth: 200
     };
     
