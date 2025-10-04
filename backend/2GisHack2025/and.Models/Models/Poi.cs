@@ -4,6 +4,14 @@ namespace AntAlgorithm;
 
 public class Poi
 {
+    public Poi() {}
+
+    public Poi(int id, double x, double y, double Weight)
+    {
+        Id = id;
+        Point = new Point() { X = x, Y = y };
+        this.Weight = Weight;
+    }
     [JsonPropertyName("id")]
     public int Id { get; set; }
     [JsonPropertyName("point")]

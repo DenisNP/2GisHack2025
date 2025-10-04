@@ -154,7 +154,7 @@ public class HexagonalMultiPolygonGenerator
     
     private static List<Vector2> GetAllVertices(List<Polygon> polygons)
     {
-        return polygons.SelectMany(p => p.Vertices).Select(v => v.Point).ToList();
+        return polygons.SelectMany(p => p.Vertices).ToList();
     }
     
     private static List<Vector2> FilterPointsBySourcePolygons(List<Vector2> points, List<Polygon> sourcePolygons)

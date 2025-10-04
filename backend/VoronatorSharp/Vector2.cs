@@ -10,7 +10,17 @@ namespace VoronatorSharp
         public int Id { get; set; }
         
         public double Weight { get; set; }
+
+        [DebuggerStepThrough]
+        public Vector2(int id, float x, float y, double weight)
+        {
+            Id = id;
+            this.x = x;
+            this.y = y;
+            Weight = weight;
+        }
         
+
         [DebuggerStepThrough]
         public Vector2(float x, float y)
         {

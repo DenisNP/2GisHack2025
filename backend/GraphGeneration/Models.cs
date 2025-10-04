@@ -4,8 +4,6 @@ using VoronatorSharp;
 
 namespace GraphGeneration;
 
-public record Edge(Poi From, Poi To);
-
 
 // 
 public record Point(double X, double Y);
@@ -24,26 +22,6 @@ public class Zone
     public ZoneType Type { get; set; }
 }
 
-public class Poi
-{
-    public Poi() {}
-    public Poi(Vector2 point)
-    {
-        Id = point.Id;
-        Point = point;
-        Weight = point.Weight;
-    }
-    public int Id { get; set; }
-    public Vector2 Point { get; set; } = new(0, 0);
-    public double Weight { get; set; }
-}
-
-public class Path
-{
-    public Poi Start { get; set; } = new();
-    public Poi End { get; set; } = new();
-    public List<Point> Points { get; set; } = new();
-}
 
 public class GraphEnrichmentConfig
 {
