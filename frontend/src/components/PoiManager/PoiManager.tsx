@@ -3,7 +3,14 @@ import { useMapglContext } from '../../MapglContext';
 import { useUnit } from 'effector-react';
 import { stores, events } from './models';
 import { Poi, PoiType } from '../../types/Poi';
-import { setMap } from '../../stores/mapStore';
+import { convertToSnakeCase } from '../../utils/convertToSnakeCase';
+import { 
+    Groups as GroupsIcon, 
+    Person as PersonIcon, 
+    PersonOutline as PersonOutlineIcon,
+    TouchApp as TouchAppIcon,
+    DeleteSweep as DeleteSweepIcon
+} from '@mui/icons-material';
 import './PoiManager.css';
 
 // Вспомогательная функция для получения anchor (точка привязки к карте)
@@ -46,7 +53,9 @@ export function PoiManager({ showPanel = false }: PoiManagerProps) {
             }
         });
         markersRef.current = [];
-        
+ 
+        console.log(JSON.stringify(convertToSnakeCase(store)));
+         
         // Создаем новые маркеры для каждого POI
         store.poi.forEach((poi: Poi) => {
             try {
@@ -152,34 +161,45 @@ export function PoiManager({ showPanel = false }: PoiManagerProps) {
     
     return (
         <div className="poi-manager-panel">
-            <div className="poi-manager-title">Управление POI</div>
-            
-            <div style={{ marginBottom: 8, fontWeight: 600, fontSize: 12 }}>Добавить:</div>
+            <div className="poi-manager-title">Добавить</div>
+
             <button
                 onClick={() => toggleAddingMode(PoiType.High)}
                 className={`poi-button poi-button-high ${addingMode === PoiType.High ? 'active' : ''}`}
             >
-                Высокий приоритет
+                <GroupsIcon style={{ marginRight: 8, fontSize: 20 }} />
+                Популярные точки интереса
             </button>
             <button
                 onClick={() => toggleAddingMode(PoiType.Medium)}
                 className={`poi-button poi-button-medium ${addingMode === PoiType.Medium ? 'active' : ''}`}
             >
-                Средний приоритет
+                <PersonIcon style={{ marginRight: 8, fontSize: 20 }} />
+                Обычные точки интереса
             </button>
             <button
                 onClick={() => toggleAddingMode(PoiType.Low)}
                 className={`poi-button poi-button-low ${addingMode === PoiType.Low ? 'active' : ''}`}
             >
-                Низкий приоритет
+                <PersonOutlineIcon style={{ marginRight: 8, fontSize: 20 }} />
+                Второстепенные точки интереса
             </button>
-            
-            <div style={{ marginTop: 12, marginBottom: 8, fontWeight: 600, fontSize: 12 }}>Удалить:</div>
+
+            <div className="poi-manager-title" style={{ marginTop: 20 }}>Удалить</div>
             <button
                 onClick={toggleDeletionMode}
                 className={`poi-button poi-button-delete ${isDeletionMode ? 'active' : ''}`}
             >
-                {isDeletionMode ? '✓ Режим удаления' : 'Режим удаления'}
+                <TouchAppIcon style={{ marginRight: 8, fontSize: 20 }} />
+                {isDeletionMode ? '✓ Удаление по одной' : 'Удаление по одной'}
+            </button>
+            <button
+                onClick={() => events.removeAllPoi()}
+                className="poi-button poi-button-delete-all"
+                disabled={store.poi.length === 0}
+            >
+                <DeleteSweepIcon style={{ marginRight: 8, fontSize: 20 }} />
+                Удалить все POI
             </button>
             
             {addingMode && (

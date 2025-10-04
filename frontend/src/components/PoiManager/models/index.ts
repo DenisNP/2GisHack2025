@@ -13,6 +13,7 @@ import { stores as mapStores } from '../../../stores/mapStore';
 /*events*/
 const addPoi = createEvent<AddPoiEventData>();
 const removePoiById = createEvent<number>();
+const removeAllPoi = createEvent<void>();
 const movePoi = createEvent<MovePoiEventData>();
 
 /*effects*/
@@ -52,6 +53,7 @@ $store.on(removePoiById, (state, poiId) => {
    const newPoi = state.poi.filter((p) => p.id !== poiId);
    return { poi: newPoi };
 });
+$store.on(removeAllPoi, () => ({ poi: [] }));
 
 /*bindings*/
 sample({
@@ -90,6 +92,7 @@ sample({
 export const events = {
     addPoi,
     removePoiById,
+    removeAllPoi,
     movePoi,
 };
 

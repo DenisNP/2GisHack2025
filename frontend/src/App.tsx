@@ -60,7 +60,7 @@ function App() {
         },
         { 
             id: 'poi', 
-            label: 'Точки интереса', 
+            label: 'Точки интереса (POI)',
             icon: PlaceIcon,
             color: '#007acc' 
         }
@@ -110,7 +110,6 @@ function App() {
             case 'poi':
                 return (
                     <Stack spacing={2}>
-                        <Typography variant="h6">Точки интереса (POI)</Typography>
                         <PoiManager showPanel={true} />
                     </Stack>
                 );
