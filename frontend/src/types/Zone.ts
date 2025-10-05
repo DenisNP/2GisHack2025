@@ -13,4 +13,4 @@ export enum ZoneType {
     Available = "Available",
 }
 
-export const MAIN_ZONE_TYPE = ZoneType.Urban;
+export const MAIN_ZONE_TYPE = ZoneType.None;

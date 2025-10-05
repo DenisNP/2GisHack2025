@@ -4,6 +4,7 @@ import { ZoneDrawerProps, ZoneData, ZonePolygon } from "./ZoneDrawer.types";
 import { GeoPoint } from "../../types/GeoPoint";
 import { ZONE_TYPES_COLOR } from "./ZoneDrawer.constants";
 import { useZoneId} from "../../hooks/useZoneId";
+import { ZoneType } from "../../types/Zone";
 import { Button, Divider, Stack, Alert, Typography } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
@@ -65,7 +66,7 @@ function closeRing(coords: GeoPoint[]) {
 }
 
 
-export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChanged}) =>{
+export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, isActiveZone, onZonesChanged}) =>{
 
     const { mapglInstance, mapgl } = useMapglContext();
     const [isDrawing, setIsDrawing] = useState(false);
@@ -75,6 +76,7 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
     const getNewZoneId = useZoneId();
     const currentPointsRef = useRef<GeoPoint[]>([]);
     const currentZonesRef = useRef<ZoneData[]>([]);
+
 
     const colorRgb = parseHexColor(ZONE_TYPES_COLOR.get(type)!);
     const colorDerived = colorsFromRgb(colorRgb);
@@ -104,7 +106,7 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
                 onZonesChanged(newList);
             }
             
-            // Очищаем только текущие точки и временные элементы, но остаемся в режиме рисования
+            // Очищаем текущие точки и временные элементы
             if (tempLineRef.current) { try { tempLineRef.current.destroy(); } catch (e) {} tempLineRef.current = null; }
             if (firstPointMarkerRef.current) {
                 try {
@@ -117,9 +119,15 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
                 firstPointHtmlRef.current = null;
                 firstPointClickHandlerRef.current = null;
             }
-            // НЕ выключаем режим рисования - setIsDrawing(false);
-            setCurrentPoints([]); // Очищаем только точки для начала нового полигона
-        }, [onZonesChanged, getNewZoneId]);
+            
+            // Для типа None выключаем режим рисования после завершения полигона
+            if (type === ZoneType.None) {
+                setIsDrawing(false);
+            }
+            // Для других типов остаемся в режиме рисования для непрерывного рисования
+            
+            setCurrentPoints([]); // Очищаем точки для начала нового полигона
+        }, [onZonesChanged, getNewZoneId, type]);
 
     const createFirstPointMarker = useCallback((firstPoint: GeoPoint) => {
             if (!mapglInstance || !mapgl) return;
@@ -366,24 +374,35 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
     }
 
     const hasZones = zones.length > 0;
+    const isNoneType = type === ZoneType.None;
+    const maxZonesReached = isNoneType && hasZones; // для None максимум 1 зона
 
     useEffect(()=>{
-        if(isDeletionMode && !hasZones)
+        if(isDeletionMode && (!hasZones || isNoneType)) // для None отключаем удаление
         {
             setIsDeletionMode(false);
         }
-    },[isDeletionMode,hasZones])
+    },[isDeletionMode,hasZones,isNoneType])
+
+    useEffect(()=>{
+        if(!isActiveZone)
+        {
+            cancelDrawing()
+            setIsDeletionMode(false);
+        }
+    },[isActiveZone])
 
     const isDrawingStarted = isDrawing && currentPoints.length > 0;
-    const disableDelete = isDrawingStarted || !hasZones;
+    const disableDelete = isDrawingStarted || !hasZones || isNoneType; // для None всегда отключено
+    const disableAdd = isDrawing || maxZonesReached; // для None отключаем при наличии зоны
 
     return <Stack spacing={1}>
         <Button 
                 variant="contained" 
                 startIcon={<AddIcon />} 
                 onClick={startDrawing} 
-                disabled={isDrawing}>
-            Добавить
+                disabled={disableAdd}>
+            {isNoneType ? 'Добавить зону' : 'Добавить'}
         </Button>
         <Button 
                 variant="outlined" 
@@ -392,28 +411,49 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
                 disabled={!isDrawing}>
             Отменить
         </Button>
-        <Divider />
-        <Typography variant="groupHeader">
-            Удаление зон
-        </Typography>
-        <Button 
-                variant={ isDeletionMode ? "contained" : "outlined"} 
-                startIcon={<TouchAppOutlinedIcon />} 
-                onClick={toggleDeletionMode} 
-                disabled={disableDelete}
-                color={isDeletionMode ? "error" : "neutral"}>
-            Удаление по одной
-        </Button>
-        <Button 
-                variant={"outlined"} 
-                startIcon={<DeleteSweepOutlinedIcon />} 
-                onClick={clearAll}
-                disabled={disableDelete}
-                color="error">
-            Удалить все зоны
-        </Button>
+        {!isNoneType && (
+            <>
+                <Divider />
+                <Typography variant="groupHeader">
+                    Удаление зон
+                </Typography>
+                <Button 
+                        variant={ isDeletionMode ? "contained" : "outlined"} 
+                        startIcon={<TouchAppOutlinedIcon />} 
+                        onClick={toggleDeletionMode} 
+                        disabled={disableDelete}
+                        color={isDeletionMode ? "error" : "neutral"}>
+                    Удаление по одной
+                </Button>
+                <Button 
+                        variant={"outlined"} 
+                        startIcon={<DeleteSweepOutlinedIcon />} 
+                        onClick={clearAll}
+                        disabled={disableDelete}
+                        color="error">
+                    Удалить все зоны
+                </Button>
+            </>
+        )}
+        {isNoneType && hasZones && (
+            <>
+                <Divider />
+                <Button 
+                        variant={"outlined"} 
+                        startIcon={<DeleteSweepOutlinedIcon />} 
+                        onClick={clearAll}
+                        color="error">
+                    Удалить зону
+                </Button>
+            </>
+        )}
         
         {/* Подписи через MUI Alert */}
+        {maxZonesReached && (
+            <Alert severity="warning" icon={<WarningIcon />}>
+                Для данного типа можно создать только одну зону. Удалите существующую, чтобы создать новую.
+            </Alert>
+        )}
         {isDrawing && (
             <Alert severity="info" icon={<InfoIcon />}>
                 Кликните на карту для добавления точек. Кликните на первую точку для завершения.

@@ -4,6 +4,7 @@ import { ZoneType } from "../../types/Zone"
 export type ZoneDrawerProps = {
     type: ZoneType,
     zones: ZoneData[];
+    isActiveZone: boolean;
     onZonesChanged: (polygons: ZoneData[]) => void;
 }
 

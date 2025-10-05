@@ -24,7 +24,8 @@ import {
     CheckCircle as CheckCircleIcon,
     DirectionsWalk as DirectionsWalkIcon,
     Close as CloseIcon,
-    Place as PlaceIcon
+    Place as PlaceIcon,
+    CropFree as CropFreeIcon
 } from '@mui/icons-material';
 import { useZones } from './hooks/useZones';
 import { useUnit } from 'effector-react';
@@ -56,10 +57,13 @@ function App() {
         availableZones, 
         restrictedZones, 
         urbanZones,
+        baseZones,
         sidewalks, 
+        hasBaseZone,
         setAvailableZones, 
         setRestrictedZones, 
         setUrbanZones,
+        setBaseZones,
         setSidewalks} = useZones();
     
     const {saveZones, restoreZones} = useSaveRestoreZones()
@@ -72,19 +76,25 @@ function App() {
 
     const menuItems = [
         { 
-            id: 'restricted', 
+            id: ZoneType.None, 
+            label: 'Рабочая область', 
+            icon: CropFreeIcon,
+            color: '#8E8E93' 
+        },
+        { 
+            id: ZoneType.Restricted, 
             label: 'Запрещенные зоны', 
             icon: BlockIcon,
             color: '#cc3b3b' 
         },
         { 
-            id: 'available', 
+            id: ZoneType.Available, 
             label: 'Разрешенные зоны', 
             icon: CheckCircleIcon,
             color: '#00b450' 
         },
         { 
-            id: 'urban', 
+            id: ZoneType.Urban, 
             label: 'Общая зона', 
             icon: DirectionsWalkIcon,
             color: '#FFA500' 
@@ -129,6 +139,7 @@ function App() {
                                 <Tooltip key={item.id} title={item.label} placement="right">
                                     <IconButton
                                         onClick={() => handleMenuClick(item.id)}
+                                        disabled={item.id !== ZoneType.None && !hasBaseZone}
                                         sx={{
                                             width: 60,
                                             height: 60,
@@ -174,25 +185,36 @@ function App() {
                             </Stack>
                             <Divider sx={{ mb: 2 }} />
                             {/* Отображается панель только активного компонента */}
-                            <PanelWrapper panelId="restricted" openPanel={openPanel}>
+                            <PanelWrapper panelId={ZoneType.None} openPanel={openPanel}>
+                                <ZoneDrawer 
+                                    type={ZoneType.None} 
+                                    zones={baseZones} 
+                                    onZonesChanged={setBaseZones}
+                                    isActiveZone={ZoneType.None === openPanel}
+                                />
+                            </PanelWrapper>
+                            <PanelWrapper panelId={ZoneType.Restricted} openPanel={openPanel}>
                                 <ZoneDrawer 
                                     type={ZoneType.Restricted} 
                                     zones={restrictedZones} 
                                     onZonesChanged={setRestrictedZones}
+                                    isActiveZone={ZoneType.Restricted === openPanel}
                                 />
                             </PanelWrapper>
-                            <PanelWrapper panelId="available" openPanel={openPanel}>
+                            <PanelWrapper panelId={ZoneType.Available} openPanel={openPanel}>
                                 <ZoneDrawer 
                                     type={ZoneType.Available} 
                                     zones={availableZones} 
                                     onZonesChanged={setAvailableZones}
+                                    isActiveZone={ZoneType.Available === openPanel}
                                 />
                             </PanelWrapper>
-                            <PanelWrapper panelId="urban" openPanel={openPanel}>
+                            <PanelWrapper panelId={ZoneType.Urban} openPanel={openPanel}>
                                 <ZoneDrawer 
                                     type={ZoneType.Urban} 
                                     zones={urbanZones} 
                                     onZonesChanged={setUrbanZones}
+                                    isActiveZone={ZoneType.Urban === openPanel}
                                 />
                             </PanelWrapper>
                             <PanelWrapper panelId="sidewalks" openPanel={openPanel}>
