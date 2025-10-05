@@ -8,6 +8,8 @@ export const EMPTY_POI: Poi = {
     geoPoint: { lng: 0, lat: 0 },
 };
 
+export const DIST_TOLERANCE: number = 3;
+
 export const weightByType = (type: PoiType): number => {
     switch (type) {
         case PoiType.Low:

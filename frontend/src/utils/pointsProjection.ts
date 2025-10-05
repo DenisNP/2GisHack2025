@@ -1,6 +1,6 @@
 import { GeoPoint } from '../types/GeoPoint';
 import { Map as MapGl } from '@2gis/mapgl/types';
-import getDistance from './getDistance';
+import { geoDistance } from './getDistance';
 import { Point } from '../types/Point';
 
 /**
@@ -64,8 +64,8 @@ const getPixelsToMetersRatio = (map: MapGl): Point => {
     const geoBottomLeft = { lng: rawBottomLeft[0], lat: rawBottomLeft[1] };
 
     // Найдём горизонтальное расстояние и вертикальное
-    const horizontalDist = getDistance(geoTopLeft, geoTopRight);
-    const verticalDist = getDistance(geoTopLeft, geoBottomLeft);
+    const horizontalDist = geoDistance(geoTopLeft, geoTopRight);
+    const verticalDist = geoDistance(geoTopLeft, geoBottomLeft);
 
     // Вернём соотношения
     return { x: 100 / horizontalDist, y: 100 / verticalDist };

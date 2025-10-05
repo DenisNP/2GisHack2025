@@ -15,8 +15,10 @@ import {
     Tooltip,
     Paper,
     Divider,
-    Button
+    Button,
+    ThemeProvider
 } from '@mui/material';
+import { customTheme } from './theme/customTheme';
 import {
     Block as BlockIcon,
     CheckCircle as CheckCircleIcon,
@@ -106,9 +108,10 @@ function App() {
     };
 
     return (
-        <MapglContextProvider>
-            <CssBaseline />
-            <Box sx={{ display: 'flex', height: '100vh' }}>
+        <ThemeProvider theme={customTheme}>
+            <MapglContextProvider>
+                <CssBaseline />
+                <Box sx={{ display: 'flex', height: '100vh' }}>
                 {/* Контейнер для левой части (узкая панель + выезжающая панель) */}
                 <Box sx={{ display: 'flex', flexShrink: 0 }}>
                     {/* Узкая вертикальная панель слева */}
@@ -224,6 +227,7 @@ function App() {
                 </Box>
             </Box>
         </MapglContextProvider>
+        </ThemeProvider>
     );
 }
 

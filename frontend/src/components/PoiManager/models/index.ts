@@ -7,8 +7,9 @@ import {
 } from '../PoiManager.types';
 import { Poi } from '../../../types/Poi';
 import { projectPoint } from '../../../utils/pointsProjection';
-import { EMPTY_POI, weightByType } from '../PoiManager.constants';
+import { DIST_TOLERANCE, EMPTY_POI, weightByType } from '../PoiManager.constants';
 import { stores as mapStores } from '../../../stores/mapStore';
+import { distance } from '../../../utils/getDistance';
 
 /*events*/
 const addPoi = createEvent<AddPoiEventData>();
@@ -17,18 +18,42 @@ const removeAllPoi = createEvent<void>();
 const movePoi = createEvent<MovePoiEventData>();
 
 /*effects*/
-const addPoiFx = createEffect(({data, store, mapStore}: EffectProps<AddPoiEventData, PoiManagerStore>): Poi => {
+const addPoiFx = createEffect(({data, store, mapStore}: EffectProps<AddPoiEventData, PoiManagerStore>): Poi | null => {
     if (mapStore.map === undefined) {
         return EMPTY_POI;
     }
     const geomPoint = projectPoint(data.geoPoint, mapStore.origin, mapStore.map);
-    return {
-        id: findNewId(store.poi),
-        weight: weightByType(data.type),
-        point: geomPoint,
-        geoPoint: data.geoPoint,
-        type: data.type,
-    };
+
+    // Перебираем существующие точки и ищем, не добавлена ли уже рядом
+    const nearest = store.poi.find((p) => distance(p.point, geomPoint) <= DIST_TOLERANCE);
+
+    // Если ближайшей нет, просто добавляем новую
+    if (!nearest) {
+        return {
+            id: findNewId(store.poi),
+            weight: weightByType(data.type),
+            point: geomPoint,
+            geoPoint: data.geoPoint,
+            type: data.type,
+        };
+    // Иначе нужно оставить с более приоритетным типом
+    } else {
+        const nearestWeight = weightByType(nearest.type);
+        const newWeight = weightByType(data.type);
+
+        if (nearestWeight >= newWeight) {
+            return null; // не добавляем новую точку
+        } else {
+            // вернём старую с новым типом
+            return {
+                id: nearest.id,
+                weight: newWeight,
+                point: nearest.point,
+                geoPoint: nearest.geoPoint,
+                type: nearest.type,
+            }
+        }
+    }
 });
 
 const findNewId = (pois: Poi[]): number => {
@@ -48,7 +73,14 @@ const findNewId = (pois: Poi[]): number => {
 const $store = createStore<PoiManagerStore>({
     poi: []
 });
-$store.on(addPoiFx.doneData, (state, poi) => ({...state, poi: [...state.poi, poi]}));
+$store.on(addPoiFx.doneData, (state, poi) => {
+  if (poi === null) {
+      return state;
+  } else {
+      const excluded = state.poi.filter((p) => p.id !== poi.id);
+      return {...state, poi: [...excluded, poi]};
+  }
+});
 $store.on(removePoiById, (state, poiId) => {
    const newPoi = state.poi.filter((p) => p.id !== poiId);
    return { poi: newPoi };

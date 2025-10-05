@@ -4,6 +4,13 @@ import { ZoneDrawerProps, ZoneData, ZonePolygon } from "./ZoneDrawer.types";
 import { GeoPoint } from "../../types/GeoPoint";
 import { ZONE_TYPES_COLOR } from "./ZoneDrawer.constants";
 import { useZoneId} from "../../hooks/useZoneId";
+import { Button, Divider, Stack, Alert, Typography } from "@mui/material";
+import AddIcon from '@mui/icons-material/Add';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import DeleteSweepOutlinedIcon from '@mui/icons-material/DeleteSweepOutlined';
+import TouchAppOutlinedIcon from '@mui/icons-material/TouchAppOutlined';
+import InfoIcon from '@mui/icons-material/Info';
+import WarningIcon from '@mui/icons-material/Warning';
 
 // color helpers
 function clamp(v: number, lo = 0, hi = 255) { return Math.max(lo, Math.min(hi, Math.round(v))); }
@@ -97,7 +104,7 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
                 onZonesChanged(newList);
             }
             
-            // Очищаем всё
+            // Очищаем только текущие точки и временные элементы, но остаемся в режиме рисования
             if (tempLineRef.current) { try { tempLineRef.current.destroy(); } catch (e) {} tempLineRef.current = null; }
             if (firstPointMarkerRef.current) {
                 try {
@@ -110,8 +117,8 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
                 firstPointHtmlRef.current = null;
                 firstPointClickHandlerRef.current = null;
             }
-            setIsDrawing(false);
-            setCurrentPoints([]);
+            // НЕ выключаем режим рисования - setIsDrawing(false);
+            setCurrentPoints([]); // Очищаем только точки для начала нового полигона
         }, [onZonesChanged, getNewZoneId]);
 
     const createFirstPointMarker = useCallback((firstPoint: GeoPoint) => {
@@ -355,51 +362,67 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, onZonesChange
         polygonsRef.current = [];
         // clear logical list
         onZonesChanged([]);
+        setIsDrawing(false)
     }
 
-    const boxStyle: React.CSSProperties = {
-        background: 'white',
-        padding: 8,
-        borderRadius: 6,
-        border: '1px solid #e0e0e0',
-    };
+    const hasZones = zones.length > 0;
 
-    return (
-        <div style={boxStyle}>
-            <div style={{ marginBottom: 8, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span
-                    aria-hidden
-                    style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 12,
-                        background: colorDerived.normalStroke,
-                        display: 'inline-block',
-                        boxShadow: '0 0 0 2px rgba(0,0,0,0.04) inset',
-                    }}
-                />
-                <span>Панель: {type}</span>
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
-                <button onClick={startDrawing} disabled={isDrawing} title='Начать добавление'>Добавить</button>
-                <button onClick={cancelDrawing} disabled={!isDrawing} title='Отменить добавление'>Отмена</button>
-                <button 
-                    onClick={toggleDeletionMode} 
-                    disabled={isDrawing}
-                    style={{ 
-                        backgroundColor: isDeletionMode ? '#f44336' : '#fafafa',
-                        color: isDeletionMode ? 'white' : 'black'
-                    }}
-                    title='Режим удаления - кликните на полигон для удаления'
-                >
-                    {isDeletionMode ? 'Выйти из удаления' : 'Удаление'}
-                </button>
-                <button onClick={clearAll} title='Удалить все полигоны'>Очистить всё</button>
-                <div style={{ marginTop: 6, fontSize: 12 }}>
-                    {isDrawing ? `Точек: ${currentPoints.length}` : ''}
-                    {isDeletionMode ? 'Кликните на полигон для удаления' : ''}
-                </div>
-            </div>
-        </div>
-    );
+    useEffect(()=>{
+        if(isDeletionMode && !hasZones)
+        {
+            setIsDeletionMode(false);
+        }
+    },[isDeletionMode,hasZones])
+
+    const isDrawingStarted = isDrawing && currentPoints.length > 0;
+    const disableDelete = isDrawingStarted || !hasZones;
+
+    return <Stack spacing={1}>
+        <Button 
+                variant="contained" 
+                startIcon={<AddIcon />} 
+                onClick={startDrawing} 
+                disabled={isDrawing}>
+            Добавить
+        </Button>
+        <Button 
+                variant="outlined" 
+                startIcon={<CancelOutlinedIcon />} 
+                onClick={cancelDrawing} 
+                disabled={!isDrawing}>
+            Отменить
+        </Button>
+        <Divider />
+        <Typography variant="groupHeader">
+            Удаление зон
+        </Typography>
+        <Button 
+                variant={ isDeletionMode ? "contained" : "outlined"} 
+                startIcon={<TouchAppOutlinedIcon />} 
+                onClick={toggleDeletionMode} 
+                disabled={disableDelete}
+                color={isDeletionMode ? "error" : "neutral"}>
+            Удаление по одной
+        </Button>
+        <Button 
+                variant={"outlined"} 
+                startIcon={<DeleteSweepOutlinedIcon />} 
+                onClick={clearAll}
+                disabled={disableDelete}
+                color="error">
+            Удалить все зоны
+        </Button>
+        
+        {/* Подписи через MUI Alert */}
+        {isDrawing && (
+            <Alert severity="info" icon={<InfoIcon />}>
+                Кликните на карту для добавления точек. Кликните на первую точку для завершения.
+            </Alert>
+        )}
+        {isDeletionMode && (
+            <Alert severity="warning" icon={<WarningIcon />}>
+                Кликните на полигон для удаления
+            </Alert>
+        )}
+    </Stack>
 }
