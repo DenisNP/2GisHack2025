@@ -15,7 +15,7 @@ public static class GraphGen
     {
         var maxId = poi.Max(p => p.Id);
         var polygons = zones
-            .Select((zone, j) => new Polygon(
+            .Select((zone, j) => new ZonePolygon(
             zone.Region.Select((region, i) => new Vector2(maxId + i, (float)region.X, (float)region.Y, 0)), zone.ZoneType)
             )
             .ToList();

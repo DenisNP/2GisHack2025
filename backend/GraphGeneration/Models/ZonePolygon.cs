@@ -6,20 +6,20 @@ using VoronatorSharp;
 
 namespace GraphGeneration;
 
-public class Polygon
+public class ZonePolygon
 {
     [JsonPropertyName("region")]
     public List<Vector2> Vertices { get; set; } = new List<Vector2>();
     
-    public Polygon() { }
+    public ZonePolygon() { }
     
-    [JsonPropertyName("zone_type")]
-    public ZoneType Zone { get; set; }
+    [JsonPropertyName("type")]
+    public ZoneType Type { get; set; }
     
-    public Polygon(IEnumerable<Vector2> vertices, ZoneType zone = ZoneType.Available)
+    public ZonePolygon(IEnumerable<Vector2> vertices, ZoneType type = ZoneType.Available)
     {
         Vertices = vertices.Select((i,v) => new Vector2() { Id = v, x = i.X, y = i.y, Weight = 0 }).ToList();
-        Zone = zone;
+        Type = type;
     }
     
     // Проверка, находится ли точка внутри полигона (алгоритм winding number)

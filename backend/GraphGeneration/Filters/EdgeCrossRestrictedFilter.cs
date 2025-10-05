@@ -3,13 +3,13 @@ using VoronatorSharp;
 
 namespace GraphGeneration.Filters;
 
-public class EdgeFilter
+public class EdgeCrossRestrictedFilter : IEdgeFilter
 {
     private readonly IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> _ignore;
     private readonly float _expectedDistance;
     private readonly PointAllowedFilter _pointAllowedFilter;
 
-    public EdgeFilter(IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> allowed, IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> ignore, float hexSize)
+    public EdgeCrossRestrictedFilter(IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> allowed, IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> ignore, float hexSize)
     {
         _ignore = ignore;
         _expectedDistance = HexagonalGridGenerator.CalculateExpectedHexDistance(hexSize);

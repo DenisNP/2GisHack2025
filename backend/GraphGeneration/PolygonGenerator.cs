@@ -11,9 +11,9 @@ public class PolygonGenerator
         _random = seed == 0 ? new Random() : new Random(seed);
     }
     
-    public (List<Polygon> polygons, List<Vector2> pois) GeneratePolygonsWithPois(int polygonCount, int poisPerPolygon)
+    public (List<ZonePolygon> polygons, List<Vector2> pois) GeneratePolygonsWithPois(int polygonCount, int poisPerPolygon)
     {
-        var polygons = new List<Polygon>();
+        var polygons = new List<ZonePolygon>();
         var allPois = new List<Vector2>();
         
         // Генерируем полигоны
@@ -30,7 +30,7 @@ public class PolygonGenerator
         return (polygons, allPois);
     }
     
-    private Polygon GenerateRandomPolygon()
+    private ZonePolygon GenerateRandomPolygon()
     {
         // Создаем базовый прямоугольник
         float width = _random.Next(20, 50);
@@ -61,13 +61,13 @@ public class PolygonGenerator
             vertices.Add(new Vector2(startX + offset, startY)); // Замыкаем полигон
         }
         
-        return new Polygon(vertices);
+        return new ZonePolygon(vertices);
     }
     
-    private List<Vector2> GeneratePoisInsidePolygon(Polygon polygon, int count, int startId)
+    private List<Vector2> GeneratePoisInsidePolygon(ZonePolygon zonePolygon, int count, int startId)
     {
         var pois = new List<Vector2>();
-        var bounds = GetPolygonBounds(polygon);
+        var bounds = GetPolygonBounds(zonePolygon);
         
         for (var i = 0; i < count; i++)
         {
@@ -86,11 +86,11 @@ public class PolygonGenerator
                 // Если долго не получается, используем центр тяжести
                 if (attempts > 100)
                 {
-                    point = GetPolygonCentroid(polygon);
+                    point = GetPolygonCentroid(zonePolygon);
                     break;
                 }
             }
-            while (!IsPointInPolygon(point, polygon));
+            while (!IsPointInPolygon(point, zonePolygon));
             
             // Генерируем случайный вес от 0.1 до 2.0
             var weight = (float)(0.1 + _random.NextDouble() * 1.9);
@@ -101,12 +101,12 @@ public class PolygonGenerator
         return pois;
     }
     
-    private (float MinX, float MinY, float MaxX, float MaxY) GetPolygonBounds(Polygon polygon)
+    private (float MinX, float MinY, float MaxX, float MaxY) GetPolygonBounds(ZonePolygon zonePolygon)
     {
         float minX = float.MaxValue, minY = float.MaxValue;
         float maxX = float.MinValue, maxY = float.MinValue;
         
-        foreach (var vertex in polygon.Vertices)
+        foreach (var vertex in zonePolygon.Vertices)
         {
             minX = Math.Min(minX, vertex.X);
             minY = Math.Min(minY, vertex.Y);
@@ -117,12 +117,12 @@ public class PolygonGenerator
         return (minX, minY, maxX, maxY);
     }
     
-    private Vector2 GetPolygonCentroid(Polygon polygon)
+    private Vector2 GetPolygonCentroid(ZonePolygon zonePolygon)
     {
         float area = 0;
         float centroidX = 0;
         float centroidY = 0;
-        var vertices = polygon.Vertices.ToArray();
+        var vertices = zonePolygon.Vertices.ToArray();
         
         for (var i = 0; i < vertices.Length - 1; i++)
         {
@@ -140,10 +140,10 @@ public class PolygonGenerator
     }
     
     // Алгоритм проверки нахождения точки в полигоне
-    private bool IsPointInPolygon(Vector2 point, Polygon polygon)
+    private bool IsPointInPolygon(Vector2 point, ZonePolygon zonePolygon)
     {
         var inside = false;
-        var vertices = polygon.Vertices.ToArray();
+        var vertices = zonePolygon.Vertices.ToArray();
         
         for (int i = 0, j = vertices.Length - 1; i < vertices.Length; j = i++)
         {

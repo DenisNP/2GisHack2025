@@ -1,5 +1,5 @@
-﻿
-using AntAlgorithm;
+﻿using GraphGeneration.Filters;
+using GraphGeneration.Models;
 using VoronatorSharp;
 
 namespace GraphGeneration;
@@ -18,15 +18,16 @@ public class HexagonalMultiPolygonGenerator
     
     public static List<Vector2> GenerateHexagonalPoints(
         int maxId,
-        List<Polygon> sourcePolygons,
+        PolygonMap polygonMap,
         HexagonalSettings settings)
     {
         var points = new List<Vector2>();
+        var pointFilter = new PointRestrictedAndNotUrbanFilter(polygonMap);
         
         // 1. Находим общий ограничивающий полигон
         var boundingPolygon = settings.UseConvexHull
-            ? CalculateConvexHull(GetAllVertices(sourcePolygons))
-            : CalculateBoundingPolygon(sourcePolygons);
+            ? CalculateConvexHull(GetAllVertices(polygonMap.Generation))
+            : CalculateBoundingPolygon(polygonMap.Generation);
         
         // 2. Генерируем гексагональную сетку в bounding полигоне
         if (settings.Density > 1)
@@ -41,12 +42,12 @@ public class HexagonalMultiPolygonGenerator
         }
         
         // 3. Фильтруем точки, оставляя только внутри исходных полигонов
-        points = FilterPointsBySourcePolygons(points, sourcePolygons);
+        points = FilterPointsBySourcePolygons(pointFilter, points, polygonMap.Generation);
         
         // 4. Добавляем вершины полигонов, если нужно
         if (settings.AddPolygonVertices)
         {
-            points.AddRange(GetAllVertices(sourcePolygons));
+            points.AddRange(GetAllVertices(polygonMap.Generation));
         }
         
         // // 5. Добавляем точки на рёбрах, если нужно
@@ -97,10 +98,10 @@ public class HexagonalMultiPolygonGenerator
     // }
     
     // Вспомогательные методы (те же, что и раньше)
-    private static Polygon CalculateConvexHull(List<Vector2> points)
+    private static ZonePolygon CalculateConvexHull(List<Vector2> points)
     {
         if (points.Count < 3)
-            return new Polygon(points);
+            return new ZonePolygon(points);
             
         var pivot = points.OrderBy(p => p.Y).ThenBy(p => p.X).First();
         
@@ -126,13 +127,13 @@ public class HexagonalMultiPolygonGenerator
             hull.Push(sortedPoints[i]);
         }
         
-        return new Polygon(hull.Reverse());
+        return new ZonePolygon(hull.Reverse());
     }
     
-    private static Polygon CalculateBoundingPolygon(List<Polygon> polygons)
+    private static ZonePolygon CalculateBoundingPolygon(IReadOnlyCollection<ZonePolygon> polygons)
     {
         if (polygons.Count == 0)
-            return new Polygon();
+            return new ZonePolygon();
             
         var allVertices = GetAllVertices(polygons);
         
@@ -143,7 +144,7 @@ public class HexagonalMultiPolygonGenerator
         
         var padding = Math.Min(maxX - minX, maxY - minY) * 0.1f;
         
-        return new Polygon([
+        return new ZonePolygon([
             new Vector2(minX - padding, minY - padding),
             new Vector2(maxX + padding, minY - padding),
             new Vector2(maxX + padding, maxY + padding),
@@ -151,16 +152,17 @@ public class HexagonalMultiPolygonGenerator
         ]);
     }
     
-    private static List<Vector2> GetAllVertices(List<Polygon> polygons)
+    private static List<Vector2> GetAllVertices(IReadOnlyCollection<ZonePolygon> polygons)
     {
         return polygons.SelectMany(p => p.Vertices).ToList();
     }
     
-    private static List<Vector2> FilterPointsBySourcePolygons(List<Vector2> points, List<Polygon> sourcePolygons)
+    private static List<Vector2> FilterPointsBySourcePolygons(IPointFilter pointFilter, List<Vector2> points, IReadOnlyCollection<ZonePolygon> sourcePolygons)
     {
-        return points.Where(point => sourcePolygons
-            .Any(polygon => polygon.Zone != ZoneType.Restricted && polygon.ContainsPoint(point)))
-            .ToList();
+        return points
+            .Where(point =>  //(!pointFilter.Skip(point) || point.IsPoi) && 
+                            sourcePolygons.Any(polygon => polygon.ContainsPoint(point))
+            ).ToList();
     }
     
     private static float Cross(Vector2 o, Vector2 a, Vector2 b)

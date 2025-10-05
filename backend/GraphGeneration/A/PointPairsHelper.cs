@@ -8,10 +8,13 @@ public static class PointPairsHelper
 {
     public static IEnumerable<(Vector2, Vector2)> GetUniquePairs(IReadOnlyCollection<Vector2> vectors)
     {
-        return vectors
-            .SelectMany((v1, i) => vectors
-                .Skip(i + 1)
-                .Select(v2 => (v1, v2)));
+        for (int i = 0; i < vectors.Count; i++)
+        {
+            for (int j = i + 1; j < vectors.Count; j++)
+            {
+                yield return (vectors.ElementAt(i), vectors.ElementAt(j));
+            }
+        }
     }
     
     // Альтернативный вариант с Where

@@ -3,25 +3,24 @@ using System.Text.Json;
 using AntAlgorithm;
 using GraphGeneration;
 using VoronatorSharp;
-using Polygon = GraphGeneration.Polygon;
 
-var polygons = new List<Polygon>
+var polygons = new List<ZonePolygon>
 {
-    new Polygon([
+    new ZonePolygon([
         new Vector2(0, 0),
         new Vector2(30, 0),
         new Vector2(30, 30),
         new Vector2(0, 30),
         new Vector2(0, 0)
     ]),
-    new Polygon([
+    new ZonePolygon([
         new Vector2(30, 10),  // Вплотную к первому полигону
         new Vector2(50, 10),
         new Vector2(40, 30),
         new Vector2(30, 30),
         new Vector2(30, 10)
     ]),
-    new Polygon([
+    new ZonePolygon([
         new Vector2(10, 30),  // Вплотную к первому полигону
         new Vector2(40, 30),
         new Vector2(40, 50),
@@ -40,7 +39,7 @@ var ff = JsonSerializer.Serialize(new InputData()
     Zones = rr.polygons.Select(ee => new Zone()
     {
         Region = ee.Vertices.Select(dd => new AntAlgorithm.Point() { X = dd.X, Y = dd.Y}).ToArray(),
-        ZoneType = ee.Zone,
+        ZoneType = ee.Type,
     }).ToArray(),
 });
 

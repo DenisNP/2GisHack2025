@@ -3,7 +3,7 @@ using VoronatorSharp;
 
 namespace GraphGeneration.Filters;
 
-public class PointAllowedFilter
+public class PointAllowedFilter:  IPointFilter
 {
     private readonly IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> _allowed;
 

@@ -6,8 +6,7 @@ namespace GraphGeneration.A;
 public static class VoronatorNeighborsRecover
 {
     public static (VoronatorFinderEdge[], Vector2[]) Get(     
-        IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> ignore,
-        IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> allowed,
+        PolygonMap polygonMap,
         Voronator voronoi,
         float hexSize,
         IReadOnlyCollection<Vector2> shortPath)
@@ -15,7 +14,7 @@ public static class VoronatorNeighborsRecover
         var edgeFinder = new VoronatorNeighborsFinder(voronoi);
 
         // Получение результатов для частичных точек
-        var results = edgeFinder.FindNeighborsWithEdges(ignore, allowed, hexSize, shortPath);
+        var results = edgeFinder.FindNeighborsWithEdges(polygonMap, hexSize, shortPath);
             
         var edges = results
             .Values

@@ -62,23 +62,23 @@ Path GetBestPath(Edge[] edges, IAntColonyAlgorithm algorithm)
 
 Path GetBestPath2(IAntColonyAlgorithm algorithm)
 {
-    var polygons = new List<Polygon>
+    var polygons = new List<ZonePolygon>
     {
-        new Polygon([
+        new ZonePolygon([
             new Vector2(0, 0),
             new Vector2(30, 0),
             new Vector2(30, 30),
             new Vector2(0, 30),
             new Vector2(0, 0)
         ]),
-        new Polygon([
+        new ZonePolygon([
             new Vector2(30, 10),  // Вплотную к первому полигону
             new Vector2(50, 10),
             new Vector2(40, 30),
             new Vector2(30, 30),
             new Vector2(30, 10)
         ]),
-        new Polygon([
+        new ZonePolygon([
             new Vector2(10, 30),  // Вплотную к первому полигону
             new Vector2(40, 30),
             new Vector2(40, 50),
