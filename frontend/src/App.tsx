@@ -14,7 +14,6 @@ import {
     Tooltip,
     Paper,
     Divider,
-    Button,
     ThemeProvider
 } from '@mui/material';
 import { customTheme } from './theme/customTheme';
@@ -24,12 +23,11 @@ import {
     DirectionsWalk as DirectionsWalkIcon,
     Close as CloseIcon,
     Place as PlaceIcon,
-    CropFree as CropFreeIcon
+    CropFree as CropFreeIcon,
+    Settings as SettingsIcon
 } from '@mui/icons-material';
 import { useZones } from './hooks/useZones';
-import { useUnit } from 'effector-react';
-import { events } from './stores/globalState';
-import { useSaveRestoreState } from './hooks/useSaveRestoreState';
+import { Tools } from './components/Tools/Tools';
 
 // Компонент-обертка для управления видимостью панели
 const PanelWrapper: React.FC<{ 
@@ -51,7 +49,6 @@ const PanelWrapper: React.FC<{
 });
 
 function App() {
-    const getJson = useUnit(events.getJson)
     const {
         availableZones, 
         restrictedZones, 
@@ -63,8 +60,6 @@ function App() {
         setUrbanZones,
         setBaseZones,
     } = useZones();
-
-    const {saveCurrentState, restoreState} = useSaveRestoreState()
 
     // Состояние для открытой панели
     const [openPanel, setOpenPanel] = useState<string | null>(null);
@@ -102,6 +97,12 @@ function App() {
             label: 'Точки интереса (POI)',
             icon: PlaceIcon,
             color: '#007acc' 
+        },
+        { 
+            id: 'tools', 
+            label: 'Инструменты',
+            icon: SettingsIcon,
+            color: '#9C27B0' 
         }
     ];
 
@@ -113,17 +114,16 @@ function App() {
         <ThemeProvider theme={customTheme}>
             <MapglContextProvider>
                 <CssBaseline />
-                <Box sx={{ display: 'flex', height: '100vh' }}>
-                {/* Контейнер для левой части (узкая панель + выезжающая панель) */}
-                <Box sx={{ display: 'flex', flexShrink: 0 }}>
+                <Box sx={{ display: 'flex', height: '100vh', position: 'relative' }}>
                     {/* Узкая вертикальная панель слева */}
                     <Paper 
                         elevation={3}
                         sx={{
                             width: sidebarWidth,
                             flexShrink: 0,
-                            zIndex: 1200,
+                            zIndex: 1300,
                             borderRadius: 0,
+                            position: 'relative',
                         }}
                     >
                         <Stack spacing={1} sx={{ p: 1, pt: 2 }}>
@@ -131,7 +131,7 @@ function App() {
                                 <Tooltip key={item.id} title={item.label} placement="right">
                                     <IconButton
                                         onClick={() => handleMenuClick(item.id)}
-                                        disabled={item.id !== ZoneType.None && !hasBaseZone}
+                                        disabled={item.id !== ZoneType.None && item.id !== "tools" && !hasBaseZone}
                                         sx={{
                                             width: 80,
                                             height: 60,
@@ -167,14 +167,31 @@ function App() {
                         </Stack>
                     </Paper>
 
-                    {/* Выезжающая панель рядом с узкой панелью */}
+                    {/* Основная область с картой */}
+                    <Box 
+                        component="main" 
+                        sx={{ 
+                            flexGrow: 1, 
+                            height: '100vh',
+                            position: 'relative',
+                        }}
+                    >
+                        <Mapgl />
+                    </Box>
+
+                    {/* Выезжающая панель поверх карты */}
                     <Box
                         sx={{
+                            position: 'absolute',
+                            left: sidebarWidth,
+                            top: 0,
+                            height: '100%',
                             width: openPanel ? drawerWidth : 0,
                             transition: 'width 0.3s ease',
                             overflow: 'hidden',
                             backgroundColor: 'background.paper',
-                            borderRight: openPanel ? '1px solid rgba(0, 0, 0, 0.12)' : 'none',
+                            boxShadow: openPanel ? '2px 0 8px rgba(0, 0, 0, 0.15)' : 'none',
+                            zIndex: 1200,
                         }}
                     >
                         <Box sx={{ width: drawerWidth, height: '100%', p: 2, overflow: 'auto', display: openPanel ? 'block' : 'none' }}>
@@ -223,26 +240,15 @@ function App() {
                             <PanelWrapper panelId="poi" openPanel={openPanel}>
                                 <PoiManager />
                             </PanelWrapper>
+                            <PanelWrapper panelId="tools" openPanel={openPanel}>
+                                <Stack spacing={2}>
+                                   <Tools />
+                                </Stack>
+                            </PanelWrapper>
                         </Box>
                     </Box>
                 </Box>
-
-                {/* Основная область с картой */}
-                <Box 
-                    component="main" 
-                    sx={{ 
-                        flexGrow: 1, 
-                        height: '100vh',
-                        position: 'relative',
-                    }}
-                >
-                    <Button onClick={getJson}>GET JSON</Button>
-                    <Button onClick={saveCurrentState}>SAVE CURRENT STATE</Button>
-                    <Button onClick={restoreState}>RESTORE STATE</Button>
-                    <Mapgl />
-                </Box>
-            </Box>
-        </MapglContextProvider>
+            </MapglContextProvider>
         </ThemeProvider>
     );
 }

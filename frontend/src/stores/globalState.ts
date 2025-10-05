@@ -1,6 +1,6 @@
 import {stores as zonesStore, events as zonesEvents} from "./zonesStore"
 import {stores as poiStores, events as poiEvents} from "../components/PoiManager/models"
-import { combine, createEffect, createEvent, sample } from "effector"
+import { combine, createEffect, createEvent, createStore, sample } from "effector"
 import { Zone } from "../types/Zone"
 import { Poi } from "../types/Poi"
 import { convertToSnakeCase } from "../utils/convertToSnakeCase"
@@ -30,6 +30,58 @@ const SAVED_STATE_KEY = "saved_state";
 const getJson = createEvent();
 const saveCurrentState = createEvent();
 const restoreState = createEvent();
+const checkSavedState = createEvent(); // Новое событие для проверки
+
+/**
+ * Проверяет наличие и валидность сохраненного состояния в localStorage
+ */
+function validateSavedState(): boolean {
+    try {
+        const savedData = localStorage.getItem(SAVED_STATE_KEY);
+        if (!savedData) {
+            return false;
+        }
+        
+        const state: GlobalGeoStateProps = JSON.parse(savedData);
+        
+        // Проверяем структуру объекта
+        if (!state || typeof state !== 'object') {
+            return false;
+        }
+        
+        // Проверяем наличие обязательных полей
+        if (!state.zones || !Array.isArray(state.poi)) {
+            return false;
+        }
+        
+        // Проверяем структуру zones
+        const { zones } = state;
+        if (!zones.availabelZones || !zones.restrictedZones || 
+            !zones.urbanZones || !zones.baseZones) {
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error validating saved state:', error);
+        return false;
+    }
+}
+
+/**
+ * Store для отслеживания наличия валидного сохраненного состояния
+ */
+const $hasSavedState = createStore(validateSavedState());
+
+/**
+ * Effect для проверки сохраненного состояния
+ */
+const checkSavedStateFx = createEffect(() => {
+    return validateSavedState();
+});
+
+// Обновляем store при изменении localStorage
+$hasSavedState.on(checkSavedStateFx.doneData, (_, isValid) => isValid);
 
 
 const getJsonFx = createEffect((state: GlobalStateProps)=>{
@@ -115,12 +167,32 @@ sample({
     target: restoreStateFx
 })
 
+// Обновляем флаг после сохранения состояния
+sample({
+    clock: saveCurrentStateFx.done,
+    target: checkSavedStateFx
+})
+
+// Обновляем флаг после восстановления состояния
+sample({
+    clock: restoreStateFx.done,
+    target: checkSavedStateFx
+})
+
+// Проверяем состояние по запросу
+sample({
+    clock: checkSavedState,
+    target: checkSavedStateFx
+})
+
 export const stores = {
-    $globalState
+    $globalState,
+    $hasSavedState
 }
 
 export const events = {
     getJson,
     saveCurrentState,
-    restoreState
+    restoreState,
+    checkSavedState
 }
