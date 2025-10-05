@@ -29,6 +29,25 @@ import { useUnit } from 'effector-react';
 import { events } from './stores/globalState';
 import { useSaveRestoreZones } from './hooks/useSaveRestoreZones';
 
+// Компонент-обертка для управления видимостью панели
+const PanelWrapper: React.FC<{ 
+    panelId: string; 
+    children: React.ReactNode; 
+    openPanel: string | null;
+}> = React.memo(({ panelId, children, openPanel }) => {
+    const isVisible = openPanel === panelId;
+    
+    return (
+        <Box 
+            sx={{ 
+                display: isVisible ? 'block' : 'none'
+            }}
+        >
+            {children}
+        </Box>
+    );
+});
+
 function App() {
     const getJson = useUnit(events.getJson)
     const {
@@ -84,24 +103,6 @@ function App() {
 
     const handleMenuClick = (itemId: string) => {
         setOpenPanel(openPanel === itemId ? null : itemId);
-    };
-
-    // Компонент-обертка для управления видимостью панели
-    const PanelWrapper: React.FC<{ 
-        panelId: string; 
-        children: React.ReactNode; 
-    }> = ({ panelId, children }) => {
-        const isVisible = openPanel === panelId;
-        
-        return (
-            <Box 
-                sx={{ 
-                    display: isVisible ? 'block' : 'none'
-                }}
-            >
-                {children}
-            </Box>
-        );
     };
 
     return (
@@ -170,28 +171,28 @@ function App() {
                             </Stack>
                             <Divider sx={{ mb: 2 }} />
                             {/* Отображается панель только активного компонента */}
-                            <PanelWrapper panelId="restricted">
+                            <PanelWrapper panelId="restricted" openPanel={openPanel}>
                                 <ZoneDrawer 
                                     type={ZoneType.Restricted} 
                                     zones={restrictedZones} 
                                     onZonesChanged={setRestrictedZones}
                                 />
                             </PanelWrapper>
-                            <PanelWrapper panelId="available">
+                            <PanelWrapper panelId="available" openPanel={openPanel}>
                                 <ZoneDrawer 
                                     type={ZoneType.Available} 
                                     zones={availableZones} 
                                     onZonesChanged={setAvailableZones}
                                 />
                             </PanelWrapper>
-                            <PanelWrapper panelId="urban">
+                            <PanelWrapper panelId="urban" openPanel={openPanel}>
                                 <ZoneDrawer 
                                     type={ZoneType.Urban} 
                                     zones={urbanZones} 
                                     onZonesChanged={setUrbanZones}
                                 />
                             </PanelWrapper>
-                            <PanelWrapper panelId="sidewalks">
+                            <PanelWrapper panelId="sidewalks" openPanel={openPanel}>
                                 <UrbanDrawer 
                                     width={3} 
                                     color='#FFD700' 
@@ -200,7 +201,7 @@ function App() {
                                     onSidewalksChanged={setSidewalks}
                                 />
                             </PanelWrapper>
-                            <PanelWrapper panelId="poi">
+                            <PanelWrapper panelId="poi" openPanel={openPanel}>
                                 <PoiManager />
                             </PanelWrapper>
                         </Box>
