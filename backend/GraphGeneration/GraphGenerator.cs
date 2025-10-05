@@ -101,6 +101,8 @@ public static class GraphGenerator
         var shortPathPoint = new List<Vector2>(originPoints.Length);
         var shortEdges = new HashSet<IEdge<Vector2>>(originEdges.Length);
         var maxLenPath = 0;
+        var longPairs = new HashSet<(Vector2, Vector2)>();
+
         validPoi = originPoints.Where(p => p.IsPoi).ToList();
         foreach (var pair in PointPairsHelper.GetUniquePairs(validPoi))
         {
@@ -113,7 +115,17 @@ public static class GraphGenerator
             {
                 shortEdges.Add(edge);
             }
+
+            if (shortPath.Any(p => !p.IsPoi))
+            {
+                longPairs.Add((pair.Item1, pair.Item2));
+                longPairs.Add((pair.Item2, pair.Item1));
+            }
         }
+
+        var start = new Vector2();
+        var ends = new List<Vector2>();
+        IEnumerable<Vector2> end = ends.Where(p => longPairs.Contains((start, p)));
 
 #if DEBUG
         // рисуем короткие пути
