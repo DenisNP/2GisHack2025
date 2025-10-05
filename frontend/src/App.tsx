@@ -127,6 +127,40 @@ function App() {
                         }}
                     >
                         <Stack spacing={1} sx={{ p: 1, pt: 2 }}>
+                            {/* Логотип и название */}
+                            <Box sx={{ 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'center',
+                                mb: 2,
+                                gap: 1
+                            }}>
+                                <img 
+                                    src="/icon.png" 
+                                    alt="Pathscape Logo" 
+                                    style={{ 
+                                        width: '60px', 
+                                        height: '60px',
+                                        objectFit: 'contain'
+                                    }} 
+                                />
+                                <Typography 
+                                    variant="h6" 
+                                    sx={{ 
+                                        fontWeight: 600,
+                                        fontSize: '16px',
+                                        letterSpacing: '0.5px',
+                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent',
+                                        backgroundClip: 'text',
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    Pathscape
+                                </Typography>
+                            </Box>
+                            <Divider sx={{ mb: 1 }} />
                             {menuItems.map((item) => (
                                 <Tooltip key={item.id} title={item.label} placement="right">
                                     <IconButton

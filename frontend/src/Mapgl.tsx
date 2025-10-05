@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { load } from '@2gis/mapgl';
 import { useMapglContext } from './MapglContext';
 import { Map as MapGl } from '@2gis/mapgl/types';
-// Ruler plugin removed — drawing is handled by PolygonDrawer
 import { MapWrapper } from './MapWrapper';
 import { useUnit } from 'effector-react';
 import { events } from './stores/mapStore';
@@ -22,6 +21,7 @@ export default function Mapgl() {
                 zoom: 18,
                 key: process.env.REACT_APP_MAPGL_API_KEY || '',
                 style: process.env.REACT_APP_MAPGL_STYLE_ID,
+                disableRotationByUserInteraction: true,
             });
 
             setMapglContext({
