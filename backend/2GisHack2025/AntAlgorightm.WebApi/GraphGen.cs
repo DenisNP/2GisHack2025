@@ -29,6 +29,8 @@ public static class GraphGen
 
         var edges = GraphGenerator.GenerateEdges(polygons, points);
 
+        algorithm.Run(edges.Edges);
+
         return [];
     }
 }

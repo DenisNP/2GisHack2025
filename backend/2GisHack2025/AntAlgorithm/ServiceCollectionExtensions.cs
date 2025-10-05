@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddOptions<AntColonyConfiguration>();
         services.AddTransient<IAntColonyAlgorithm, AntColonyAlgorithm>();
+        services.AddTransient<AntColonyAlgorithm2>();
         
         return services;
     }
