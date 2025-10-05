@@ -9,12 +9,12 @@ public class AntColonyConfiguration
     /// <summary>
     /// Влияние феромона
     /// </summary>
-    public double Alpha { get; set; } = 1.0;
+    public double Alpha { get; set; } = 2.0;
     
     /// <summary>
     /// Влияние расстояния
     /// </summary>
-    public double Beta { get; set; } = 3.0;
+    public double Beta { get; set; } = 20.0;
 
     /// <summary>
     /// Влияние веса вершины

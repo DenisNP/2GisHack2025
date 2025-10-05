@@ -310,7 +310,7 @@ public class PheromoneGraphVisualizer
 
     public void SaveToFile(string filePath, int width = 5000, int height = 5000, int topN = 500)
     {
-        var myTopN = _edges.Length / 5;
+        var myTopN = _edges.Length;
         
         var svgContent = GenerateSvg(myTopN, width, height);
         File.WriteAllText(filePath, svgContent, Encoding.UTF8);

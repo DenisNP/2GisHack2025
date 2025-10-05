@@ -1,4 +1,5 @@
 ﻿using and.Models;
+using GraphGeneration;
 using Microsoft.Extensions.Options;
 
 namespace AntAlgorithm;
@@ -32,7 +33,6 @@ public class AntColonyAlgorithm2
     private readonly Dictionary<int, Poi> _pois;
     private readonly Dictionary<(int from, int to), double> _pheromones;
     private readonly Random _random;
-
     
     private readonly double _alpha;
     private readonly double _beta;
@@ -74,8 +74,8 @@ public class AntColonyAlgorithm2
             var key1 = (edge.From.Id, edge.To.Id);
             var key2 = (edge.To.Id, edge.From.Id);
             
-            _pheromones[key1] = 1.0;
-            _pheromones[key2] = 1.0;
+            _pheromones[key1] = 0;
+            _pheromones[key2] = 0;
         }
     }
 
@@ -93,7 +93,7 @@ public class AntColonyAlgorithm2
         // return weightInfluence / (distance + 0.1); // +0.1 чтобы избежать деления на 0
     }
 
-    private Dictionary<Poi, double> GetProbabilities(Poi current, List<Poi> visited, List<Edge> availableEdges)
+    private Dictionary<Poi, double> GetProbabilities(Poi current, List<Poi> visited, List<Edge> availableEdges, Poi endPoi)
     {
         var probabilities = new Dictionary<Poi, double>();
         var total = 0.0;
@@ -101,6 +101,13 @@ public class AntColonyAlgorithm2
         foreach (var edge in availableEdges)
         {
             var neighbor = edge.To.Id == current.Id ? edge.From : edge.To;
+
+            // if (neighbor.Weight > 0 
+            //     && availableEdges.Any(it => it.From.Weight == 0 && it.To.Weight == 0) 
+            //     && visited.All(p => p.Id != neighbor.Id))
+            // {
+            //     continue;
+            // }
             
             // Пропускаем уже посещенные точки
             if (visited.Any(p => p.Id == neighbor.Id))
@@ -108,21 +115,27 @@ public class AntColonyAlgorithm2
 
             var pheromoneKey = (current.Id, neighbor.Id);
             var pheromone = _pheromones.ContainsKey(pheromoneKey) ? _pheromones[pheromoneKey] : 0.1;
+
+            var calculatedDistance = CalculateDistance(neighbor, endPoi);
+
+            // if (calculatedDistance <= HexagonalGridGenerator.CalculateExpectedHexDistance(2) * 2)
+            // {
+            //     calculatedDistance = HexagonalGridGenerator.CalculateExpectedHexDistance(2);
+            // }
+
+            var distance = (1.0 / calculatedDistance);
             
-            var distance = CalculateDistance(edge.From, edge.To);
-            
-            var weight = GetWeightValue(neighbor);
+            //var weight = GetWeightValue(neighbor);
             
             var probability = Math.Pow(pheromone, _alpha) * 
-                            Math.Pow(distance, _beta) *
-                            Math.Pow(weight, _gamma);
+                            Math.Pow(distance, _beta);
             
             probabilities[neighbor] = probability;
             total += probability;
         }
 
-        // Нормализуем вероятности
         if (total > 0)
+        // Нормализуем вероятности
         {
             foreach (var poi in probabilities.Keys.ToList())
             {
@@ -135,25 +148,55 @@ public class AntColonyAlgorithm2
 
     private Poi SelectNextPoi(Poi current, Dictionary<Poi, double> probabilities)
     {
-        if (probabilities.Count == 0)
-            return null;
+        var asd = probabilities.ToArray();
+        return SelectWeightedRandom(asd, (x) => x.Value).Key;
+    }
+    
+    private T SelectWeightedRandom<T>(T[] values, Func<T, double> func)
+    {
+        var listMaxSize = 1000;
+    
+        var nonZeroValues = values.Where(it => func(it) > 0).ToArray();
 
-        var randomValue = _random.NextDouble();
-        var cumulative = 0.0;
-
-        foreach (var (poi, probability) in probabilities)
+        if (nonZeroValues.Length == 0)
         {
-            cumulative += probability;
-            if (randomValue <= cumulative)
-                return poi;
+            return values[_random.Next(values.Length)];
         }
 
-        // Если что-то пошло не так, возвращаем первую точку
-        return probabilities.Keys.First();
+        // Вычисляем общий вес всех элементов
+        var totalWeight = nonZeroValues.Sum(v => func(v));
+    
+        // Вычисляем коэффициент для масштабирования до 1000 элементов
+        var scaleFactor = listMaxSize / totalWeight;
+    
+        var list = new List<T>();
+
+        foreach (var value in nonZeroValues)
+        {
+            // Вычисляем количество элементов для этого значения
+            var elementsCount = (int)Math.Round(func(value) * scaleFactor);
+        
+            // Гарантируем, что у каждого ненулевого значения будет хотя бы 1 элемент
+            elementsCount = Math.Max(1, elementsCount);
+        
+            for (var i = 0; i < elementsCount; i++)
+            {
+                list.Add(value);
+            }
+        }
+
+        // Если список превысил 1000 элементов из-за округления, обрезаем его
+        if (list.Count > listMaxSize)
+        {
+            list = list.Take(listMaxSize).ToList();
+        }
+    
+        return list[_random.Next(list.Count)];
     }
 
-    public List<Ant> Run(Edge[] edges, int maxIterations = 10000)
+    public List<Ant> Run(Edge[] edges, int moveCount = 1000, int maxIterations = 500)
     {
+        //var moveCount2 = 1000;
         _edges = edges;
         
         InitializePheromones();
@@ -175,9 +218,8 @@ public class AntColonyAlgorithm2
 
             // Испарение феромонов
             EvaporatePheromones();
-
-            // Проверка завершения
-            if (ants.All(a => a.Completed || a.VisitedPois.Count >= _maxAntSteps))
+            
+            if (ants.All(a => a.Completed || a.VisitedPois.Count >= moveCount))
                 break;
         }
 
@@ -241,33 +283,17 @@ public class AntColonyAlgorithm2
         var ants = new List<Ant>();
         var notNullFromWeights = _edges.Where(it => it.From.Weight != 0).ToList();
         
-        // условно 2.6
-        var weightSum = notNullFromWeights.Sum(it => it.From.Weight);
-        
-        // условно 1000 / 2.6 = 385
-        var oneAntCost = _antCount / weightSum;
-
-        var endPointPool = GetPoolOfEndPoints(notNullFromWeights);
-        
-        
-        foreach (var distanceWeight in notNullFromWeights)
+        var notNullPoiWeights = _edges.SelectMany(edge => new List<Poi> {edge.From, edge.To } ).Where(it => it.Weight > 0).ToArray();
+        for (var i = 0; i < _antCount; i++)
         {
-            var antCount = (int)Math.Ceiling(oneAntCost * distanceWeight.From.Weight);
-            var startPoi = _edges.FirstOrDefault(it => it.From.Id == distanceWeight.From.Id).From;
-            var endPointId = endPointPool[_random.Next(0,  endPointPool.Count - 1)];
-
-            while (endPointId == startPoi.Id)
-            {
-                endPointId = endPointPool[_random.Next(0,  endPointPool.Count - 1)];
-            }
+            // var start = _edges.SelectMany(it => new List<Poi> { it.From, it.To }).FirstOrDefault(it => it.Id == 41);
+            // var end = _edges.SelectMany(it => new List<Poi> { it.From, it.To }).FirstOrDefault(it => it.Id == 10);
             
-            var endPoi = _edges.FirstOrDefault(it => it.From.Id == endPointId).From;
-
-            // Создаем муравьев
-            for (var i = 0; i < antCount; i++)
-            {
-                ants.Add(new Ant(i, startPoi, endPoi));
-            }
+            var poi = SelectWeightedRandom(notNullPoiWeights, (x) => Math.Sqrt(x.Weight));
+            
+            var endPoint = SelectWeightedRandom(notNullPoiWeights.Except([poi]).ToArray(), (x) => Math.Sqrt(x.Weight));
+            
+            ants.Add(new Ant(i, poi, endPoint));
         }
 
         return ants;
@@ -282,7 +308,7 @@ public class AntColonyAlgorithm2
             e.From.Id == current.Id || e.To.Id == current.Id).ToList();
 
         // Получаем вероятности перехода
-        var probabilities = GetProbabilities(current, ant.VisitedPois, availableEdges);
+        var probabilities = GetProbabilities(current, ant.VisitedPois, availableEdges, ant.EndPoi);
         
         if (probabilities.Count == 0)
         {
@@ -294,18 +320,15 @@ public class AntColonyAlgorithm2
         // Выбираем следующую точку
         var nextPoi = SelectNextPoi(current, probabilities);
         
-        if (nextPoi != null)
-        {
-            ant.CurrentPosition = nextPoi;
-            ant.VisitedPois.Add(nextPoi);
+        ant.CurrentPosition = nextPoi;
+        ant.VisitedPois.Add(nextPoi);
             
-            // Проверяем, нашли ли мы целевую точку (с весом)
-            if (nextPoi.Id == ant.EndPoi.Id)
-            {
-                ant.Completed = true;
-                ant.HasFoundTarget = true;
-                ant.TargetPoi = nextPoi;
-            }
+        // Проверяем, нашли ли мы целевую точку (с весом)
+        if (nextPoi.Id == ant.EndPoi.Id)
+        {
+            ant.Completed = true;
+            ant.HasFoundTarget = true;
+            ant.TargetPoi = nextPoi;
         }
     }
 
@@ -324,10 +347,10 @@ public class AntColonyAlgorithm2
                 var key2 = (to.Id, from.Id);
                 
                 if (_pheromones.ContainsKey(key1))
-                    _pheromones[key1] += _q / pathQuality;
+                    _pheromones[key1] += pathQuality;
                 
                 if (_pheromones.ContainsKey(key2))
-                    _pheromones[key2] += _q / pathQuality;
+                    _pheromones[key2] += pathQuality;
             }
         }
     }
@@ -341,20 +364,8 @@ public class AntColonyAlgorithm2
         {
             totalDistance += CalculateDistance(ant.VisitedPois[i], ant.VisitedPois[i + 1]);
         }
-
-        double weight;
-        // Качество пути: расстояние + штраф за длинные маршруты
-        if (ant.TargetPoi?.Weight == null || ant.TargetPoi?.Weight == 0)
-        {
-            weight = 1;
-        }
-        else
-        {
-            weight = (double)ant.TargetPoi?.Weight;
-        }
-
-        var targetWeightBonus = weight;
-        return totalDistance * targetWeightBonus;
+        
+        return 1.0 / totalDistance;
     }
 
     private void EvaporatePheromones()

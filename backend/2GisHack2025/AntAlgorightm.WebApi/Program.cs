@@ -47,9 +47,9 @@ app.UseHttpsRedirection();
 
 app.MapGet("/check", context => context.Response.WriteAsync("It works"));
 app.MapPost("/getAllWays", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetAllWays(edges, algorithm));
-app.MapPost("/getBestPath", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetBestPath(edges, algorithm));
-app.MapPost("/getBestPath2", (IAntColonyAlgorithm algorithm) => GetBestPath2(algorithm));
 app.MapPost("/getBestPath3", ([FromBody]InputData data, AntColonyAlgorithm2 algorithm) => GraphGen.GetBestPath(data.Zones, data.Pois, algorithm));
+app.MapPost("/runSimulation", ([FromBody]InputData data, AntColonyAlgorithm2 algorithm) => GraphGen.GetBestPath(data.Zones, data.Pois, algorithm));
+
 app.UseCors();
 app.Run();
 

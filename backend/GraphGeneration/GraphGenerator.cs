@@ -118,11 +118,11 @@ public static class GraphGenerator
         File.WriteAllText("short_paths.svg", svgShortPaths, Encoding.UTF8);
         
         // восстанавливаем соседей
-        // var (edges, points) = VoronatorNeighborsRecover.Get(polygonMap, voronator, settings.HexSize, shortPathPoint);
+        var (edges, points) = VoronatorNeighborsRecover.Get(polygonMap, voronator, settings.HexSize, shortPathPoint);
         
         // смешиваем точки обогащенные соседями и точки с Urban+Available
         var urbanFilter = new PointAvaliableAndUrbanFilter(polygonMap);
-        var recoveredPoints = shortPathPoint.Concat(originPoints.Where(p => !urbanFilter.Skip(p))).ToList();
+        var recoveredPoints = points.Concat(originPoints.Where(p => !urbanFilter.Skip(p))).ToList();
         
         // Строим воронова по стабильным точкам и коротким путям
         var voronator2 = new Voronator(recoveredPoints);
