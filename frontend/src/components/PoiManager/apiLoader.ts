@@ -5,42 +5,20 @@ import { GeoPoint } from '../../types/GeoPoint';
 import { typeByRubric } from './PoiManager.constants';
 import { events } from './models';
 import { PoiType } from '../../types/Poi';
-import { getBoundingBox } from '../../utils/getBoundingBox';
+import { geoPointInMainRegion } from '../../utils/pointInRegion';
 import { events as zoneEvents } from '../../stores/zonesStore';
 import { ZoneType } from '../../types/Zone';
 
 /**
- * Проверяет, попадает ли точка в bounding box
+ * Проверяет, попадает ли item в главную зону по его координатам point
  */
-function isPointInBoundingBox(
-    point: GeoPoint, 
-    boundingBox: { topLeft: GeoPoint; bottomRight: GeoPoint }
-): boolean {
-    return (
-        point.lng >= boundingBox.topLeft.lng &&
-        point.lng <= boundingBox.bottomRight.lng &&
-        point.lat <= boundingBox.topLeft.lat &&
-        point.lat >= boundingBox.bottomRight.lat
-    );
-}
-
-/**
- * Проверяет, попадает ли item в bounding box по его координатам point
- */
-function isItemInBoundingBox(
-    item: ApiItem, 
-    boundingBox: { topLeft: GeoPoint; bottomRight: GeoPoint } | null
-): boolean {
-    if (!boundingBox) {
-        return true; // Если нет bounding box, пропускаем все items
-    }
-    
+function isItemInMainRegion(item: ApiItem): boolean {
     const geoPoint: GeoPoint = {
         lng: item.point.lon,
         lat: item.point.lat
     };
     
-    return isPointInBoundingBox(geoPoint, boundingBox);
+    return geoPointInMainRegion(geoPoint);
 }
 
 /**
@@ -69,10 +47,7 @@ async function processBranch(item: ApiItem): Promise<void> {
 /**
  * Обработчик для типа building
  */
-async function processBuilding(
-    item: ApiItem, 
-    boundingBox: { topLeft: GeoPoint; bottomRight: GeoPoint } | null
-): Promise<void> {
+async function processBuilding(item: ApiItem): Promise<void> {
     // Проверяем наличие geometry.hover
     const hoverWkt = item.geometry?.hover;
     
@@ -118,9 +93,9 @@ async function processBuilding(
                     // Берём первый элемент массива points и парсим его из WKT
                     const entranceGeoPoint = parseWktPoint(points[0]);
                     
-                    // Проверяем, попадает ли вход в bounding box
-                    if (boundingBox && !isPointInBoundingBox(entranceGeoPoint, boundingBox)) {
-                        continue; // Пропускаем входы вне границ
+                    // Проверяем, попадает ли вход в главную зону
+                    if (!geoPointInMainRegion(entranceGeoPoint)) {
+                        continue; // Пропускаем входы вне главной зоны
                     }
                     
                     // Добавляем POI с типом Low
@@ -156,13 +131,10 @@ async function processStation(item: ApiItem): Promise<void> {
 /**
  * Обрабатывает один элемент в зависимости от его типа
  */
-async function processItem(
-    item: ApiItem,
-    boundingBox: { topLeft: GeoPoint; bottomRight: GeoPoint } | null
-): Promise<void> {
-    // Проверяем, попадает ли item в bounding box
-    if (!isItemInBoundingBox(item, boundingBox)) {
-        return; // Пропускаем items вне границ
+async function processItem(item: ApiItem): Promise<void> {
+    // Проверяем, попадает ли item в главную зону
+    if (!isItemInMainRegion(item)) {
+        return; // Пропускаем items вне главной зоны
     }
     
     switch (item.type) {
@@ -170,7 +142,7 @@ async function processItem(
             await processBranch(item);
             break;
         case 'building':
-            await processBuilding(item, boundingBox);
+            await processBuilding(item);
             break;
         case 'station_platform':
         case 'station.metro':
@@ -187,14 +159,6 @@ async function processItem(
  * Начинает с первой страницы и продолжает пока не получит null
  */
 export async function loadAllPages(): Promise<void> {
-    // Получаем bounding box один раз для всей загрузки
-    const boundingBox = getBoundingBox();
-    
-    if (!boundingBox) {
-        console.warn('Не удалось получить bounding box. Загрузка отменена.');
-        return;
-    }
-    
     console.log('Начало загрузки POI из 2GIS API...');
     let currentPage = 1;
     let totalItems = 0;
@@ -213,7 +177,7 @@ export async function loadAllPages(): Promise<void> {
         totalItems += items.length;
         
         for (const item of items) {
-            await processItem(item, boundingBox);
+            await processItem(item);
         }
         
         // Переходим к следующей странице

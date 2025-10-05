@@ -1,17 +1,17 @@
 import { GeoPoint } from '../types/GeoPoint';
 import { Point } from '../types/Point';
-import { ZoneType } from '../types/Zone';
-import { stores as globalStateStores } from '../stores/globalState';
+import { MAIN_ZONE_TYPE } from '../types/Zone';
+import { stores as zonesStores } from '../stores/zonesStore';
 import { stores as mapStores } from '../stores/mapStore';
 import { unprojectPoint } from './pointsProjection';
 
 /**
- * Получить ограничивающий прямоугольник для всех Urban зон
+ * Получить ограничивающий прямоугольник для главной зоны
  * @returns Объект с двумя GeoPoint: topLeft (левая верхняя) и bottomRight (правая нижняя)
  */
 export const getBoundingBox = (): { topLeft: GeoPoint; bottomRight: GeoPoint } | null => {
-    // Получаем глобальное состояние и карту
-    const globalState = globalStateStores.$globalState.getState();
+    // Получаем все зоны и карту
+    const allZones = zonesStores.$allZones.getState();
     const mapStore = mapStores.$mapStore.getState();
 
     // Проверяем, что карта инициализирована
@@ -20,19 +20,19 @@ export const getBoundingBox = (): { topLeft: GeoPoint; bottomRight: GeoPoint } |
         return null;
     }
 
-    // Фильтруем только Urban зоны
-    const urbanZones = globalState.zones.filter(zone => zone.type === ZoneType.Urban);
+    // Находим главную зону (она одна)
+    const mainZone = allZones.find(zone => zone.type === MAIN_ZONE_TYPE);
 
-    if (urbanZones.length === 0) {
-        console.warn('Нет Urban зон');
+    if (!mainZone) {
+        console.warn('Нет главной зоны');
         return null;
     }
 
-    // Собираем все точки из всех Urban зон
-    const allPoints: Point[] = urbanZones.flatMap(zone => zone.region);
+    // Получаем все точки главной зоны
+    const allPoints: Point[] = mainZone.region;
 
     if (allPoints.length === 0) {
-        console.warn('Нет точек в Urban зонах');
+        console.warn('Нет точек в главной зоне');
         return null;
     }
 
