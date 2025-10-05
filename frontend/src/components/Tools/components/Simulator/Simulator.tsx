@@ -5,17 +5,15 @@ import {
     Typography, 
     Button, 
     CircularProgress, 
-    Alert, 
-    Box 
+    Alert
 } from "@mui/material"
 import { PlayArrow as PlayArrowIcon } from "@mui/icons-material"
 import { SimulationLines } from "./components/SimulationLines"
 
 export const Simulator : React.FC = () => {
-    const [$canSimulate, $isSimulating, simulationResult, runSimulation] = useUnit([
+    const [$canSimulate, $isSimulating, runSimulation] = useUnit([
         stores.$canSimulate, 
         stores.$isSimulating, 
-        stores.$simulationResult,
         events.runSimulation])
 
     // Определяем причину недоступности симуляции
@@ -60,21 +58,6 @@ export const Simulator : React.FC = () => {
                     {getUnavailabilityReason()}
                 </Typography>
             </Alert>
-        )}
-
-        {/* Результат симуляции */}
-        {simulationResult.length > 0 && (
-            <Box>
-                <Typography variant="subtitle2" gutterBottom>
-                    Результат симуляции:
-                </Typography>
-                <Alert severity="success" variant="outlined">
-                    <Typography variant="body2">
-                        {/* Здесь можно отформатировать результат */}
-                        {JSON.stringify(simulationResult)}
-                    </Typography>
-                </Alert>
-            </Box>
         )}
 
         {/* Компонент для рисования линий симуляции на карте */}

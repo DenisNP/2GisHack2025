@@ -8,6 +8,7 @@ import { getAdjustedPoi } from "../utils/getAdjustedPoi";
 import { Map as MapGl } from '@2gis/mapgl/types';
 import { GeoPoint } from "../types/GeoPoint";
 import { unprojectPoint } from "../utils/pointsProjection";
+import { showNotification } from "../utils/showNotification";
 
 type RunSimulationProps = {
     request: RunSimulationRequest,
@@ -66,6 +67,21 @@ sample({
             origin: mapStore.origin}
         }),
     target: runSimulationFx
+})
+
+runSimulationFx.doneData.watch(({isSuccess}) => {
+    if(!isSuccess)
+    {
+        showNotification({
+            variant: "error",
+            message: "Не удалось выполнить симуляцию маршрутов"
+        })
+    }
+
+    showNotification({
+            variant: "success",
+            message: "Симуляция маршрутов успешно выполнена"
+        })
 })
 
 export const events = {

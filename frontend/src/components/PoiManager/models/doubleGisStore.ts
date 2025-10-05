@@ -10,6 +10,7 @@ import { typeByRubric } from "../PoiManager.constants";
 import { parseWktMultiPolygon, parseWktPoint, parseWktPolygon } from "../../../utils/wkt";
 import { ZoneType } from "../../../types/Zone";
 import { fetchJsonFromApi } from "../../../utils/api";
+import { showNotification } from "../../../utils/showNotification";
 
 
 const MAX_SIZE_ZONE_IN_METERS = 4
@@ -241,6 +242,21 @@ const loadDataFx = createEffect(async() => {
     }
 
     return isSuccess;
+})
+
+loadDataFx.doneData.watch((isSuccess) => {
+    if(!isSuccess)
+    {
+        showNotification({
+            variant: "error",
+            message: "Не удалось получить данные из справочника 2ГИС"
+        })
+    }
+
+    showNotification({
+            variant: "success",
+            message: "Данные из справочника 2ГИC успешно получены "
+        })
 })
 
 sample({
