@@ -1,53 +1,28 @@
 ﻿
 
+using GraphGeneration.Models;
 using NetTopologySuite.Geometries;
 using VoronatorSharp;
 
 namespace GraphGeneration.A;
 
-public class VoronoiEdgeFinder
+public class VoronotorEdgeFinder
 {
-    private Voronator _voronator;
-    private List<Vector2> _allPoints;
+    private readonly Voronator _voronator;
     
-    public VoronoiEdgeFinder(Voronator voronator, List<Vector2> allPoints)
+    public VoronotorEdgeFinder(Voronator voronator)
     {
         _voronator = voronator;
-        _allPoints = allPoints;
     }
     
     public class NeighborhoodResult
     {
         public Vector2 Point { get; set; }
-        public List<Vector2> NeighborPoints { get; set; } = new List<Vector2>();
-        public List<Edge> Edges { get; set; } = new List<Edge>();
+        public List<Vector2> NeighborPoints { get; set; } = [];
+        public List<VoronatorFinderEdge> Edges { get; set; } = [];
     }
     
-    public class Edge
-    {
-        public Vector2 Source { get; set; }
-        public Vector2 Target { get; set; }
-        
-        public override string ToString() => $"{Source} -> {Target}";
-        
-        // Для сравнения рёбер (независимо от направления)
-        public override bool Equals(object obj)
-        {
-            if (obj is Edge other)
-            {
-                return (Source.Equals(other.Source) && Target.Equals(other.Target)) ||
-                       (Source.Equals(other.Target) && Target.Equals(other.Source));
-            }
-            return false;
-        }
-        
-        public override int GetHashCode()
-        {
-            return Source.GetHashCode() ^ Target.GetHashCode();
-        }
-    }
-    
-    public Dictionary<Vector2, NeighborhoodResult> FindNeighborsWithEdges(List<NetTopologySuite.Geometries.Polygon> ignore, float hexSize, List<Vector2> partialPoints)
+    public Dictionary<Vector2, NeighborhoodResult> FindNeighborsWithEdges(List<NetTopologySuite.Geometries.Polygon> ignore, float hexSize, IReadOnlyCollection<Vector2> partialPoints)
     {
         var result = new Dictionary<Vector2, NeighborhoodResult>();
         
@@ -63,7 +38,7 @@ public class VoronoiEdgeFinder
     {
         var result = new NeighborhoodResult { Point = point };
         var neighborSet = new HashSet<Vector2>();
-        var edgeSet = new HashSet<Edge>();
+        var edgeSet = new HashSet<VoronatorFinderEdge>();
         
         int pointIndex = _voronator.Find(point);
         if (pointIndex < 0) return result;
@@ -110,13 +85,10 @@ public class VoronoiEdgeFinder
                     }
                     
                     // Создаём ребро между текущей точкой и соседом
-                    var edge = new Edge { Source = point, Target = neighborPoint };
+                    var edge = new VoronatorFinderEdge { Source = point, Target = neighborPoint };
                     edgeSet.Add(edge);
                 }
             }
-            
-            // Добавляем саму точку в список соседей
-            
             
             // Находим рёбра между соседними точками        
             FindEdgesBetweenNeighbors(ignore, sr, point, neighborSet, edgeSet);
@@ -134,7 +106,7 @@ public class VoronoiEdgeFinder
         return result;
     }
     
-    private void FindEdgesBetweenNeighbors(List<NetTopologySuite.Geometries.Polygon> ignore, float sr, Vector2 centerPoint, HashSet<Vector2> neighbors, HashSet<Edge> edges)
+    private void FindEdgesBetweenNeighbors(List<NetTopologySuite.Geometries.Polygon> ignore, float sr, Vector2 centerPoint, HashSet<Vector2> neighbors, HashSet<VoronatorFinderEdge> edges)
     {
         // Для каждой пары соседних точек проверяем, есть ли между ними ребро
         var neighborList = neighbors.Where(p => !p.Equals(centerPoint)).ToList();
@@ -176,7 +148,7 @@ public class VoronoiEdgeFinder
                 // Проверяем, являются ли эти точки соседями в исходном графе
                 if (ArePointsNeighbors(pointA, pointB))
                 {
-                    edges.Add(new Edge { Source = pointA, Target = pointB });
+                    edges.Add(new VoronatorFinderEdge { Source = pointA, Target = pointB });
                 }
             }
         }

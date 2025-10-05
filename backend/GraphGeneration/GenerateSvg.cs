@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using NetTopologySuite.Geometries;
+using QuickGraph;
 using VoronatorSharp;
 using Triangle = VoronatorSharp.Triangle;
 
@@ -7,17 +8,17 @@ namespace GraphGeneration;
 
 public static class GenerateSvg
 {
-    public static string GenerateMultiPolygonGraphSvg(
+    public static string GenerateFilteredSvg(
         List<NetTopologySuite.Geometries.Polygon> ignore,
-        List<NetTopologySuite.Geometries.Polygon> polygons,
         Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon,
-        Delaunator voronator,
+        IReadOnlyCollection<Vector2> points,
+        IReadOnlyCollection<IEdge<Vector2>> edges,
         double scale,
         float hexSize)
     {
         // Вычисляем общие границы всех полигонов
         var overallEnvelope = new Envelope();
-        foreach (var polygon in polygons)
+        foreach (var polygon in pointsByPolygon.Keys)
         {
             overallEnvelope.ExpandToInclude(polygon.EnvelopeInternal);
         }
@@ -25,7 +26,7 @@ public static class GenerateSvg
         var width = overallEnvelope.Width;
         var height = overallEnvelope.Height;
 
-        var padding = 30;
+        var padding = 20;
         var svgWidth = (int)(width * scale) + padding * 2;
         var svgHeight = (int)(height * scale) + padding * 2;
 
@@ -61,30 +62,25 @@ public static class GenerateSvg
 
         // Рисуем граф Делоне
         svg.AppendLine("<g class=\"graph-edges\">");
-        var triangles = voronator.GetTriangles().ToArray();
-        var allPoints = pointsByPolygon.Values.SelectMany(x => x).ToList();
 
         var sr = HexagonalGridGenerator.CalculateExpectedHexDistance(hexSize);
 
-        foreach (var triangle in triangles)
+        foreach (var triangle in edges)
         {
-            for (var i = 0; i < 3; i++)
-            {
-                var tPoints = triangle.ToList();
-                var t1 = tPoints[i];
-                var t2 = tPoints[(i + 1) % 3];
+                var t1 = triangle.Source;
+                var t2 = triangle.Target;
 
                 if (sr * 2 < Vector2.Distance(t1, t2))
                 {
                     continue;
                 }
 
-// Создаем геометрическое представление ребра
+                // Создаем геометрическое представление ребра
                 var lineString = new LineString([
                     new Coordinate(t1.x, t1.y),
                     new Coordinate(t2.x, t2.y)
                 ]);
-
+                
                 // Проверяем, пересекает ли ребро любой из игнорируемых полигонов
                 var intersectsIgnoredPolygon = false;
                 foreach (var polygon in ignore)
@@ -95,7 +91,7 @@ public static class GenerateSvg
                         break;
                     }
                 }
-
+                
                 // Если ребро пересекает игнорируемый полигон, пропускаем его
                 if (intersectsIgnoredPolygon)
                 {
@@ -103,29 +99,28 @@ public static class GenerateSvg
                 }
 
                 // Определяем, является ли ребро межполигональным
-                var polygon1 = GetPointPolygon(new Point(t1.x, t1.y), pointsByPolygon);
-                var polygon2 = GetPointPolygon(new Point(t2.x, t2.y), pointsByPolygon);
-                var isCrossPolygon = polygon1 == polygon2 && (polygon2 != null || polygon1 != null);
+                // var polygon1 = GetPointPolygon(new Point(t1.x, t1.y), pointsByPolygon);
+                // var polygon2 = GetPointPolygon(new Point(t2.x, t2.y), pointsByPolygon);
+                // var isCrossPolygon = polygon1 == polygon2 && (polygon2 != null || polygon1 != null);
 
-                var (x1, y1) = Transform(t1.x, t1.y);
+                var (x1, y1) = Transform(t1.X, t1.y);
                 var (x2, y2) = Transform(t2.x, t2.y);
 
-                if (polygon1 == polygon2)
+                // if (polygon1 == polygon2)
                     svg.AppendLine(
                         $@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" class=""{"graph-edges"}""/>");
 
                 // string edgeClass = isCrossPolygon ? "cross-polygon-edges" : "graph-edges";
                 // svg.AppendLine($@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" class=""{"graph-edges"}""/>");
-            }
         }
 
         svg.AppendLine("</g>");
 
+        var i = 0;
         // Рисуем полигоны
-        for (var i = 0; i < polygons.Count; i++)
+        foreach (var polygon in pointsByPolygon.Keys)
         {
-            var polygon = polygons[i];
-            var polygonClass = $"polygon-{(i % 5) + 1}";
+            var polygonClass = $"polygon-{(i++ % 5) + 1}";
 
             svg.Append($@"<polygon class=""{polygonClass}"" points=""");
             foreach (var coord in polygon.Coordinates)
@@ -139,11 +134,11 @@ public static class GenerateSvg
 
         // Рисуем узлы графа
         svg.AppendLine("<g class=\"graph-nodes\">");
-        foreach (var point in voronator.Points)
+        foreach (var point in points)
         {
             var (x, y) = Transform(point.X, point.Y);
 
-            var lineString = new Point(x, y);
+            var lineString = new Point(point.X, point.Y);
 
             // Проверяем, пересекает ли ребро любой из игнорируемых полигонов
             var intersectsIgnoredPolygon = false;
@@ -181,16 +176,16 @@ public static class GenerateSvg
         svg.AppendLine("</g>");
 
         // Информация
-        var totalPoints = allPoints.Count;
-        var totalEdges = triangles.Count() * 3 / 2;
-        var crossPolygonEdges = CountCrossPolygonEdges(triangles, pointsByPolygon);
+        var totalPoints = points.Count;
+        // var totalEdges = triangles.Count() * 3 / 2;
+        // var crossPolygonEdges = CountCrossPolygonEdges(triangles, pointsByPolygon);
 
         svg.AppendLine($@"<text x=""{padding}"" y=""{padding - 5}"" class=""info"">");
-        svg.AppendLine($"Полигоны: {polygons.Count}, Точки: {totalPoints}, Ребра: {totalEdges}");
+        svg.AppendLine($"Полигоны: {pointsByPolygon.Keys.Count}, Точки: {totalPoints}, Ребра: {edges.Count}");
         svg.AppendLine($@"</text>");
 
         svg.AppendLine($@"<text x=""{padding}"" y=""{padding + 15}"" class=""info"">");
-        svg.AppendLine($"Межполигональные связи: {crossPolygonEdges}");
+        // svg.AppendLine($"Межполигональные связи: {crossPolygonEdges}");
         svg.AppendLine($@"</text>");
 
         svg.AppendLine("</svg>");

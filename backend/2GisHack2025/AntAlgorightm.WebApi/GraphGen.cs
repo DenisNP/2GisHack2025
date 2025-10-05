@@ -27,9 +27,7 @@ public static class GraphGen
             zone.Vertices.Add(zone.Vertices.First());
         }
 
-        var (svg, edges) = GraphGenerator.GenerateSvg(polygons, points);
-        
-        File.WriteAllText("multi_polygon_graph.svg", svg, Encoding.UTF8);
+        var edges = GraphGenerator.GenerateEdges(polygons, points);
 
         return new Path();
     }

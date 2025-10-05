@@ -1,6 +1,6 @@
 ﻿using System.Text;
-using GraphGeneration.A;
 using NetTopologySuite.Geometries;
+using QuickGraph;
 // using QuickGraph;
 using VoronatorSharp;
 using Triangle = VoronatorSharp.Triangle;
@@ -13,7 +13,7 @@ public static class GenerateSvg3
         // List<NetTopologySuite.Geometries.Polygon> ignore,
         Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon,
         IReadOnlyCollection<Vector2> points,
-        IReadOnlyCollection<VoronoiEdgeFinder.Edge> edges,
+        IReadOnlyCollection<IEdge<Vector2>> edges,
         double scale,
         float hexSize)
     {

@@ -1,6 +1,8 @@
-﻿using AntAlgorithm;
+﻿using System.Text;
+using AntAlgorithm;
 using GraphGeneration.A;
 using NetTopologySuite.Geometries;
+using QuickGraph;
 using VoronatorSharp;
 using Point = NetTopologySuite.Geometries.Point;
 
@@ -8,7 +10,7 @@ namespace GraphGeneration;
 
 public static class GraphGenerator
 {
-    public static Edge[] GenerateEdges(List<Polygon> polygons, List<Vector2> pois)
+    public static Edge[] Generate(List<Polygon> polygons, List<Vector2> pois)
     {
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
@@ -49,7 +51,7 @@ public static class GraphGenerator
         return svgContent;
     }
     
-    public static (string, Edge[]) GenerateSvg(List<Polygon> polygons, List<Vector2> poi)
+    public static Edge[] GenerateEdges(List<Polygon> polygons, List<Vector2> poi)
     {
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
@@ -83,24 +85,36 @@ public static class GraphGenerator
         }
         
         var graph = VoronoiGraphAdapter.ConvertToQuickGraph(ignore, voronator, settings.HexSize);
+        var svgOriginGraph = GenerateSvg3.GenerateMultiPolygonGraphSvg(pointsByPolygon, graph.Vertices.ToArray(), graph.Edges.ToArray(), 25, settings.HexSize);
+        File.WriteAllText("origin_graph.svg", svgOriginGraph, Encoding.UTF8);
 
-        var shortPaths = UniquePairsLinq.GetUniquePairsLinq(poi)
-            .SelectMany(pair => VoronoiPathFinder.FindPath(graph, pair.Item1, pair.Item2))
-            .ToList();
-        
-        
-        var (edge, vector) = VoronatorFilter.Get(ignore, voronator, settings.HexSize, shortPaths);
-        // foreach (var pair in UniquePairsLinq.GetUniquePairsLinq(poi))
-        // {
-        //     VoronoiPathFinder.FindPath(voronator, pair.Item1, pair.Item2);
-        // }
+        // var shortPaths = UniquePairsLinq.GetUniquePairsLinq(poi)
+        //     .SelectMany(pair => VoronoiPathFinder.FindPath(graph, pair.Item1, pair.Item2))
+        //     .ToList();
 
-        
-        var svgContent = GenerateSvg3.GenerateMultiPolygonGraphSvg(pointsByPolygon, vector, edge, 50, settings.HexSize);
+        var shortPaths = Enumerable.Empty<Vector2>();
+        var shortEdges = Enumerable.Empty<IEdge<Vector2>>();
+        foreach (var pair in UniquePairsLinq.GetUniquePairsLinq(poi))
+        {
+            var shortPath = VoronoiPathFinder.FindPath(graph, pair.Item1, pair.Item2);
+            shortPaths = shortPaths.Concat(shortPath);
+            shortEdges = shortEdges.Concat(UniquePairsLinq.GetEdges(shortPath));
+        }
 
-        return (
-            svgContent,
-            edge.Select(e => new Edge(new Poi(e.Source.Id, e.Source.X, e.Source.Y, e.Source.Weight), new Poi(e.Target.Id, e.Target.X, e.Target.Y, e.Target.Weight))).ToArray()
-            );
+        var filteredPoints = shortPaths.ToArray();
+        
+        var svgShortPaths = GenerateSvg.GenerateFilteredSvg(ignore, pointsByPolygon, filteredPoints, shortEdges.ToArray(), 25, settings.HexSize);
+        File.WriteAllText("short_paths.svg", svgShortPaths, Encoding.UTF8);
+        
+        var (edges, points) = VoronatorFilter.Get(ignore, voronator, settings.HexSize, filteredPoints);
+        
+        var svgFilteredGraph = GenerateSvg3.GenerateMultiPolygonGraphSvg(pointsByPolygon, points, edges, 25, settings.HexSize);
+        File.WriteAllText("filtered_graph.svg", svgFilteredGraph, Encoding.UTF8);
+
+        return edges
+            .Select(e => new Edge(
+                new Poi(e.Source.Id, e.Source.X, e.Source.Y, e.Source.Weight),
+                new Poi(e.Target.Id, e.Target.X, e.Target.Y, e.Target.Weight))
+            ).ToArray();
     }
 }
