@@ -107,7 +107,7 @@ public static class GenerateSvg
         var svg = new SvgBuilder(polygonMap.Render, scale);
 
         // Рисуем граф Делоне
-        /*svg.AppendLine("<g class=\"graph-edges\">");
+        svg.AppendLine("<g class=\"graph-edges\">");
         foreach (var triangle in edges)
         {
                 var t1 = triangle.From;
@@ -123,7 +123,7 @@ public static class GenerateSvg
 
                 if (triangle.Weight <= 3)
                 {
-                    continue;
+                    //continue;
                 }
 
                 // Вычисляем толщину линии в зависимости от веса (от 0.5 до 5)
@@ -136,7 +136,7 @@ public static class GenerateSvg
                 // svg.AppendLine($@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" class=""{"graph-edges"}""/>");
         }
 
-        svg.AppendLine("</g>");*/
+        svg.AppendLine("</g>");
 
         // Рисуем полигоны
         foreach (var polygon in polygonMap.Zones)
@@ -159,7 +159,7 @@ public static class GenerateSvg
         {
             if (!point.Show)
             {
-                continue;
+                //continue;
             }
             var (x, y) =  svg.Transform(point.X, point.Y);
 
