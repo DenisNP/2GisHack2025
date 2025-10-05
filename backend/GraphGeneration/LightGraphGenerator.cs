@@ -124,7 +124,7 @@ public class LightGraphGenerator
                 });
             }
             //var totalPairs = pairs.Count;
-            //var coeff = Math.Floor(totalPairs / (uniqCount * 1f));
+            //var coeff = 0.8f * Math.Floor(totalPairs / (uniqCount * 1f));
 
             foreach (KeyValuePair<int, List<GeomPoint>> pair in pointsByPairs)
             {
@@ -134,7 +134,7 @@ public class LightGraphGenerator
                     pair.Value.ForEach(p => p.Show = true);
                 }
             }
-            
+
 /*#if DEBUG
 
             Console.WriteLine(iterations);
@@ -151,7 +151,7 @@ public class LightGraphGenerator
         File.WriteAllText("short_graph.svg", svgShortGraph, Encoding.UTF8);
 #endif        
 
-        return originPoints.Where(e => e.Show).ToArray();
+        return originPoints.Where(e => e.Show && !e.IsPoi).ToArray();
     }
 
     private static int GetPairId((GeomPoint, GeomPoint) pair)
