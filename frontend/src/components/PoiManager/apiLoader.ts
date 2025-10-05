@@ -186,4 +186,3 @@ export async function loadAllPages(): Promise<void> {
     
     console.log(`Загрузка завершена. Обработано страниц: ${currentPage - 1}, элементов: ${totalItems}`);
 }
-

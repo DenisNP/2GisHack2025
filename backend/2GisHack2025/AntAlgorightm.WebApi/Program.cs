@@ -3,6 +3,7 @@ using AntAlgorithm;
 using AntAlgorithm.Abstractions;
 using GraphGeneration;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -37,11 +38,14 @@ if (app.Environment.IsDevelopment())
     {
         options.SwaggerEndpoint("/openapi/v1.json", "My API V1");
     });
-    app.UseCors("AllowAll");
 }
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.UseCors(policyBuilder => policyBuilder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseHttpsRedirection();
 
+app.MapGet("/check", context => context.Response.WriteAsync("It works"));
 app.MapPost("/getAllWays", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetAllWays(edges, algorithm));
 app.MapPost("/getBestPath", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetBestPath(edges, algorithm));
 app.MapPost("/getBestPath2", (IAntColonyAlgorithm algorithm) => GetBestPath2(algorithm));

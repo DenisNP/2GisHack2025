@@ -1,5 +1,5 @@
 import { Point } from '../types/Point';
-import { MAIN_ZONE_TYPE, Zone, ZoneType } from '../types/Zone';
+import { MAIN_ZONE_TYPE, Zone } from '../types/Zone';
 import { GeoPoint } from '../types/GeoPoint';
 import { stores } from '../stores/mapStore';
 import { stores as zonesStores } from '../stores/zonesStore';

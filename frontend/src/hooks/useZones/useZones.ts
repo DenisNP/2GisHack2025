@@ -5,33 +5,36 @@ export const useZones = () => {
     const [availableZones, 
         restrictedZones,
         urbanZones,
-        sidewalks,
+        baseZones,
         allZones,
+        hasBaseZone,
         setAvailableZones,
         setRestrictedZones,
         setUrbanZones,
-        setSidewalks
+        setBaseZones,
     ] = useUnit([
         stores.$availableZones, 
         stores.$restrictedZones, 
         stores.$urbanZones,
-        stores.$sidewalks, 
+        stores.$baseZones,
         stores.$allZones,
+        stores.$hasBaseZone,
         events.setAvailableZones,
         events.setRestrictedZones,
         events.setUrbanZones,
-        events.setSidewalks
+        events.setBaseZones,
     ])
 
     return {
         availableZones,
         restrictedZones,
         urbanZones,
-        sidewalks,
+        baseZones,
         allZones,
+        hasBaseZone,
         setAvailableZones,
         setRestrictedZones,
         setUrbanZones,
-        setSidewalks
+        setBaseZones,
     }
 }
