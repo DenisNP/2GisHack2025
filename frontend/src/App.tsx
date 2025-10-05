@@ -277,7 +277,7 @@ function App() {
                                     />
                                 </PanelWrapper>
                                 <PanelWrapper panelId="poi" openPanel={openPanel}>
-                                    <PoiManager />
+                                    <PoiManager isActive={openPanel === "poi"} />
                                 </PanelWrapper>
                                 <PanelWrapper panelId="tools" openPanel={openPanel}>
                                     <Stack spacing={2}>

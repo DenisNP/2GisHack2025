@@ -16,6 +16,7 @@ import {
 } from '@mui/icons-material';
 import { Typography, Button, Stack, Alert, Divider, CircularProgress } from '@mui/material';
 import './PoiManager.css';
+import { PoiManagerProps } from './PoiManager.types';
 
 // Вспомогательная функция для получения anchor (точка привязки к карте)
 // Размеры должны соответствовать CSS
@@ -27,7 +28,7 @@ const getAnchor = (type: PoiType): [number, number] => {
     }
 };
 
-export function PoiManager() {
+export const PoiManager: React.FC<PoiManagerProps> = ({ isActive }) => {
     const { mapglInstance, mapgl } = useMapglContext();
     const [store, isLoadingGisData, loadGisData] = useUnit([stores.$store, gisStores.$isLoadingData, gisEvents.loadData]);
     
@@ -151,6 +152,14 @@ export function PoiManager() {
             setAddingMode(null);
         }
     };
+
+    useEffect(()=>{
+        if(!isActive)
+        {
+             setAddingMode(null);
+             setIsDeletionMode(false);
+        }
+    }, [isActive])
     
     return (
         <Stack spacing={1} className="poi-manager-panel">

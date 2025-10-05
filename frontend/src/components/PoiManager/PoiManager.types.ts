@@ -16,4 +16,9 @@ export interface MovePoiEventData {
     id: number;
 }
 
+export interface PoiManagerProps {
+    isActive : boolean;
+}
+
+
 export type EffectProps<T, S> = { data: T, store: S, mapStore: MapStore };
