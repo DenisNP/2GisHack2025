@@ -53,7 +53,7 @@ public static class GraphGenerator
     //     return svgContent;
     // }
     
-    public static (Edge[] Edges, int MaxLenPath) GenerateEdges(List<ZonePolygon> polygons, List<Vector2> poi)
+    public static (Edge[] Edges, HashSet<(Vector2, Vector2)> LongPaths, int MaxLenPath) GenerateEdges(List<ZonePolygon> polygons, List<Vector2> poi)
     {
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
@@ -123,9 +123,9 @@ public static class GraphGenerator
             }
         }
 
-        var start = new Vector2();
-        var ends = new List<Vector2>();
-        IEnumerable<Vector2> end = ends.Where(p => longPairs.Contains((start, p)));
+        // var start = new Vector2();
+        // var ends = new List<Vector2>();
+        // IEnumerable<Vector2> end = ends.Where(p => longPairs.Contains((start, p)));
 
 #if DEBUG
         // рисуем короткие пути
@@ -160,6 +160,6 @@ public static class GraphGenerator
                 new Poi(e.Source.Id, e.Source.X, e.Source.Y, e.Source.Weight),
                 new Poi(e.Target.Id, e.Target.X, e.Target.Y, e.Target.Weight))
             ).ToArray(); 
-        return (resultEdges, maxLenPath);
+        return (resultEdges, longPairs, maxLenPath);
     }
 }
