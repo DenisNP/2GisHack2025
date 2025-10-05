@@ -116,7 +116,7 @@ public static class GenerateFilteredSvg
         var pointFilter = new PointIgnoreFilter(ignore);
         foreach (var point in points)
         {
-            if (pointFilter.Skip(point))
+            if (!point.IsPoi && pointFilter.Skip(point))
             {
                 continue;
             }
@@ -126,7 +126,7 @@ public static class GenerateFilteredSvg
             var fillColor = "#d32f2f"; // красный по умолчанию
             double radius = 10; // размер по умолчанию
 
-            if (point.Weight == 0)
+            if (!point.IsPoi)
             {
                 fillColor = "#008000";
             }

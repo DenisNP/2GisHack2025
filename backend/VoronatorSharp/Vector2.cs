@@ -11,6 +11,8 @@ namespace VoronatorSharp
         
         public double Weight { get; set; }
 
+        public bool IsPoi => Math.Abs(Weight) > float.Epsilon;
+
         [DebuggerStepThrough]
         public Vector2(int id, float x, float y, double weight)
         {

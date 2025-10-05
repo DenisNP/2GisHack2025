@@ -7,18 +7,18 @@ public class EdgeFilter
 {
     private readonly IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> _ignore;
     private readonly float _expectedDistance;
-    private readonly PointAllowedFilter _pointIgnoreFilter;
+    private readonly PointAllowedFilter _pointAllowedFilter;
 
     public EdgeFilter(IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> allowed, IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> ignore, float hexSize)
     {
         _ignore = ignore;
         _expectedDistance = HexagonalGridGenerator.CalculateExpectedHexDistance(hexSize);
-         _pointIgnoreFilter = new PointAllowedFilter(allowed);
+         _pointAllowedFilter = new PointAllowedFilter(allowed);
     }
 
     public bool Skip(Vector2 a, Vector2 b)
     {
-        if (_expectedDistance * 2 < Vector2.Distance(a, a))
+        if (_expectedDistance * 1.5 < Vector2.Distance(a, a))
         {
             return true;
         }
@@ -44,7 +44,7 @@ public class EdgeFilter
         // var polygon2 = GetPointPolygon(new Point(t2.x, t2.y), pointsByPolygon);
         // var isCrossPolygon = polygon1 == polygon2 && (polygon2 != null || polygon1 != null);
 
-        return _pointIgnoreFilter.Skip(a) || _pointIgnoreFilter.Skip(b);
+        return (!a.IsPoi && _pointAllowedFilter.Skip(a)) || (!b.IsPoi && _pointAllowedFilter.Skip(b));
     }
 
     private static NetTopologySuite.Geometries.Polygon? GetPointPolygon(Point point,

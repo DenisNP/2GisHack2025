@@ -24,7 +24,7 @@ public static class GenerateSvg
         var width = overallEnvelope.Width;
         var height = overallEnvelope.Height;
 
-        var padding = 30;
+        var padding = 20;
         var svgWidth = (int)(width * scale) + padding * 2;
         var svgHeight = (int)(height * scale) + padding * 2;
 
@@ -111,7 +111,7 @@ public static class GenerateSvg
             var fillColor = "#d32f2f"; // красный по умолчанию
             double radius = 10; // размер по умолчанию
 
-            if (point.Weight == 0)
+            if (!point.IsPoi)
             {
                 fillColor = "#008000";
             }

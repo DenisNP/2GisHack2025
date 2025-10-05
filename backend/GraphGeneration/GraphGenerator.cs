@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using AntAlgorithm;
 using GraphGeneration.A;
+using GraphGeneration.Filters;
 using NetTopologySuite.Geometries;
 using QuickGraph;
 using VoronatorSharp;
@@ -64,13 +65,6 @@ public static class GraphGenerator
             EdgePointSpacing = 2f
         };
         
-        // Генерируем точки
-        var hexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(poi.Max(p => p.Id), polygons.ToList(), settings);
-        
-        // Создаем общую диаграмму Вороного/Делоне для всех точек
-        // var vectorPoints = hexPoints.Select(p => new Vector2((float)p.X, (float)p.Y)).ToArray();
-        var voronator = new Voronator(hexPoints.Concat(poi).ToArray());
-        
         var pointsByPolygon = new Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>>();
 
         var ignore  = new List<NetTopologySuite.Geometries.Polygon>(polygons.Count);
@@ -89,6 +83,16 @@ public static class GraphGenerator
             }
         }
         
+        var poiFilter = new PointAllowedFilter(allowed);
+        var validPoi = poi.Where(p => !poiFilter.Skip(p)).ToList();
+        // var validPoi = poi.Where(p => p.IsPoi).ToList();
+        
+        // Генерируем точки
+        var hexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(validPoi.Max(p => p.Id), polygons.ToList(), settings);
+        
+        // Создаем общую диаграмму Вороного/Делоне для всех точек
+        var voronator = new Voronator(hexPoints.Concat(validPoi).ToArray());
+        
         var graph = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(ignore, allowed, voronator, settings.HexSize);
         var originPoints = graph.Vertices.ToArray();
         var originEdges = graph.Edges.ToArray();
@@ -101,7 +105,7 @@ public static class GraphGenerator
 
         var shortPathPoint = new List<Vector2>(originPoints.Length);
         var shortEdges = new List<IEdge<Vector2>>(originEdges.Length);
-        foreach (var pair in PointPairsHelper.GetUniquePairs(poi))
+        foreach (var pair in PointPairsHelper.GetUniquePairs(validPoi))
         {
             var shortPath = QuickPathFinder
                 .FindPath(graph, pair.Item1, pair.Item2)

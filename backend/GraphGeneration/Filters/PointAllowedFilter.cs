@@ -12,13 +12,13 @@ public class PointAllowedFilter
         _allowed = allowed;
     }
 
-    public bool Skip(float x, float y)
+    private bool Skip(float x, float y)
     {
-        var lineString = new Point(x, y);
+        var point = new Point(x, y);
             
         foreach (var polygon in _allowed)
         {
-            if (lineString.Crosses(polygon) || polygon.Contains(lineString))
+            if (polygon.Contains(point))
             {
                 return false;
             }

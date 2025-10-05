@@ -12,7 +12,7 @@ public class PointIgnoreFilter
         _ignore = ignore;
     }
 
-    public bool Skip(float x, float y)
+    private bool Skip(float x, float y)
     {
         var lineString = new Point(x, y);
             
@@ -28,5 +28,5 @@ public class PointIgnoreFilter
         return false;
     }
     
-    public bool Skip(Vector2 vector) => Skip(vector.X, vector.Y);
+    public bool Skip(Vector2 vector) => Skip(vector.x, vector.y);
 }
