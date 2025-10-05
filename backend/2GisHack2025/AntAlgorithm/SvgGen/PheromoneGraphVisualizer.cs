@@ -1,7 +1,8 @@
 ﻿using System.Globalization;
 using System.Text;
 using and.Models;
-using AntAlgorithm;
+
+namespace AntAlgorithm.SvgGen;
 
 public class PheromoneGraphVisualizer
 {
@@ -21,9 +22,9 @@ public class PheromoneGraphVisualizer
     public string GenerateSvg(int topN, int width = 5000, int height = 5000)
     {
         var normalizedPheromones = NormalizePheromones();
-        var topEdges = GetTopPheromoneEdges(normalizedPheromones, topN);
+        var topEdges = GetTopPheromoneEdges(_pheromones, topN);
         
-        var svgContent = GenerateSvgContent(topEdges, normalizedPheromones, width, height);
+        var svgContent = GenerateSvgContent(topEdges, _pheromones, width, height);
         
         return $@"<svg width=""{width}"" height=""{height}"" xmlns=""http://www.w3.org/2000/svg"">
 {svgContent}
@@ -41,9 +42,7 @@ public class PheromoneGraphVisualizer
 
         foreach (var kvp in _pheromones)
         {
-            var normalizedValue = maxPheromone > minPheromone 
-                ? 0.1 + 0.9 * (kvp.Value - minPheromone) / (maxPheromone - minPheromone)
-                : 1.0;
+            var normalizedValue = (kvp.Value - minPheromone) / (maxPheromone - minPheromone);
             
             normalized[kvp.Key] = normalizedValue;
         }
@@ -83,11 +82,13 @@ public class PheromoneGraphVisualizer
     {
         var svgElements = new StringBuilder();
 
+        var maxWeightPoi = edges.SelectMany(it => new List<Poi> { it.From, it.To }).MaxBy(it => it.Weight);
+        
         // Рисуем ребра
         foreach (var edge in edges)
         {
-            var strokeWidth = CalculateStrokeWidth(edge, normalizedPheromones);
-            var strokeColor = CalculateStrokeColor(edge, normalizedPheromones);
+            var strokeWidth = 10; // CalculateStrokeWidth(edge, normalizedPheromones, maxWeightPoi.Weight);
+            var strokeColor = CalculateStrokeColor(edge, normalizedPheromones, maxWeightPoi.Weight);
             
             var fromPoint = ConvertToSvgCoordinates(edge.From.Point, width, height);
             var toPoint = ConvertToSvgCoordinates(edge.To.Point, width, height);
@@ -112,7 +113,7 @@ public class PheromoneGraphVisualizer
             
             // Подписи точек
             svgElements.AppendLine(
-                 $@"    <text x=""{(point.X + 5).ToString(CultureInfo.InvariantCulture)}"" y=""{(point.Y - 10).ToString(CultureInfo.InvariantCulture)}"" font-family=""Arial"" font-size=""12"" fill=""#333"">{poi.Id}</text>");
+                $@"    <text x=""{(point.X + 5).ToString(CultureInfo.InvariantCulture)}"" y=""{(point.Y - 10).ToString(CultureInfo.InvariantCulture)}"" font-family=""Arial"" font-size=""12"" fill=""#333"">{poi.Id}</text>");
             
             drawnPoints.Add(poi.Id);
         }
@@ -198,7 +199,7 @@ public class PheromoneGraphVisualizer
         return (minX - paddingX, minY - paddingY, maxX + paddingX, maxY + paddingY);
     }
 
-    private double CalculateStrokeWidth(Edge edge, Dictionary<(int from, int to), double> normalizedPheromones)
+    private double CalculateStrokeWidth(Edge edge, Dictionary<(int from, int to), double> normalizedPheromones, double maxWeight)
     {
         var key1 = (edge.From.Id, edge.To.Id);
         var key2 = (edge.To.Id, edge.From.Id);
@@ -208,12 +209,14 @@ public class PheromoneGraphVisualizer
             pheromone = Math.Max(pheromone, normalizedPheromones[key1]);
         if (normalizedPheromones.ContainsKey(key2))
             pheromone = Math.Max(pheromone, normalizedPheromones[key2]);
+        
+        var size = pheromone / 10;
         
         // Более разумный диапазон толщины линий
-        return 2 + pheromone * 10;
+        return size;
     }
 
-    private string CalculateStrokeColor(Edge edge, Dictionary<(int from, int to), double> normalizedPheromones)
+    private string CalculateStrokeColor(Edge edge, Dictionary<(int from, int to), double> normalizedPheromones, double maxWeight)
     {
         var key1 = (edge.From.Id, edge.To.Id);
         var key2 = (edge.To.Id, edge.From.Id);
@@ -223,11 +226,11 @@ public class PheromoneGraphVisualizer
             pheromone = Math.Max(pheromone, normalizedPheromones[key1]);
         if (normalizedPheromones.ContainsKey(key2))
             pheromone = Math.Max(pheromone, normalizedPheromones[key2]);
+
+        var red = 255 - (int)pheromone; //(int)(pheromone * 255);
+        var blue = 255 - pheromone; // Сохраняем некоторую синеву
         
-        var red = (int)(pheromone * 255);
-        var blue = 255 - (int)(pheromone * 200); // Сохраняем некоторую синеву
-        
-        return $"rgb({red}, 0, {blue})";
+        return $"rgba({red}, {red}, {red})";
     }
 
     private Dictionary<int, Poi> ExtractPoisFromEdges(Edge[] edges)

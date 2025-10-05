@@ -1,4 +1,4 @@
-﻿namespace AntAlgorithm;
+﻿namespace and.Models;
 
 public enum ZoneType
 {

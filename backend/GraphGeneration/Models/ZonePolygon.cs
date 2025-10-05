@@ -1,11 +1,11 @@
 ﻿// using System.Numerics;
 
 using System.Text.Json.Serialization;
-using AntAlgorithm;
+using and.Models;
 using NetTopologySuite.Geometries;
 using VoronatorSharp;
 
-namespace GraphGeneration;
+namespace GraphGeneration.Models;
 
 public class ZonePolygon
 {

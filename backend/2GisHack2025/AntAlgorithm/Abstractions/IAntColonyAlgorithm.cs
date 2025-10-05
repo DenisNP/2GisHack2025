@@ -1,4 +1,7 @@
-﻿namespace AntAlgorithm.Abstractions;
+﻿using and.Models;
+using Path = and.Models.Path;
+
+namespace AntAlgorithm.Abstractions;
 
 public interface IAntColonyAlgorithm
 {

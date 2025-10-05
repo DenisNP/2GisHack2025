@@ -18,4 +18,10 @@
       <ProjectReference Include="..\AntAlgorithm\AntAlgorithm.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="and.Models">
+        <HintPath>bin\Debug\net9.0\and.Models.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>

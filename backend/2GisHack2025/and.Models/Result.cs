@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
-using AntAlgorithm;
+
+namespace and.Models;
 
 [JsonSerializable(typeof(Result))]
 public class Result

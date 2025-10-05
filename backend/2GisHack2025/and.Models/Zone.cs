@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace AntAlgorithm;
+namespace and.Models;
 
 public class Zone
 {

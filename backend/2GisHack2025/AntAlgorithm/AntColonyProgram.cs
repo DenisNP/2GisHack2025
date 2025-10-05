@@ -7,7 +7,7 @@
 // Free parameters are alpha, beta, rho, and Q. Hard-coded constants limit min and max
 // values of pheromones.
 
-namespace AntColony
+namespace AntAlgorithm
 {
     internal class AntColonyProgram
     {

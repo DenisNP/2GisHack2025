@@ -1,11 +1,10 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using and.Models;
 using AntAlgorithm;
-using AntAlgorithm.Abstractions;
 using GraphGeneration;
+using GraphGeneration.Models;
 using VoronatorSharp;
-using Path = AntAlgorithm.Path;
 
 namespace WebApplication2;
 
@@ -33,4 +32,8 @@ public static class GraphGen
 
         return new List<ResultEdge>();
     }
+}
+
+public class ResultEdge
+{
 }

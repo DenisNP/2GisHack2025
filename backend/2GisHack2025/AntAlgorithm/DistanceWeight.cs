@@ -1,4 +1,6 @@
-﻿namespace AntAlgorithm;
+﻿using and.Models;
+
+namespace AntAlgorithm;
 
 internal class DistanceWeight
 {

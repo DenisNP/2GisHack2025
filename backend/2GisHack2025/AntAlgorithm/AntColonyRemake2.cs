@@ -1,6 +1,7 @@
 ﻿using and.Models;
-using GraphGeneration;
+using AntAlgorithm.SvgGen;
 using Microsoft.Extensions.Options;
+using Path = and.Models.Path;
 
 namespace AntAlgorithm;
 
@@ -39,9 +40,9 @@ public class AntColonyAlgorithm2
     private readonly double _gamma;
     private readonly double _evaporation;
     private readonly double _q;
-    private int _maxAntSteps = 300;
+    private int _maxAntSteps = 400;
 
-    private int _antCount = 500;
+    private int _antCount = 10000;
 
     public AntColonyAlgorithm2(IOptions<AntColonyConfiguration> configuration)
     {
@@ -74,8 +75,8 @@ public class AntColonyAlgorithm2
             var key1 = (edge.From.Id, edge.To.Id);
             var key2 = (edge.To.Id, edge.From.Id);
             
-            _pheromones[key1] = 0;
-            _pheromones[key2] = 0;
+            _pheromones[key1] = 0.1;
+            _pheromones[key2] = 0.1;
         }
     }
 
@@ -116,19 +117,23 @@ public class AntColonyAlgorithm2
             var pheromoneKey = (current.Id, neighbor.Id);
             var pheromone = _pheromones.ContainsKey(pheromoneKey) ? _pheromones[pheromoneKey] : 0.1;
 
-            var calculatedDistance = CalculateDistance(neighbor, endPoi);
+            var calculatedDistanceToEnd = CalculateDistance(neighbor, endPoi);
+            
+            var calculateDistanceTonNeighbor =  CalculateDistance(current, neighbor);
 
             // if (calculatedDistance <= HexagonalGridGenerator.CalculateExpectedHexDistance(2) * 2)
             // {
             //     calculatedDistance = HexagonalGridGenerator.CalculateExpectedHexDistance(2);
             // }
 
-            var distance = (1.0 / calculatedDistance);
+            var distanceToEnd = (1.0 / calculatedDistanceToEnd);
+            var distanceToNeighbor = (1.0 / calculateDistanceTonNeighbor);
             
             //var weight = GetWeightValue(neighbor);
             
             var probability = Math.Pow(pheromone, _alpha) * 
-                            Math.Pow(distance, _beta);
+                            Math.Pow(distanceToEnd, _beta) * 
+                            Math.Pow(distanceToNeighbor, _gamma);
             
             probabilities[neighbor] = probability;
             total += probability;
@@ -194,7 +199,7 @@ public class AntColonyAlgorithm2
         return list[_random.Next(list.Count)];
     }
 
-    public List<Ant> Run(Edge[] edges, int moveCount = 1000, int maxIterations = 500)
+    public List<Ant> Run(Edge[] edges, int moveCount = 1000, int maxIterations = 10000)
     {
         //var moveCount2 = 1000;
         _edges = edges;
@@ -217,7 +222,7 @@ public class AntColonyAlgorithm2
             UpdatePheromones(ants);
 
             // Испарение феромонов
-            EvaporatePheromones();
+            //EvaporatePheromones();
             
             if (ants.All(a => a.Completed || a.VisitedPois.Count >= moveCount))
                 break;
@@ -357,8 +362,6 @@ public class AntColonyAlgorithm2
 
     private double CalculatePathQuality(Ant ant)
     {
-        if (ant.VisitedPois.Count < 2) return double.MaxValue;
-        
         double totalDistance = 0;
         for (var i = 0; i < ant.VisitedPois.Count - 1; i++)
         {

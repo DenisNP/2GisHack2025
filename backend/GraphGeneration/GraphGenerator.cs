@@ -1,12 +1,11 @@
 ﻿using System.Text;
-using AntAlgorithm;
+using and.Models;
 using GraphGeneration.A;
 using GraphGeneration.Filters;
 using GraphGeneration.Geometry;
-using NetTopologySuite.Geometries;
+using GraphGeneration.Models;
 using QuickGraph;
 using VoronatorSharp;
-using Point = NetTopologySuite.Geometries.Point;
 
 namespace GraphGeneration;
 

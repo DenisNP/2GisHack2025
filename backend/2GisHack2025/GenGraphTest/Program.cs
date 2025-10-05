@@ -1,7 +1,8 @@
 ﻿using System.Text;
 using System.Text.Json;
-using AntAlgorithm;
+using and.Models;
 using GraphGeneration;
+using GraphGeneration.Models;
 using VoronatorSharp;
 
 var polygons = new List<ZonePolygon>
@@ -35,10 +36,10 @@ var rr = new PolygonGenerator().GeneratePolygonsWithPois(4, 6);
 
 var ff = JsonSerializer.Serialize(new InputData()
 {
-    Pois = rr.pois.Select(dd=> new Poi() { Id = dd.Id, Weight = dd.Weight, Point = new AntAlgorithm.Point() { X = dd.X, Y = dd.Y}}).ToArray(),
+    Pois = rr.pois.Select(dd=> new Poi() { Id = dd.Id, Weight = dd.Weight, Point = new Point() { X = dd.X, Y = dd.Y}}).ToArray(),
     Zones = rr.polygons.Select(ee => new Zone()
     {
-        Region = ee.Vertices.Select(dd => new AntAlgorithm.Point() { X = dd.X, Y = dd.Y}).ToArray(),
+        Region = ee.Vertices.Select(dd => new Point() { X = dd.X, Y = dd.Y}).ToArray(),
         ZoneType = ee.Type,
     }).ToArray(),
 });

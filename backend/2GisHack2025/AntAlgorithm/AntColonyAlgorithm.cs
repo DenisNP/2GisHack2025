@@ -1,5 +1,7 @@
-﻿using AntAlgorithm.Abstractions;
+﻿using and.Models;
+using AntAlgorithm.Abstractions;
 using Microsoft.Extensions.Options;
+using Path = and.Models.Path;
 
 namespace AntAlgorithm;
 

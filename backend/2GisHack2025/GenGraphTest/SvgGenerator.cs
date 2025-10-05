@@ -1,7 +1,8 @@
 ﻿using System.Text;
 using and.Models;
-using AntAlgorithm;
-using Path = AntAlgorithm.Path;
+using Path = and.Models.Path;
+
+namespace GenGraphTest;
 
 public class SvgGenerator
 {
@@ -39,7 +40,7 @@ public class SvgGenerator
             var strokeWidth = CalculateStrokeWidth(edge.To.Weight, edges);
             var strokeColor = CalculateStrokeColor(edge.To.Weight, edges);
             var lineLength = GetLength(edge.From.Point.X, edge.To.Point.X, 
-                                     edge.From.Point.Y, edge.To.Point.Y);
+                edge.From.Point.Y, edge.To.Point.Y);
 
             svgContent.AppendLine($@"<g>
     <line
