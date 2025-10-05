@@ -158,7 +158,7 @@ public class LightGraphGenerator
         File.WriteAllText("short_graph.svg", svgShortGraph, Encoding.UTF8);
 #endif        
 
-        return originEdges.ToArray();
+        return originEdges.Where(e => e.Weight > 0).ToArray();
     }
 
     private static IEnumerable<(GeomPoint, GeomPoint)> GeneratePoiPairs(List<GeomPoint> pois)
