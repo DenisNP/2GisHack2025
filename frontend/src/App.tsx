@@ -29,7 +29,7 @@ import {
 import { useZones } from './hooks/useZones';
 import { useUnit } from 'effector-react';
 import { events } from './stores/globalState';
-import { useSaveRestoreZones } from './hooks/useSaveRestoreZones';
+import { useSaveRestoreState } from './hooks/useSaveRestoreState';
 
 // Компонент-обертка для управления видимостью панели
 const PanelWrapper: React.FC<{ 
@@ -63,8 +63,8 @@ function App() {
         setUrbanZones,
         setBaseZones,
     } = useZones();
-    
-    const {saveZones, restoreZones} = useSaveRestoreZones()
+
+    const {saveCurrentState, restoreState} = useSaveRestoreState()
 
     // Состояние для открытой панели
     const [openPanel, setOpenPanel] = useState<string | null>(null);
@@ -237,8 +237,8 @@ function App() {
                     }}
                 >
                     <Button onClick={getJson}>GET JSON</Button>
-                    <Button onClick={saveZones}>SAVE ZONES</Button>
-                    <Button onClick={restoreZones}>RESTORE ZONES</Button>
+                    <Button onClick={saveCurrentState}>SAVE CURRENT STATE</Button>
+                    <Button onClick={restoreState}>RESTORE STATE</Button>
                     <Mapgl />
                 </Box>
             </Box>

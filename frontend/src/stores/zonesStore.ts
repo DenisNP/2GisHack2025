@@ -1,4 +1,4 @@
-import { combine, createEffect, createEvent, createStore, restore, sample } from "effector";
+import { combine, createEvent, createStore, restore, sample } from "effector";
 import { ZoneData } from "../components/ZoneDrawer";
 import { Zone, ZoneType } from "../types/Zone";
 import { MapStore, stores as mapStores } from "./mapStore";
@@ -12,15 +12,6 @@ type AddZoneProps = {
     coords: GeoPoint[] 
 }
 
-type AllZones = {
-    availabelZones: ZoneData[],
-    restrictedZones: ZoneData[],
-    urbanZones: ZoneData[],
-    baseZones: ZoneData[],
-}
-
-const SAVED_ZONES_KEY = "saved_zones";
-
 const setAvailableZones = createEvent<ZoneData[]>()
 const addAvailabelZone = createEvent<ZoneData>()
 const setRestrictedZones = createEvent<ZoneData[]>()
@@ -32,53 +23,7 @@ const addBaseZone = createEvent<ZoneData>()
 const incrementZoneId = createEvent<void>()
 const setNewId = createEvent<number>()
 const addZone = createEvent<AddZoneProps>()
-const saveZones = createEvent()
-const restoreZones = createEvent()
 const clearAllZones = createEvent()
-
-const saveZonesFx = createEffect((allZones: AllZones) => {
-    try {
-        localStorage.setItem(SAVED_ZONES_KEY, JSON.stringify(allZones));
-        console.log('Zones saved to localStorage:', allZones);
-    } catch (error) {
-        console.error('Failed to save zones to localStorage:', error);
-        throw error;
-    }
-})
-
-const restoreZonesFx = createEffect(() => {
-    try {
-        const savedData = localStorage.getItem(SAVED_ZONES_KEY);
-        
-        if (savedData) {
-            const zones: AllZones = JSON.parse(savedData);
-            console.log('Zones loaded from localStorage:', zones);
-            
-            // Загружаем зоны из localStorage
-            setAvailableZones(zones.availabelZones || []);
-            setRestrictedZones(zones.restrictedZones || []);
-            setUrbanZones(zones.urbanZones || []);
-            setBaseZones(zones.baseZones || []);
-            
-            // Находим максимальный ID среди всех зон и устанавливаем следующий
-            const allIds = [
-                ...(zones.availabelZones || []).map(z => z.id),
-                ...(zones.restrictedZones || []).map(z => z.id),
-                ...(zones.urbanZones || []).map(z => z.id),
-                ...(zones.baseZones || []).map(z => z.id)
-            ];
-            const maxId = allIds.length > 0 ? Math.max(...allIds) : 0;
-            setNewId(maxId + 1);
-            
-            console.log('Zones restored successfully');
-        } else {
-            console.log('No saved zones found in localStorage');
-        }
-    } catch (error) {
-        console.error('Failed to restore zones from localStorage:', error);
-        throw error;
-    }
-})
 
 const $availableZones = restore(setAvailableZones, []).on(addAvailabelZone, (state, zone) => [
     ...state,
@@ -162,17 +107,6 @@ sample({
 })
 
 sample({
-    clock: saveZones,
-    source: {availabelZones: $availableZones, restrictedZones: $restrictedZones, urbanZones: $urbanZones, baseZones: $baseZones},
-    target: saveZonesFx
-})
-
-sample({
-    clock: restoreZones,
-    target: restoreZonesFx
-})
-
-sample({
     clock: setBaseZones,
     filter: (zones)=> zones.length === 0,
     target: clearAllZones
@@ -208,6 +142,5 @@ export const events = {
     setBaseZones,
     incrementZoneId,
     addZone,
-    saveZones,
-    restoreZones
+    setNewId
 }
