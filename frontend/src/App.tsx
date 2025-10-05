@@ -69,8 +69,8 @@ function App() {
     // Состояние для открытой панели
     const [openPanel, setOpenPanel] = useState<string | null>(null);
 
-    const sidebarWidth = 80; // Ширина узкой боковой панели
-    const drawerWidth = 400; // Ширина выезжающей панели
+    const sidebarWidth = 100; // Ширина узкой боковой панели
+    const drawerWidth = 320; // Ширина выезжающей панели
 
     const menuItems = [
         { 
@@ -133,7 +133,7 @@ function App() {
                                         onClick={() => handleMenuClick(item.id)}
                                         disabled={item.id !== ZoneType.None && !hasBaseZone}
                                         sx={{
-                                            width: 60,
+                                            width: 80,
                                             height: 60,
                                             borderRadius: 2,
                                             backgroundColor: openPanel === item.id ? item.color : 'transparent',
@@ -147,8 +147,19 @@ function App() {
                                         }}
                                     >
                                         <item.icon />
-                                        <Typography variant="caption" sx={{ fontSize: '10px', lineHeight: 1 }}>
-                                            {item.label.split(' ')[0]}
+                                        <Typography 
+                                            variant="caption" 
+                                            sx={{ 
+                                                fontSize: '9px', 
+                                                lineHeight: 1, 
+                                                textAlign: 'center',
+                                                maxWidth: '76px',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            {item.label.length > 12 ? item.label.split(' ')[0] : item.label}
                                         </Typography>
                                     </IconButton>
                                 </Tooltip>
