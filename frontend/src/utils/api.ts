@@ -6,7 +6,7 @@ const API_ENDPOINT = 'https://catalog.api.2gis.com/3.0/items';
 const API_LOCALE = 'ru_RU';
 const API_FIELDS = 'items.point,items.caption,items.links,items.links.database_entrances,items.geometry.hover,items.rubrics';
 const API_TYPE = 'branch,building,station_platform,station.metro,station_entrance';
-const API_PAGE_SIZE = 20;
+const API_PAGE_SIZE = Number(process.env.REACT_APP_2GIS_PAGE_SIZE) || 10;
 
 /**
  * Выполняет GET запрос к API 2GIS каталога с фиксированными параметрами
