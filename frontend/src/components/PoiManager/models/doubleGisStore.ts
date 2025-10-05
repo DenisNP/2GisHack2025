@@ -1,14 +1,16 @@
-import { fetchJsonFromApi } from '../../utils/api';
-import { ApiItem } from '../../types/ApiResponse';
-import { parseWktPolygon, parseWktPoint, parseWktMultiPolygon } from '../../utils/wkt';
-import { GeoPoint } from '../../types/GeoPoint';
-import { typeByRubric } from './PoiManager.constants';
-import { events } from './models';
-import { PoiType } from '../../types/Poi';
-import { geoPointInMainRegion } from '../../utils/pointInRegion';
-import { events as zoneEvents } from '../../stores/zonesStore';
-import { ZoneType } from '../../types/Zone';
-import { geoDistance } from '../../utils/getDistance';
+import { createEffect, createEvent, sample } from "effector";
+import { ApiItem } from "../../../types/ApiResponse";
+import { PoiType } from "../../../types/Poi";
+import { GeoPoint } from "../../../types/GeoPoint";
+import { events as poiEvents } from './';
+import { events as zoneEvents } from '../../../stores/zonesStore';
+import { geoDistance } from "../../../utils/getDistance";
+import { geoPointInMainRegion } from "../../../utils/pointInRegion";
+import { typeByRubric } from "../PoiManager.constants";
+import { parseWktMultiPolygon, parseWktPoint, parseWktPolygon } from "../../../utils/wkt";
+import { ZoneType } from "../../../types/Zone";
+import { fetchJsonFromApi } from "../../../utils/api";
+
 
 const MAX_SIZE_ZONE_IN_METERS = 4
 
@@ -72,7 +74,7 @@ async function processBranch(item: ApiItem): Promise<void> {
     };
     
     // Добавляем POI через store
-    events.addPoi({
+    poiEvents.addPoi({
         geoPoint,
         type: poiType
     });
@@ -141,7 +143,7 @@ async function processBuilding(item: ApiItem): Promise<void> {
                     }
                     
                     // Добавляем POI с типом Low
-                    events.addPoi({
+                    poiEvents.addPoi({
                         geoPoint: entranceGeoPoint,
                         type: PoiType.Low
                     });
@@ -164,7 +166,7 @@ async function processStation(item: ApiItem): Promise<void> {
     };
     
     // Добавляем POI с типом High
-    events.addPoi({
+    poiEvents.addPoi({
         geoPoint,
         type: PoiType.High
     });
@@ -196,11 +198,7 @@ async function processItem(item: ApiItem): Promise<void> {
     }
 }
 
-/**
- * Запускает цепочку загрузок из API постранично
- * Начинает с первой страницы и продолжает пока не получит null
- */
-export async function loadAllPages(): Promise<void> {
+const loadDataInternal = async () => {
     console.log('Начало загрузки POI из 2GIS API...');
     let currentPage = 1;
     let totalItems = 0;
@@ -227,4 +225,33 @@ export async function loadAllPages(): Promise<void> {
     }
     
     console.log(`Загрузка завершена. Обработано страниц: ${currentPage - 1}, элементов: ${totalItems}`);
+}
+
+const loadData = createEvent();
+
+const loadDataFx = createEffect(async() => {
+    let isSuccess = true
+    try
+    {
+        await loadDataInternal()
+    }
+    catch
+    {
+        isSuccess = false
+    }
+
+    return isSuccess;
+})
+
+sample({
+    clock: loadData,
+    target: loadDataFx
+})
+
+export const events = {
+    loadData
+}
+
+export const stores = {
+    $isLoadingData: loadDataFx.pending
 }

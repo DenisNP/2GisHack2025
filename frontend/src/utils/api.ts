@@ -76,7 +76,7 @@ export async function fetchJsonFromApi(page?: number): Promise<ApiResponse | nul
 
         return data;
     } catch (error) {
-        console.error('Ошибка при парсинге ответа API:', error);
-        return null;
+        console.log(`Ошибка при парсинге ответа API: ${error}`);
+        throw new Error('Ошибка при парсинге ответа API');
     }
 }

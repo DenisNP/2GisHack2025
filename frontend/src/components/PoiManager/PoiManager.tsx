@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useMapglContext } from '../../MapglContext';
 import { useUnit } from 'effector-react';
 import { stores, events } from './models';
+import { stores as gisStores, events as gisEvents} from "./models/doubleGisStore"
 import { Poi, PoiType } from '../../types/Poi';
 import { 
     Groups as GroupsIcon, 
@@ -13,9 +14,8 @@ import {
     Info as InfoIcon,
     Warning as WarningIcon
 } from '@mui/icons-material';
-import { Typography, Button, Stack, Alert, Divider } from '@mui/material';
+import { Typography, Button, Stack, Alert, Divider, CircularProgress } from '@mui/material';
 import './PoiManager.css';
-import { loadAllPages } from './apiLoader';
 
 // Вспомогательная функция для получения anchor (точка привязки к карте)
 // Размеры должны соответствовать CSS
@@ -29,16 +29,13 @@ const getAnchor = (type: PoiType): [number, number] => {
 
 export function PoiManager() {
     const { mapglInstance, mapgl } = useMapglContext();
-    const store = useUnit(stores.$store);
+    const [store, isLoadingGisData, loadGisData] = useUnit([stores.$store, gisStores.$isLoadingData, gisEvents.loadData]);
     
     // Режим добавления POI
     const [addingMode, setAddingMode] = useState<PoiType | null>(null);
     
     // Режим удаления POI
     const [isDeletionMode, setIsDeletionMode] = useState(false);
-    
-    // Состояние загрузки из API
-    const [isLoading, setIsLoading] = useState(false);
     
     // Храним ссылки на маркеры POI
     const markersRef = useRef<Array<{ id: number; marker: any }>>([]);
@@ -155,18 +152,6 @@ export function PoiManager() {
         }
     };
     
-    // Обработчик загрузки из API
-    const handleLoadFromApi = async () => {
-        setIsLoading(true);
-        try {
-            await loadAllPages();
-        } catch (error) {
-            console.error('Ошибка при загрузке из API:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
     return (
         <Stack spacing={1} className="poi-manager-panel">
             <Typography variant="groupHeader">
@@ -204,12 +189,18 @@ export function PoiManager() {
                 Загрузка из API
             </Typography>
             <Button
-                onClick={handleLoadFromApi}
+                onClick={loadGisData}
                 variant="success"
-                startIcon={<CloudDownloadIcon />}
-                disabled={isLoading}
+                startIcon={
+                    isLoadingGisData ? (
+                        <CircularProgress size={20} color="inherit" />
+                    ) : (
+                        <CloudDownloadIcon />
+                    )
+                }
+                disabled={isLoadingGisData}
             >
-                {isLoading ? 'Загрузка...' : 'Загрузить POI из 2GIS'}
+                {isLoadingGisData ? 'Загрузка...' : 'Загрузить POI из 2GIS'}
             </Button>
 
             <Divider />
