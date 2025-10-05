@@ -153,7 +153,7 @@ sample({
 
 sample({
     clock: setBaseZones,
-    filter: (zones)=> zones.length === 0,
+    filter: (zones)=> zones.length !== 0,
     fn: (zones)=> zones[0].coords[0],
     target: mapEvents.setOrigin
 })
