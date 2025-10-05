@@ -5,9 +5,9 @@ using NetTopologySuite.Geometries;
 
 namespace GraphGeneration;
 
-public static class GenerateMultiPolygonGraph
+public static class GenerateEdgesGraphDeprecate
 {
-    public static Edge[] GenerateMultiPolygonGraphSvg(
+    public static Edge[] GetEdges(
         List<NetTopologySuite.Geometries.Polygon> restricts,
         Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon,
         Delaunator delaunator,

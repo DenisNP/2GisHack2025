@@ -4,9 +4,9 @@ using VoronatorSharp;
 
 namespace GraphGeneration.A;
 
-public static class VoronoiPathFinder
+public static class QuickPathFinder
 {
-    public static List<Vector2> FindPath(AdjacencyGraph<Vector2, Edge<Vector2>> graph, Vector2 start, Vector2 end)
+    public static IEnumerable<Vector2> FindPath(AdjacencyGraph<Vector2, Edge<Vector2>> graph, Vector2 start, Vector2 end)
     {
         // Функция стоимости (евклидово расстояние)
         double EdgeCost(Edge<Vector2> edge) => Vector2.Distance(edge.Source, edge.Target);
@@ -21,9 +21,9 @@ public static class VoronoiPathFinder
             // // Находим путь
             // astar.Compute(start);
             
-            if (tryGetPath(end, out IEnumerable<Edge<Vector2>> path))
+            if (tryGetPath(end, out var path))
             {
-                return path.Select(edge => edge.Target).Prepend(start).ToList();
+                return path.Select(edge => edge.Target).Prepend(start);
             }
         }
         catch (Exception ex)

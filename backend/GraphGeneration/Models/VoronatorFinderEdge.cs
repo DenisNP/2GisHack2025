@@ -15,6 +15,8 @@ public class VoronatorFinderEdge : IEdge<Vector2>
         Target = v2;
     }
     
+    public IEnumerable<Vector2> Points => [Source, Target];
+    
     public Vector2 Source { get; set; }
     public Vector2 Target { get; set; }
         

@@ -2,8 +2,6 @@
 
 namespace GraphGeneration;
 
-
-
 public class PolygonGenerator
 {
     private Random _random;

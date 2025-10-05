@@ -46,7 +46,7 @@ public static class GraphGenerator
                 ignore.Add(polygonPoints);
         }
         
-        var svgContent = GenerateMultiPolygonGraph.GenerateMultiPolygonGraphSvg(ignore, pointsByPolygon, voronator.Delaunator, settings.HexSize);
+        var svgContent = GenerateEdgesGraphDeprecate.GetEdges(ignore, pointsByPolygon, voronator.Delaunator, settings.HexSize);
 
         return svgContent;
     }
@@ -73,7 +73,8 @@ public static class GraphGenerator
         
         var pointsByPolygon = new Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>>();
 
-        var ignore  = new List<NetTopologySuite.Geometries.Polygon>();
+        var ignore  = new List<NetTopologySuite.Geometries.Polygon>(polygons.Count);
+        var allowed  = new List<NetTopologySuite.Geometries.Polygon>(polygons.Count);
         foreach (var polygon in polygons)
         {
             var polygonPoints = new NetTopologySuite.Geometries.Polygon(new LinearRing(
@@ -82,33 +83,41 @@ public static class GraphGenerator
             
             if (polygon.Zone == ZoneType.Restricted)
                 ignore.Add(polygonPoints);
+            else
+            {
+                allowed.Add(polygonPoints);
+            }
         }
         
-        var graph = VoronoiGraphAdapter.ConvertToQuickGraph(ignore, voronator, settings.HexSize);
-        var svgOriginGraph = GenerateSvg3.GenerateMultiPolygonGraphSvg(pointsByPolygon, graph.Vertices.ToArray(), graph.Edges.ToArray(), 25, settings.HexSize);
+        var graph = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(ignore, allowed, voronator, settings.HexSize);
+        var originPoints = graph.Vertices.ToArray();
+        var originEdges = graph.Edges.ToArray();
+        var svgOriginGraph = GenerateSvg.Generate(pointsByPolygon, originPoints, originEdges, 25);
         File.WriteAllText("origin_graph.svg", svgOriginGraph, Encoding.UTF8);
 
-        // var shortPaths = UniquePairsLinq.GetUniquePairsLinq(poi)
-        //     .SelectMany(pair => VoronoiPathFinder.FindPath(graph, pair.Item1, pair.Item2))
+        // var shortPaths = PointPairsHelper.GetUniquePairs(poi)
+        //     .SelectMany(pair => QuickPathFinder.FindPath(graph, pair.Item1, pair.Item2))
         //     .ToList();
 
-        var shortPaths = Enumerable.Empty<Vector2>();
-        var shortEdges = Enumerable.Empty<IEdge<Vector2>>();
-        foreach (var pair in UniquePairsLinq.GetUniquePairsLinq(poi))
+        var shortPathPoint = new List<Vector2>(originPoints.Length);
+        var shortEdges = new List<IEdge<Vector2>>(originEdges.Length);
+        foreach (var pair in PointPairsHelper.GetUniquePairs(poi))
         {
-            var shortPath = VoronoiPathFinder.FindPath(graph, pair.Item1, pair.Item2);
-            shortPaths = shortPaths.Concat(shortPath);
-            shortEdges = shortEdges.Concat(UniquePairsLinq.GetEdges(shortPath));
+            var shortPath = QuickPathFinder
+                .FindPath(graph, pair.Item1, pair.Item2)
+                .ToList();
+            shortPathPoint.AddRange(shortPath);
+            shortEdges.AddRange(PointPairsHelper.GetEdges(shortPath));
         }
 
-        var filteredPoints = shortPaths.ToArray();
+        // var filteredPoints = shortPathPoint.ToArray();
         
-        var svgShortPaths = GenerateSvg.GenerateFilteredSvg(ignore, pointsByPolygon, filteredPoints, shortEdges.ToArray(), 25, settings.HexSize);
+        var svgShortPaths = GenerateFilteredSvg.Generate(ignore, allowed, pointsByPolygon, shortPathPoint, shortEdges, 25, settings.HexSize);
         File.WriteAllText("short_paths.svg", svgShortPaths, Encoding.UTF8);
         
-        var (edges, points) = VoronatorFilter.Get(ignore, voronator, settings.HexSize, filteredPoints);
+        var (edges, points) = VoronatorNeighborsRecover.Get(ignore, allowed, voronator, settings.HexSize, shortPathPoint);
         
-        var svgFilteredGraph = GenerateSvg3.GenerateMultiPolygonGraphSvg(pointsByPolygon, points, edges, 25, settings.HexSize);
+        var svgFilteredGraph = GenerateSvg.Generate(pointsByPolygon, points, edges, 25);
         File.WriteAllText("filtered_graph.svg", svgFilteredGraph, Encoding.UTF8);
 
         return edges

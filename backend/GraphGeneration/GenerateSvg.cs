@@ -8,13 +8,11 @@ namespace GraphGeneration;
 
 public static class GenerateSvg
 {
-    public static string GenerateFilteredSvg(
-        List<NetTopologySuite.Geometries.Polygon> ignore,
+    public static string Generate(
         Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon,
         IReadOnlyCollection<Vector2> points,
         IReadOnlyCollection<IEdge<Vector2>> edges,
-        double scale,
-        float hexSize)
+        double scale)
     {
         // Вычисляем общие границы всех полигонов
         var overallEnvelope = new Envelope();
@@ -26,7 +24,7 @@ public static class GenerateSvg
         var width = overallEnvelope.Width;
         var height = overallEnvelope.Height;
 
-        var padding = 20;
+        var padding = 30;
         var svgWidth = (int)(width * scale) + padding * 2;
         var svgHeight = (int)(height * scale) + padding * 2;
 
@@ -62,41 +60,12 @@ public static class GenerateSvg
 
         // Рисуем граф Делоне
         svg.AppendLine("<g class=\"graph-edges\">");
-
-        var sr = HexagonalGridGenerator.CalculateExpectedHexDistance(hexSize);
+        var allPoints = pointsByPolygon.Values.SelectMany(x => x).ToList();
 
         foreach (var triangle in edges)
         {
                 var t1 = triangle.Source;
                 var t2 = triangle.Target;
-
-                if (sr * 2 < Vector2.Distance(t1, t2))
-                {
-                    continue;
-                }
-
-                // Создаем геометрическое представление ребра
-                var lineString = new LineString([
-                    new Coordinate(t1.x, t1.y),
-                    new Coordinate(t2.x, t2.y)
-                ]);
-                
-                // Проверяем, пересекает ли ребро любой из игнорируемых полигонов
-                var intersectsIgnoredPolygon = false;
-                foreach (var polygon in ignore)
-                {
-                    if (lineString.Crosses(polygon) || polygon.Contains(lineString))
-                    {
-                        intersectsIgnoredPolygon = true;
-                        break;
-                    }
-                }
-                
-                // Если ребро пересекает игнорируемый полигон, пропускаем его
-                if (intersectsIgnoredPolygon)
-                {
-                    continue;
-                }
 
                 // Определяем, является ли ребро межполигональным
                 // var polygon1 = GetPointPolygon(new Point(t1.x, t1.y), pointsByPolygon);
@@ -138,36 +107,17 @@ public static class GenerateSvg
         {
             var (x, y) = Transform(point.X, point.Y);
 
-            var lineString = new Point(point.X, point.Y);
-
-            // Проверяем, пересекает ли ребро любой из игнорируемых полигонов
-            var intersectsIgnoredPolygon = false;
-            foreach (var polygon in ignore)
-            {
-                if (lineString.Crosses(polygon) || polygon.Contains(lineString))
-                {
-                    intersectsIgnoredPolygon = true;
-                    break;
-                }
-            }
-
-            // Если ребро пересекает игнорируемый полигон, пропускаем его
-            if (intersectsIgnoredPolygon)
-            {
-                continue;
-            }
-
             // Определяем цвет и размер в зависимости от веса
             var fillColor = "#d32f2f"; // красный по умолчанию
-            double radius = 2; // размер по умолчанию
+            double radius = 10; // размер по умолчанию
 
             if (point.Weight == 0)
             {
-                fillColor = "#666666"; // серый для нулевого веса
+                fillColor = "#008000";
             }
             else
             {
-                radius = 10; // увеличенный размер для узлов с весом
+                radius = 20; // увеличенный размер для узлов с весом
             }
 
             svg.AppendLine($@"<circle cx=""{x}"" cy=""{y}"" r=""{radius}"" fill=""{fillColor}""/>");
@@ -176,12 +126,12 @@ public static class GenerateSvg
         svg.AppendLine("</g>");
 
         // Информация
-        var totalPoints = points.Count;
-        // var totalEdges = triangles.Count() * 3 / 2;
+        var totalPoints = allPoints.Count;
+        var totalEdges = edges.Count;
         // var crossPolygonEdges = CountCrossPolygonEdges(triangles, pointsByPolygon);
 
         svg.AppendLine($@"<text x=""{padding}"" y=""{padding - 5}"" class=""info"">");
-        svg.AppendLine($"Полигоны: {pointsByPolygon.Keys.Count}, Точки: {totalPoints}, Ребра: {edges.Count}");
+        svg.AppendLine($"Полигоны: {pointsByPolygon.Keys.Count}, Точки: {totalPoints}, Ребра: {totalEdges}");
         svg.AppendLine($@"</text>");
 
         svg.AppendLine($@"<text x=""{padding}"" y=""{padding + 15}"" class=""info"">");
@@ -192,7 +142,7 @@ public static class GenerateSvg
         return svg.ToString();
     }
 
-// Вспомогательные функции
+    // Вспомогательные функции
     static NetTopologySuite.Geometries.Polygon? GetPointPolygon(Point point,
         Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon)
     {
