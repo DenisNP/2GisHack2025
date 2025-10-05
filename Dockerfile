@@ -2,7 +2,17 @@
 FROM node:24 as BUILD_CLIENT
 COPY ./frontend /app
 WORKDIR /app
-RUN npm install -g yarn
+
+# Объявляем ARG с значениями из переменных окружения хоста
+ARG REACT_APP_MAPGL_API_KEY
+ARG REACT_APP_MAPGL_STYLE_ID
+ARG REACT_APP_2GIS_PAGE_SIZE
+
+# Устанавливаем переменные окружения для сборки React
+ENV REACT_APP_MAPGL_API_KEY=$REACT_APP_MAPGL_API_KEY
+ENV REACT_APP_MAPGL_STYLE_ID=$REACT_APP_MAPGL_STYLE_ID
+ENV REACT_APP_2GIS_PAGE_SIZE=$REACT_APP_2GIS_PAGE_SIZE
+
 RUN yarn install
 RUN yarn build
 
@@ -21,5 +31,5 @@ COPY --from=BUILD_SERVER /app/2GisHack2025/AntAlgorightm.WebApi/out .
 COPY --from=BUILD_CLIENT /app/build /app/wwwroot
 
 # run
-EXPOSE 5070
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "AntAlgorightm.WebApi.dll"]
