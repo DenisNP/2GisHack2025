@@ -157,7 +157,7 @@ public static class GenerateSvg
         svg.AppendLine("<g class=\"graph-nodes\">");
         foreach (var point in points)
         {
-            if (point.Influence <= 1)
+            if (!point.Show)
             {
                 continue;
             }

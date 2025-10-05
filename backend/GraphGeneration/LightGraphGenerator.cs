@@ -88,7 +88,9 @@ public class LightGraphGenerator
             var n = GetNeighbours(p.Item1, originEdges);
             return n.Any(x => x.Id == p.Item2.Id);
         });
-        //int iterations = 5;
+        //int iterations = 2;
+
+        var pointsByPairs = new Dictionary<int, List<GeomPoint>>();
 
         //while (iterations-- > 0)
         //{
@@ -99,6 +101,8 @@ public class LightGraphGenerator
                     continue;
                 }
 
+                var pairId = GetPairId(pair);
+                
                 List<GeomPoint> shortPath = QuickPathFinder
                     .FindPath(originEdges, originPoints, pair.Item1, pair.Item2)
                     .ToList();
@@ -110,7 +114,13 @@ public class LightGraphGenerator
                     {
                         p.Influence += 1;
                     }*/
-                    p.AddPath(pair.Item1, pair.Item2);
+                    //p.AddPath(pair.Item1, pair.Item2);
+                    p.Influence++;
+                    if (!pointsByPairs.ContainsKey(pairId))
+                    {
+                        pointsByPairs.Add(pairId, []);
+                    }
+                    pointsByPairs[pairId].Add(p);
                     /*var neighbors = GetNeighbours(p, originEdges);
                     foreach (GeomPoint np in neighbors)
                     {
@@ -119,28 +129,13 @@ public class LightGraphGenerator
                 });
             }
 
-            // Нормируем
-            double maxInfluence = originPoints.Max(v => v.Influence);
-            if (maxInfluence > 0)
+            foreach (KeyValuePair<int, List<GeomPoint>> pair in pointsByPairs)
             {
-                foreach (GeomPoint graph2Vertex in originPoints)
+                var count = pair.Value.Count(p => p.Influence > 1);
+                if (count > 0.65 * pair.Value.Count)
                 {
-                    //graph2Vertex.Influence /= maxInfluence;
+                    pair.Value.ForEach(p => p.Show = true);
                 }
-            }
-
-            // теперь добавляем рёбрам веса по концам
-            foreach (GeomEdge graph2Edge in originEdges)
-            {
-                if (graph2Edge.From.Influence > 0 && graph2Edge.To.Influence > 0)
-                {
-                    // graph2Edge.SetWeight();
-                }
-            }
-            // сбрасываем
-            foreach (GeomPoint graph2Vertex in originPoints)
-            {
-                //graph2Vertex.Influence /= 2;
             }
             
 /*#if DEBUG
@@ -160,6 +155,15 @@ public class LightGraphGenerator
 #endif        
 
         return originPoints.Where(e => e.Influence > 0).ToArray();
+    }
+
+    private static int GetPairId((GeomPoint, GeomPoint) pair)
+    {
+        var minp = pair.Item1.Id < pair.Item2.Id ? pair.Item1.Id : pair.Item2.Id;
+        var maxp = minp == pair.Item1.Id ? pair.Item2.Id : pair.Item1.Id;
+
+        var combined = minp * 10000 + maxp;
+        return combined;
     }
 
     private static IEnumerable<(GeomPoint, GeomPoint)> GeneratePoiPairs(List<GeomPoint> pois)

@@ -9,7 +9,8 @@ public class GeomPoint
     public double X { get; set; }
     public double Y { get; set; }
     public double Weight { get; set; }
-    public int Influence => Paths.Count;
+    public int Influence { get; set; }
+    public bool Show { get; set; }
 
     public Vector2 AsVector2() => new Vector2((float)X, (float)Y);
     public bool IsPoi => Weight > 0;
@@ -44,7 +45,6 @@ public class GeomEdge : IEdge<GeomPoint>
     public double Cost()
     {
         var dist = Vector2.Distance(Source.AsVector2(), Target.AsVector2());
-        //return Math.Max(0.1, dist * (1 - Weight / 1));
         return dist;
     }
 
