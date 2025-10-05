@@ -59,7 +59,7 @@ public class HexagonalGridGenerator
              
             for (var x = min.X + xOffset; x <= max.X; x += horizontalSpacing)
             {
-                float RandomNumber() => (float)(Random.Shared.NextDouble() * 0.5f) - 0.25f;
+                float RandomNumber() => (float)(Random.Shared.NextDouble() * hexSize) - hexSize / 2;
                 var point = new Vector2(maxId++, x + RandomNumber(), y + RandomNumber(), 0);
                 if (!zonePolygon.ContainsPoint(point) || zonePolygon.Type == ZoneType.Restricted)
                 {

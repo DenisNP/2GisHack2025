@@ -4,6 +4,7 @@ using GraphGeneration.A;
 using GraphGeneration.Filters;
 using GraphGeneration.Geometry;
 using GraphGeneration.Models;
+using NetTopologySuite.Geometries;
 using QuickGraph;
 using VoronatorSharp;
 
@@ -13,18 +14,22 @@ public class LightGraphGenerator
 {
     public static GeomPoint[] GenerateEdges(List<ZonePolygon> polygons, List<GeomPoint> poi)
     {
+        PolygonMap polygonMap = PolygonHelper.GetPolygonMap(polygons);
+        double avArea = polygonMap.Available.Sum(p => p.Area);
+        double side = Math.Sqrt(avArea);
+        Console.WriteLine("Total Area: " + avArea + "; side: " + side);
+        double hexSize = Math.Min(3f, Math.Max(0.5f, side / 200f));
+
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
         {
-            HexSize = 0.5f,
+            HexSize = (float)hexSize,
             Density = 1,
             UseConvexHull = false,
             AddPolygonVertices = false,
             AddEdgePoints = false,
             EdgePointSpacing = 2f
         };
-
-        PolygonMap polygonMap = PolygonHelper.GetPolygonMap(polygons);
         
         var poiFilter = new PointAllowedFilter(polygonMap.Render);
         List<GeomPoint> validPoi = poi.Where(p => !poiFilter.Skip(p.AsVector2())).ToList();
@@ -82,8 +87,9 @@ public class LightGraphGenerator
         
         // считаем кратчайшие расстояния
         //var graph2 = ConvertToQuickGraph(originEdges, originPoints);
-        var pairs = GeneratePoiPairs(originPoints.Where(p => p.IsPoi).ToList(), originEdges, out int uniqCount).ToList();
+        var pairs = GeneratePoiPairs(originPoints.Where(p => p.IsPoi).ToList(), originEdges, polygonMap, out int uniqCount).ToList();
         //int iterations = 2;
+        Console.WriteLine("Pairs: " + pairs.Count);
 
         var pointsByPairs = new Dictionary<int, List<GeomPoint>>();
 
@@ -91,17 +97,12 @@ public class LightGraphGenerator
         //{
             foreach ((GeomPoint, GeomPoint) pair in pairs)
             {
-                if (GetNeighbours(pair.Item1, originEdges).Any(n => n.Id == pair.Item2.Id))
-                {
-                    continue;
-                }
-
                 var pairId = GetPairId(pair);
                 
                 List<GeomPoint> shortPath = QuickPathFinder
                     .FindPath(originEdges, originPoints, pair.Item1, pair.Item2)
                     .ToList();
-                
+
                 // Прибавляем всем точкам пути влияния
                 shortPath.ForEach(p =>
                 {
@@ -125,13 +126,34 @@ public class LightGraphGenerator
             }
             //var totalPairs = pairs.Count;
             //var coeff = 0.8f * Math.Floor(totalPairs / (uniqCount * 1f));
-
-            foreach (KeyValuePair<int, List<GeomPoint>> pair in pointsByPairs)
+            for (int inc = 0; inc <= 20; inc += (inc / 10 + 1))
             {
-                var count = pair.Value.Count(p => p.Influence > 1);
-                if (count > 0.65 * pair.Value.Count)
+                int pathsCount = 0;
+                foreach (KeyValuePair<int, List<GeomPoint>> pair in pointsByPairs)
                 {
-                    pair.Value.ForEach(p => p.Show = true);
+                    var count = pair.Value.Count(p => p.Influence > inc);
+                    bool show = count > 0.65 * pair.Value.Count;
+                    if (show)
+                    {
+                        pair.Value.ForEach(p => p.Show = true);
+                        pathsCount++;
+                    }
+                }
+
+                Console.WriteLine("Increment: " + inc + "; paths: " + pathsCount);
+                if (inc == 0 && pathsCount > 5)
+                {
+                    originPoints.ForEach(p => p.Show = false);
+                    continue;
+                }
+
+                if (pathsCount <= Math.Sqrt(pairs.Count) * 10)
+                {
+                    break;
+                }
+                else
+                {
+                    originPoints.ForEach(p => p.Show = false);
                 }
             }
 
@@ -174,7 +196,7 @@ public class LightGraphGenerator
         }
     }
 
-    private static IEnumerable<(GeomPoint, GeomPoint)> GeneratePoiPairs(List<GeomPoint> pois, List<GeomEdge> edges, out int uniqCount)
+    private static IEnumerable<(GeomPoint, GeomPoint)> GeneratePoiPairs(List<GeomPoint> pois, List<GeomEdge> edges, PolygonMap polygonMap, out int uniqCount)
     {
         var pairs = GenerateUniqPairs(pois).ToList();
         pairs.RemoveAll(p =>
@@ -182,7 +204,19 @@ public class LightGraphGenerator
             var n = GetNeighbours(p.Item1, edges);
             return n.Any(x => x.Id == p.Item2.Id);
         });
-        
+        pairs.RemoveAll(p =>
+        {
+            var line = new LineString([new Coordinate(p.Item1.X, p.Item1.Y),  new Coordinate(p.Item2.X, p.Item2.Y)]);
+            foreach (Polygon polygon in polygonMap.Available)
+            {
+                if (line.Crosses(polygon))
+                {
+                    return false;
+                }
+            }
+            return true;
+        });
+
         uniqCount = pairs.Count;
         return pairs;
 
