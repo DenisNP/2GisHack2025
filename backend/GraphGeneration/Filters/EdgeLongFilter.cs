@@ -7,8 +7,8 @@ namespace GraphGeneration.Filters;
 public class EdgeLongFilter : IEdgeFilter 
 {
     private readonly PolygonMap _polygonMap;
-    private readonly float _hexSize;
-    private IPointFilter _pointFilter;
+    // private readonly float _hexSize;
+    // private IPointFilter _pointFilter;
     private readonly float _expectedDistance;
 
     public EdgeLongFilter(PolygonMap polygonMap, float hexSize)

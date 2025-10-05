@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using AntAlgorithm;
@@ -11,7 +12,7 @@ namespace WebApplication2;
 
 public static class GraphGen
 {
-    public static ResultEdge[] GetBestPath(Zone[] zones, Poi[] poi, IAntColonyAlgorithm algorithm)
+    public static IEnumerable<ResultEdge> GetBestPath(Zone[] zones, Poi[] poi, IAntColonyAlgorithm algorithm)
     {
         var maxId = poi.Max(p => p.Id);
         var polygons = zones
@@ -29,8 +30,14 @@ public static class GraphGen
 
         var edges = GraphGenerator.GenerateEdges(polygons, points);
 
-        algorithm.Run(edges.Edges);
 
-        return [];
+        return algorithm
+            .GetAllWays(edges.Edges)
+            .Select(e => new ResultEdge()
+            {
+                Weight = e.Weight,
+                From = e.From.Point,
+                To = e.To.Point,
+            });
     }
 }
