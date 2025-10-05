@@ -142,5 +142,6 @@ export const events = {
     setBaseZones,
     incrementZoneId,
     addZone,
-    setNewId
+    setNewId,
+    clearAllZones
 }

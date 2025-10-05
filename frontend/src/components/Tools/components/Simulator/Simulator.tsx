@@ -9,6 +9,7 @@ import {
     Box 
 } from "@mui/material"
 import { PlayArrow as PlayArrowIcon } from "@mui/icons-material"
+import { SimulationLines } from "./components/SimulationLines"
 
 export const Simulator : React.FC = () => {
     const [$canSimulate, $isSimulating, simulationResult, runSimulation] = useUnit([
@@ -75,5 +76,8 @@ export const Simulator : React.FC = () => {
                 </Alert>
             </Box>
         )}
+
+        {/* Компонент для рисования линий симуляции на карте */}
+        <SimulationLines />
     </Stack>
 }
