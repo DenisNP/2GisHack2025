@@ -1,6 +1,5 @@
 import { combine, createEffect, createEvent, createStore, restore, sample } from "effector";
 import { ZoneData } from "../components/ZoneDrawer";
-import { SidewalkData } from "../components/UrbanDrawer";
 import { Zone, ZoneType } from "../types/Zone";
 import { MapStore, stores as mapStores } from "./mapStore";
 import { projectPoint } from "../utils/pointsProjection";
@@ -30,7 +29,6 @@ const setUrbanZones = createEvent<ZoneData[]>()
 const addUrbanZone = createEvent<ZoneData>()
 const setBaseZones = createEvent<ZoneData[]>()
 const addBaseZone = createEvent<ZoneData>()
-const setSidewalks = createEvent<SidewalkData[]>()
 const incrementZoneId = createEvent<void>()
 const setNewId = createEvent<number>()
 const addZone = createEvent<AddZoneProps>()
@@ -94,7 +92,6 @@ const $urbanZones = restore(setUrbanZones, []).on(addUrbanZone, (state, zone) =>
 const $baseZones = restore(setBaseZones, []).on(addBaseZone, (state, zone) => [
     ...state,
     zone])
-const $sidewalks = restore(setSidewalks, [])
 const $newZoneId = createStore(1)
 .on(incrementZoneId, (state) => state + 1)
 .on(setNewId, (_, newId)=>newId);
@@ -115,8 +112,8 @@ const mapZoneData = (zoneData: ZoneData, zoneType: ZoneType, mapStore: MapStore)
     }
 }
 
-const $allZones = combine([$baseZones, $availableZones, $restrictedZones, $urbanZones, $sidewalks, mapStores.$mapStore], 
-    ([baseZones, availableZones, restrictedZones, urbanZonde, sidewalks, mapStore]) => {
+const $allZones = combine([$baseZones, $availableZones, $restrictedZones, $urbanZones, mapStores.$mapStore], 
+    ([baseZones, availableZones, restrictedZones, urbanZonde, mapStore]) => {
         if(!mapStore.map)
         {
             return [];
@@ -127,7 +124,6 @@ const $allZones = combine([$baseZones, $availableZones, $restrictedZones, $urban
         ...availableZones.map(x=>mapZoneData(x, ZoneType.Available, mapStore)), 
         ...restrictedZones.map(x=>mapZoneData(x, ZoneType.Restricted, mapStore)),
         ...urbanZonde.map(x=>mapZoneData(x, ZoneType.Urban, mapStore)),
-        ...sidewalks.map(x=>mapZoneData({id: x.id, coords: x.polygon}, ZoneType.Urban, mapStore))
     ]
 })
 
@@ -185,7 +181,7 @@ sample({
 sample({
     clock: clearAllZones,
     fn: () => [],
-    target: [setAvailableZones, setRestrictedZones, setUrbanZones, setSidewalks, poiEvents.removeAllPoi],
+    target: [setAvailableZones, setRestrictedZones, setUrbanZones, poiEvents.removeAllPoi],
 })
 
 sample({
@@ -200,7 +196,6 @@ export const stores = {
     $restrictedZones,
     $urbanZones,
     $baseZones,
-    $sidewalks,
     $allZones,
     $newZoneId,
     $hasBaseZone,
@@ -211,7 +206,6 @@ export const events = {
     setRestrictedZones,
     setUrbanZones,
     setBaseZones,
-    setSidewalks,
     incrementZoneId,
     addZone,
     saveZones,

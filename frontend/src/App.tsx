@@ -2,7 +2,6 @@ import './App.css';
 import React, { useState } from 'react';
 import Mapgl from './Mapgl';
 import { MapglContextProvider } from './MapglContext';
-import { UrbanDrawer } from './components/UrbanDrawer';
 import { ZoneDrawer } from './components/ZoneDrawer';
 import { ZoneType } from './types/Zone';
 import { PoiManager } from './components/PoiManager/PoiManager';
@@ -58,13 +57,12 @@ function App() {
         restrictedZones, 
         urbanZones,
         baseZones,
-        sidewalks, 
         hasBaseZone,
         setAvailableZones, 
         setRestrictedZones, 
         setUrbanZones,
         setBaseZones,
-        setSidewalks} = useZones();
+    } = useZones();
     
     const {saveZones, restoreZones} = useSaveRestoreZones()
 
@@ -96,12 +94,6 @@ function App() {
         { 
             id: ZoneType.Urban, 
             label: 'Общая зона', 
-            icon: DirectionsWalkIcon,
-            color: '#FFA500' 
-        },
-        { 
-            id: 'sidewalks', 
-            label: 'Тротуары', 
             icon: DirectionsWalkIcon,
             color: '#FFA500' 
         },
@@ -215,15 +207,6 @@ function App() {
                                     zones={urbanZones} 
                                     onZonesChanged={setUrbanZones}
                                     isActiveZone={ZoneType.Urban === openPanel}
-                                />
-                            </PanelWrapper>
-                            <PanelWrapper panelId="sidewalks" openPanel={openPanel}>
-                                <UrbanDrawer 
-                                    width={3} 
-                                    color='#FFD700' 
-                                    label='Тротуары' 
-                                    sidewalks={sidewalks} 
-                                    onSidewalksChanged={setSidewalks}
                                 />
                             </PanelWrapper>
                             <PanelWrapper panelId="poi" openPanel={openPanel}>

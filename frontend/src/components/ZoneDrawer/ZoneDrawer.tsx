@@ -12,6 +12,7 @@ import DeleteSweepOutlinedIcon from '@mui/icons-material/DeleteSweepOutlined';
 import TouchAppOutlinedIcon from '@mui/icons-material/TouchAppOutlined';
 import InfoIcon from '@mui/icons-material/Info';
 import WarningIcon from '@mui/icons-material/Warning';
+import { UrbanDrawer } from "./components/UrbanDrawer";
 
 // color helpers
 function clamp(v: number, lo = 0, hi = 255) { return Math.max(lo, Math.min(hi, Math.round(v))); }
@@ -71,12 +72,33 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, isActiveZone,
     const { mapglInstance, mapgl } = useMapglContext();
     const [isDrawing, setIsDrawing] = useState(false);
     const [isDeletionMode, setIsDeletionMode] = useState(false);
+    const [isSidewalkDrawing, setIsSidewalkDrawing] = useState(false); // состояние рисования тротуаров
     const [currentPoints, setCurrentPoints] = useState<GeoPoint[]>([]);
     const polygonsRef = useRef<Array<ZonePolygon>>([]);
     const getNewZoneId = useZoneId();
     const currentPointsRef = useRef<GeoPoint[]>([]);
     const currentZonesRef = useRef<ZoneData[]>([]);
 
+
+    // Колбэки для взаимодействия с UrbanDrawer
+    const handleSidewalkDrawingStart = useCallback(() => {
+        setIsSidewalkDrawing(true);
+        // Отменяем рисование зон при начале рисования тротуаров
+        if (isDrawing) {
+            setIsDrawing(false); 
+            setCurrentPoints([]);
+            if (tempLineRef.current) { try { tempLineRef.current.destroy(); } catch (e) {} tempLineRef.current = null; }
+            if (firstPointMarkerRef.current) {
+                try { if (firstPointHtmlRef.current && firstPointClickHandlerRef.current) { firstPointHtmlRef.current.removeEventListener('click', firstPointClickHandlerRef.current); } } catch (e) {}
+                try { firstPointMarkerRef.current.destroy(); } catch (e) {}
+                firstPointMarkerRef.current = null; firstPointHtmlRef.current = null; firstPointClickHandlerRef.current = null;
+            }
+        }
+    }, [isDrawing]);
+
+    const handleSidewalkDrawingCancel = useCallback(() => {
+        setIsSidewalkDrawing(false);
+    }, []);
 
     const colorRgb = parseHexColor(ZONE_TYPES_COLOR.get(type)!);
     const colorDerived = colorsFromRgb(colorRgb);
@@ -339,6 +361,7 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, isActiveZone,
         setCurrentPoints([]); 
         setIsDrawing(true); 
         setIsDeletionMode(false); // отключаем режим удаления при начале рисования
+        setIsSidewalkDrawing(false); // отменяем рисование тротуаров при начале рисования зон
     }
     
     function cancelDrawing() {
@@ -411,6 +434,12 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, isActiveZone,
                 disabled={!isDrawing}>
             Отменить
         </Button>
+        {type === ZoneType.Urban && <><Divider /><UrbanDrawer 
+            isActiveZone={isActiveZone}
+            onDrawingStart={handleSidewalkDrawingStart}
+            onDrawingCancel={handleSidewalkDrawingCancel}
+            shouldCancelDrawing={isDrawing && !isSidewalkDrawing}
+        /></>}
         {!isNoneType && (
             <>
                 <Divider />
