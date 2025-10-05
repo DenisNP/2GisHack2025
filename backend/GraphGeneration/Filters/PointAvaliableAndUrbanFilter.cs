@@ -19,7 +19,8 @@ public class PointAvaliableAndUrbanFilter :  IPointFilter
             
         if (_polygonMap.Urban.Any(p => p.Contains(lineString)))
         {
-            return !_polygonMap.Available.Any(p => p.Contains(lineString));
+            return false;
+            // return !_polygonMap.Available.Any(p => p.Contains(lineString));
         }
 
         return true;

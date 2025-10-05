@@ -73,10 +73,18 @@ public static class GraphGenerator
         var poiMaxId = validPoi.Max(p => p.Id);
         
         // Генерируем точки
+        var centersUrban = polygonMap
+            .Urban
+            .Where(u => polygonMap.Restricted.Any(u.Intersects)) // && !polygonMap.Available.Any(u.Crosses)
+            // .Select(u => new Vector2(poiMaxId++, (float)u.Centroid.X, (float)u.Centroid.Y, 0))
+            .SelectMany(u => HexagonalGridGenerator.GenerateHexagonalGridInPolygon(poiMaxId, new ZonePolygon(u, ZoneType.Urban), 4))
+            .ToList();
+        poiMaxId += centersUrban.Count;
         var generatedHexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(poiMaxId, polygonMap, settings);
+  
         
         // Создаем общую диаграмму Вороного/Делоне для всех точек
-        var voronator = new Voronator(generatedHexPoints.Concat(validPoi).ToArray());
+        var voronator = new Voronator(generatedHexPoints.Concat(validPoi).Concat(centersUrban).ToArray());
         
         // Строим граф для а*
         var graph = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator, settings.HexSize);
@@ -121,7 +129,6 @@ public static class GraphGenerator
         // рисуем воронова по стабильным точкам и коротким путям
         var svgVoronRecovered = GenerateSvg.Generate(polygonMap, originPoints2, originEdges2);
         File.WriteAllText("voron_recovered.svg", svgVoronRecovered, Encoding.UTF8);
-        
         
         // рисуем финальный граф
         // var svgFilteredGraph = GenerateSvg.Generate(polygonMap, points, edges);

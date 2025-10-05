@@ -2,6 +2,7 @@
 
 using System.Text.Json.Serialization;
 using AntAlgorithm;
+using NetTopologySuite.Geometries;
 using VoronatorSharp;
 
 namespace GraphGeneration;
@@ -15,6 +16,14 @@ public class ZonePolygon
     
     [JsonPropertyName("type")]
     public ZoneType Type { get; set; }
+    
+    public ZonePolygon(Polygon polygon, ZoneType type)
+    {
+        Vertices = polygon.Coordinates
+            .Select((i,v) => new Vector2() { Id = v, x = (float)i.X, y = (float)i.Y, Weight = 0 })
+            .ToList();
+        Type = type;
+    }
     
     public ZonePolygon(IEnumerable<Vector2> vertices, ZoneType type = ZoneType.Available)
     {
