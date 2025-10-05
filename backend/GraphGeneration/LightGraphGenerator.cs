@@ -82,12 +82,7 @@ public class LightGraphGenerator
         
         // считаем кратчайшие расстояния
         //var graph2 = ConvertToQuickGraph(originEdges, originPoints);
-        var pairs = GeneratePoiPairs(originPoints.Where(p => p.IsPoi).ToList()).ToList();
-        pairs.RemoveAll(p =>
-        {
-            var n = GetNeighbours(p.Item1, originEdges);
-            return n.Any(x => x.Id == p.Item2.Id);
-        });
+        var pairs = GeneratePoiPairs(originPoints.Where(p => p.IsPoi).ToList(), originEdges, out int uniqCount).ToList();
         //int iterations = 2;
 
         var pointsByPairs = new Dictionary<int, List<GeomPoint>>();
@@ -128,6 +123,8 @@ public class LightGraphGenerator
                     }*/
                 });
             }
+            //var totalPairs = pairs.Count;
+            //var coeff = Math.Floor(totalPairs / (uniqCount * 1f));
 
             foreach (KeyValuePair<int, List<GeomPoint>> pair in pointsByPairs)
             {
@@ -154,7 +151,7 @@ public class LightGraphGenerator
         File.WriteAllText("short_graph.svg", svgShortGraph, Encoding.UTF8);
 #endif        
 
-        return originPoints.Where(e => e.Influence > 0).ToArray();
+        return originPoints.Where(e => e.Show).ToArray();
     }
 
     private static int GetPairId((GeomPoint, GeomPoint) pair)
@@ -165,8 +162,8 @@ public class LightGraphGenerator
         var combined = minp * 10000 + maxp;
         return combined;
     }
-
-    private static IEnumerable<(GeomPoint, GeomPoint)> GeneratePoiPairs(List<GeomPoint> pois)
+    
+    private static IEnumerable<(GeomPoint, GeomPoint)> GenerateUniqPairs(List<GeomPoint> pois)
     {
         for (int i = 0; i < pois.Count; i++)
         {
@@ -175,6 +172,39 @@ public class LightGraphGenerator
                 yield return (pois.ElementAt(i), pois.ElementAt(j));
             }
         }
+    }
+
+    private static IEnumerable<(GeomPoint, GeomPoint)> GeneratePoiPairs(List<GeomPoint> pois, List<GeomEdge> edges, out int uniqCount)
+    {
+        var pairs = GenerateUniqPairs(pois).ToList();
+        pairs.RemoveAll(p =>
+        {
+            var n = GetNeighbours(p.Item1, edges);
+            return n.Any(x => x.Id == p.Item2.Id);
+        });
+        
+        uniqCount = pairs.Count;
+        return pairs;
+
+        var minWeight = pairs.Min(GetPairWeight);
+        var coeff = 1 / minWeight;
+        var counts = pairs.Select(p => (count: GetPairWeight(p) * coeff, pair: p)).ToList();
+        
+        var allPairs = new List<(GeomPoint, GeomPoint)>();
+        foreach (var pair in counts)
+        {
+            for (var i = 0; i < pair.count; i++)
+            {
+                allPairs.Add(pair.pair);
+            }
+        }
+        
+        return allPairs;
+    }
+
+    private static double GetPairWeight((GeomPoint, GeomPoint) pair)
+    {
+        return (pair.Item1.Weight + pair.Item2.Weight) / 2;
     }
 
     private static IEnumerable<GeomPoint> GetNeighbours(GeomPoint point, IEnumerable<GeomEdge> edges)
