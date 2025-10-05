@@ -8,6 +8,40 @@ import { PoiType } from '../../types/Poi';
 import { geoPointInMainRegion } from '../../utils/pointInRegion';
 import { events as zoneEvents } from '../../stores/zonesStore';
 import { ZoneType } from '../../types/Zone';
+import { geoDistance } from '../../utils/getDistance';
+
+const MAX_SIZE_ZONE_IN_METERS = 4
+
+/**
+ * Проверяет, является ли полигон маленьким (вписывается в прямоугольник с заданным размером в метрах)
+ */
+function isSmallPolygon(polygon: GeoPoint[], maxSizeMeters: number): boolean {
+    if (polygon.length === 0) return true;
+    
+    // Находим bounding box полигона
+    let minLng = polygon[0].lng;
+    let maxLng = polygon[0].lng;
+    let minLat = polygon[0].lat;
+    let maxLat = polygon[0].lat;
+    
+    for (const point of polygon) {
+        minLng = Math.min(minLng, point.lng);
+        maxLng = Math.max(maxLng, point.lng);
+        minLat = Math.min(minLat, point.lat);
+        maxLat = Math.max(maxLat, point.lat);
+    }
+    
+    // Вычисляем размеры bounding box в метрах
+    const topLeft: GeoPoint = { lng: minLng, lat: maxLat };
+    const topRight: GeoPoint = { lng: maxLng, lat: maxLat };
+    const bottomLeft: GeoPoint = { lng: minLng, lat: minLat };
+    
+    const widthMeters = geoDistance(topLeft, topRight);
+    const heightMeters = geoDistance(topLeft, bottomLeft);
+    
+    // Проверяем, что оба размера не превышают maxSizeMeters
+    return widthMeters <= maxSizeMeters && heightMeters <= maxSizeMeters;
+}
 
 /**
  * Проверяет, попадает ли item в главную зону по его координатам point
@@ -60,21 +94,29 @@ async function processBuilding(item: ApiItem): Promise<void> {
         if (hoverWkt.toUpperCase().startsWith('MULTIPOLYGON')) {
             const polygons = parseWktMultiPolygon(hoverWkt);
             
-            // Добавляем каждый полигон как Restricted зону
+            // Добавляем каждый полигон как Restricted зону, если он не маленький
             polygons.forEach((polygon) => {
-                zoneEvents.addZone({
-                    type: ZoneType.Restricted,
-                    coords: polygon
-                });
+                if (!isSmallPolygon(polygon, MAX_SIZE_ZONE_IN_METERS)) {
+                    zoneEvents.addZone({
+                        type: ZoneType.Restricted,
+                        coords: polygon
+                    });
+                } else {
+                    console.log(`Пропускаем маленький полигон (меньше ${MAX_SIZE_ZONE_IN_METERS}x${MAX_SIZE_ZONE_IN_METERS} метра)`);
+                }
             });
         } else if (hoverWkt.toUpperCase().startsWith('POLYGON')) {
             const geoPoints = parseWktPolygon(hoverWkt);
             
-            // Добавляем полигон как Restricted зону
-            zoneEvents.addZone({
-                type: ZoneType.Restricted,
-                coords: geoPoints
-            });
+            // Добавляем полигон как Restricted зону, если он не маленький
+            if (!isSmallPolygon(geoPoints, MAX_SIZE_ZONE_IN_METERS)) {
+                zoneEvents.addZone({
+                    type: ZoneType.Restricted,
+                    coords: geoPoints
+                });
+            } else {
+                console.log(`Пропускаем маленький полигон (меньше ${MAX_SIZE_ZONE_IN_METERS}x${MAX_SIZE_ZONE_IN_METERS} метра)`);
+            }
         } else {
             console.warn(`Неизвестный формат geometry.hover: ${hoverWkt.substring(0, 50)}...`);
             return;
