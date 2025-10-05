@@ -36,7 +36,6 @@ const addPoiFx = createEffect(({data, store, mapStore}: EffectProps<AddPoiEventD
             geoPoint: data.geoPoint,
             type: data.type,
         };
-
     // Иначе нужно оставить с более приоритетным типом
     } else {
         const nearestWeight = weightByType(nearest.type);
