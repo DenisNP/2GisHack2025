@@ -90,10 +90,12 @@ public static class GraphGenerator
         var graph = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator, settings.HexSize);
         var originPoints = graph.Vertices.ToArray();
         var originEdges = graph.Edges.ToArray();
-        
+
+#if DEBUG
         // рисуем исходный граф
         var svgOriginGraph = GenerateSvg.Generate(polygonMap, originPoints, originEdges);
         File.WriteAllText("origin_graph.svg", svgOriginGraph, Encoding.UTF8);
+#endif
 
         // ищем короткие пути между всеми парами POI
         var shortPathPoint = new List<Vector2>(originPoints.Length);
@@ -112,11 +114,12 @@ public static class GraphGenerator
                 shortEdges.Add(edge);
             }
         }
-        
+
+#if DEBUG
         // рисуем короткие пути
         var svgShortPaths = GenerateFilteredSvg.Generate(polygonMap, shortPathPoint, shortEdges, 25, settings.HexSize);
         File.WriteAllText("short_paths.svg", svgShortPaths, Encoding.UTF8);
-        
+#endif
         // восстанавливаем соседей
         // var (edges, points) = VoronatorNeighborsRecover.Get(polygonMap, voronator, settings.HexSize, shortPathPoint);
         
@@ -129,11 +132,13 @@ public static class GraphGenerator
         var graph2 = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator2, settings.HexSize);
         var originPoints2 = graph2.Vertices.ToArray();
         var originEdges2 = graph2.Edges.ToArray();
-        
+
+#if DEBUG
         // рисуем воронова по стабильным точкам и коротким путям
         var svgVoronRecovered = GenerateSvg.Generate(polygonMap, originPoints2, originEdges2);
         File.WriteAllText("voron_recovered.svg", svgVoronRecovered, Encoding.UTF8);
-        
+#endif
+
         // рисуем финальный граф
         // var svgFilteredGraph = GenerateSvg.Generate(polygonMap, points, edges);
         // File.WriteAllText("filtered_graph.svg", svgFilteredGraph, Encoding.UTF8);
