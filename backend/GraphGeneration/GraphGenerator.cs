@@ -106,28 +106,28 @@ public static class GraphGenerator
         File.WriteAllText("short_paths.svg", svgShortPaths, Encoding.UTF8);
         
         // восстанавливаем соседей
-        var (edges, points) = VoronatorNeighborsRecover.Get(polygonMap, voronator, settings.HexSize, shortPathPoint);
+        // var (edges, points) = VoronatorNeighborsRecover.Get(polygonMap, voronator, settings.HexSize, shortPathPoint);
         
         // смешиваем точки обогащенные соседями и точки с Urban+Available
         var urbanFilter = new PointAvaliableAndUrbanFilter(polygonMap);
-        ;
         var recoveredPoints = shortPathPoint.Concat(originPoints.Where(p => !urbanFilter.Skip(p))).ToList();
-        voronator = new Voronator(recoveredPoints);
-        // Строим граф для а*
-        graph = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator, settings.HexSize);
-        originPoints = graph.Vertices.ToArray();
-        originEdges = graph.Edges.ToArray();
+        
+        // Строим воронова по стабильным точкам и коротким путям
+        var voronator2 = new Voronator(recoveredPoints);
+        var graph2 = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator2, settings.HexSize);
+        var originPoints2 = graph2.Vertices.ToArray();
+        var originEdges2 = graph2.Edges.ToArray();
         
         // рисуем воронова по стабильным точкам и коротким путям
-        var svgVoronRecovered = GenerateSvg.Generate(polygonMap, originPoints, originEdges);
+        var svgVoronRecovered = GenerateSvg.Generate(polygonMap, originPoints2, originEdges2);
         File.WriteAllText("voron_recovered.svg", svgVoronRecovered, Encoding.UTF8);
         
         
         // рисуем финальный граф
-        var svgFilteredGraph = GenerateSvg.Generate(polygonMap, points, edges);
-        File.WriteAllText("filtered_graph.svg", svgFilteredGraph, Encoding.UTF8);
+        // var svgFilteredGraph = GenerateSvg.Generate(polygonMap, points, edges);
+        // File.WriteAllText("filtered_graph.svg", svgFilteredGraph, Encoding.UTF8);
 
-        var resultEdges = edges
+        var resultEdges = originEdges2
             .Select(e => new Edge(
                 new Poi(e.Source.Id, e.Source.X, e.Source.Y, e.Source.Weight),
                 new Poi(e.Target.Id, e.Target.X, e.Target.Y, e.Target.Weight))
