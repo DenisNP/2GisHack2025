@@ -42,7 +42,8 @@ public class EdgeInRestrictedFilter : IEdgeFilter
 
         if (_polygonMap.Restricted.Any(p => p.Crosses(lineString) || p.Contains(lineString)))
         {
-            var crossUrban = _polygonMap.Urban.Any(p => p.Crosses(lineString) || p.Contains(lineString));
+            // return true;
+            var crossUrban = _polygonMap.Urban.Any(p => p.Contains(lineString));
             // var anyPointInRestrict = _polygonMap.Restricted.Any(p => p.Contains(new Point(a.x, a.y)) || p.Contains(new Point(b.x, b.y)));
             var anyPointInRestrict = _pointFilter.Skip(a) || _pointFilter.Skip(b);
             return !crossUrban || anyPointInRestrict;
