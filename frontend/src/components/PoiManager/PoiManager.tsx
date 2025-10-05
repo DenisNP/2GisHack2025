@@ -3,15 +3,17 @@ import { useMapglContext } from '../../MapglContext';
 import { useUnit } from 'effector-react';
 import { stores, events } from './models';
 import { Poi, PoiType } from '../../types/Poi';
-import { convertToSnakeCase } from '../../utils/convertToSnakeCase';
 import { 
     Groups as GroupsIcon, 
     Person as PersonIcon, 
     PersonOutline as PersonOutlineIcon,
     TouchApp as TouchAppIcon,
     DeleteSweep as DeleteSweepIcon,
-    CloudDownload as CloudDownloadIcon
+    CloudDownload as CloudDownloadIcon,
+    Info as InfoIcon,
+    Warning as WarningIcon
 } from '@mui/icons-material';
+import { Typography, Button, Stack, Alert, Divider } from '@mui/material';
 import './PoiManager.css';
 import { loadAllPages } from './apiLoader';
 
@@ -166,68 +168,82 @@ export function PoiManager() {
     };
     
     return (
-        <div className="poi-manager-panel">
-            <div className="poi-manager-title">Добавить</div>
+        <Stack spacing={1} className="poi-manager-panel">
+            <Typography variant="groupHeader">
+                Добавить
+            </Typography>
 
-            <button
+            <Button
                 onClick={() => toggleAddingMode(PoiType.High)}
-                className={`poi-button poi-button-high ${addingMode === PoiType.High ? 'active' : ''}`}
+                variant={addingMode === PoiType.High ? "contained" : "outlined"}
+                startIcon={<GroupsIcon />}
+                className={`poi-button-high ${addingMode === PoiType.High ? 'active' : ''}`}
             >
-                <GroupsIcon style={{ marginRight: 8, fontSize: 20 }} />
                 Популярные точки интереса
-            </button>
-            <button
+            </Button>
+            <Button
                 onClick={() => toggleAddingMode(PoiType.Medium)}
-                className={`poi-button poi-button-medium ${addingMode === PoiType.Medium ? 'active' : ''}`}
+                variant={addingMode === PoiType.Medium ? "contained" : "outlined"}
+                startIcon={<PersonIcon />}
+                className={`poi-button-medium ${addingMode === PoiType.Medium ? 'active' : ''}`}
             >
-                <PersonIcon style={{ marginRight: 8, fontSize: 20 }} />
                 Обычные точки интереса
-            </button>
-            <button
+            </Button>
+            <Button
                 onClick={() => toggleAddingMode(PoiType.Low)}
-                className={`poi-button poi-button-low ${addingMode === PoiType.Low ? 'active' : ''}`}
+                variant={addingMode === PoiType.Low ? "contained" : "outlined"}
+                startIcon={<PersonOutlineIcon />}
+                className={`poi-button-low ${addingMode === PoiType.Low ? 'active' : ''}`}
             >
-                <PersonOutlineIcon style={{ marginRight: 8, fontSize: 20 }} />
                 Второстепенные точки интереса
-            </button>
+            </Button>
 
-            <div className="poi-manager-title" style={{ marginTop: 20 }}>Загрузка из API</div>
-            <button
+            
+            <Divider />
+            <Typography variant="groupHeader">
+                Загрузка из API
+            </Typography>
+            <Button
                 onClick={handleLoadFromApi}
-                className="poi-button poi-button-api"
+                variant="success"
+                startIcon={<CloudDownloadIcon />}
                 disabled={isLoading}
             >
-                <CloudDownloadIcon style={{ marginRight: 8, fontSize: 20 }} />
                 {isLoading ? 'Загрузка...' : 'Загрузить POI из 2GIS'}
-            </button>
+            </Button>
 
-            <div className="poi-manager-title" style={{ marginTop: 20 }}>Удалить</div>
-            <button
+            <Divider />
+            <Typography variant="groupHeader">
+                Удалить
+            </Typography>
+            <Button
                 onClick={toggleDeletionMode}
-                className={`poi-button poi-button-delete ${isDeletionMode ? 'active' : ''}`}
+                variant={isDeletionMode ? "contained" : "outlined"}
+                startIcon={<TouchAppIcon />}
+                color={isDeletionMode ? "error" : "neutral"}
             >
-                <TouchAppIcon style={{ marginRight: 8, fontSize: 20 }} />
-                {isDeletionMode ? '✓ Удаление по одной' : 'Удаление по одной'}
-            </button>
-            <button
+                Удаление по одной
+            </Button>
+            <Button
                 onClick={() => events.removeAllPoi()}
-                className="poi-button poi-button-delete-all"
+                variant="outlined"
+                startIcon={<DeleteSweepIcon />}
                 disabled={store.poi.length === 0}
+                color="error"
             >
-                <DeleteSweepIcon style={{ marginRight: 8, fontSize: 20 }} />
                 Удалить все POI
-            </button>
+            </Button>
             
             {addingMode && (
-                <div className="poi-hint">
-                    💡 Кликните на карту для добавления точки
-                </div>
+                <Alert severity="info" icon={<InfoIcon />}>
+                    Кликните на карту для добавления точки
+                </Alert>
             )}
             {isDeletionMode && (
-                <div className="poi-hint" style={{ color: '#d32f2f' }}>
-                    🗑️ Кликните на маркер для удаления
-                </div>
+                <Alert severity="warning" icon={<WarningIcon />}>
+                    Кликните на маркер для удаления
+                </Alert>
             )}
-        </div>
+        </Stack>
     );
 }
