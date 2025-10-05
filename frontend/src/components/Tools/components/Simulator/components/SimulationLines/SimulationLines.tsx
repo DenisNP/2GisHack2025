@@ -36,10 +36,11 @@ export const SimulationLines: React.FC = () => {
         simulationResult.forEach((point: ResultGeoPoint, index: number) => {
             try {
                 const html = document.createElement('div');
-                html.style.width = '8px';
-                html.style.height = '8px';
+                html.style.width = '6px';
+                html.style.height = '6px';
                 html.style.backgroundColor = POINT_COLOR; // коричневый цвет
                 html.style.borderRadius = '50%';
+                html.style.border = '1px solid rgba(255, 255, 255, 0.8)';
                 html.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.3)';
 
                 const marker = new (mapgl as any).HtmlMarker(mapglInstance, {
