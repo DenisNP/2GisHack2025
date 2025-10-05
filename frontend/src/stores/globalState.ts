@@ -1,17 +1,12 @@
 import {stores as zonesStore, events as zonesEvents} from "./zonesStore"
 import {stores as poiStores, events as poiEvents} from "../components/PoiManager/models"
 import { combine, createEffect, createEvent, createStore, sample } from "effector"
-import { Zone } from "../types/Zone"
-import { Poi } from "../types/Poi"
 import { convertToSnakeCase } from "../utils/convertToSnakeCase"
 import { getAdjustedPoi } from "../utils/getAdjustedPoi"
 import { ZoneData } from "../components/ZoneDrawer"
 import { AddPoiEventData } from "../components/PoiManager/PoiManager.types"
+import { RunSimulationRequest } from "../types/InternalApi"
 
-type GlobalStateProps = {
-    zones: Zone[],
-    poi: Poi[]
-}
 
 type AllZones = {
     availabelZones: ZoneData[],
@@ -84,7 +79,7 @@ const checkSavedStateFx = createEffect(() => {
 $hasSavedState.on(checkSavedStateFx.doneData, (_, isValid) => isValid);
 
 
-const getJsonFx = createEffect((state: GlobalStateProps)=>{
+const getJsonFx = createEffect((state: RunSimulationRequest)=>{
     var adjustedPoi = getAdjustedPoi(state.poi, state.zones);
     console.log(convertToSnakeCase(JSON.stringify({...state, poi: adjustedPoi}, null, 2)));
 })
@@ -130,7 +125,7 @@ const restoreStateFx = createEffect(() => {
     }
 })
 
-const $globalState = combine([zonesStore.$allZones, poiStores.$store], ([$allZones, poiStore]):GlobalStateProps => ({
+const $globalState = combine([zonesStore.$allZones, poiStores.$store], ([$allZones, poiStore]):RunSimulationRequest => ({
     zones: $allZones,
     poi: poiStore.poi
 }))
