@@ -16,3 +16,13 @@ public class ResultEdge
     [JsonPropertyName("weight")]
     public double Weight { get; set; }
 }
+
+public class ResultPoint
+{
+    [JsonPropertyName("x")]
+    public double X { get; set; }
+    [JsonPropertyName("y")]
+    public double Y { get; set; }
+    [JsonPropertyName("weight")]
+    public double Weight { get; set; }
+}

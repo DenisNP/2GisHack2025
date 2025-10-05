@@ -9,10 +9,20 @@ public class GeomPoint
     public double X { get; set; }
     public double Y { get; set; }
     public double Weight { get; set; }
-    public double Influence { get; set; }
+    public int Influence => Paths.Count;
 
     public Vector2 AsVector2() => new Vector2((float)X, (float)Y);
     public bool IsPoi => Weight > 0;
+    public Dictionary<int, bool> Paths { get; set; } = new();
+
+    public void AddPath(GeomPoint p1, GeomPoint p2)
+    {
+        var minp = p1.Id < p2.Id ? p1.Id : p2.Id;
+        var maxp = minp == p1.Id ? p2.Id : p1.Id;
+
+        var combined = minp * 10000 + maxp;
+        Paths.TryAdd(combined, true);
+    }
 }
 
 public class GeomEdge : IEdge<GeomPoint>
@@ -34,7 +44,12 @@ public class GeomEdge : IEdge<GeomPoint>
     public double Cost()
     {
         var dist = Vector2.Distance(Source.AsVector2(), Target.AsVector2());
-        return Math.Max(0.1, dist * (1 - Weight / 5));
+        //return Math.Max(0.1, dist * (1 - Weight / 1));
         return dist;
+    }
+
+    public void SetWeight()
+    {
+        Weight = From.Influence + To.Influence;
     }
 }

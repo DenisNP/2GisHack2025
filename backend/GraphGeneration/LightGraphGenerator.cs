@@ -11,12 +11,12 @@ namespace GraphGeneration;
 
 public class LightGraphGenerator
 {
-    public static GeomEdge[] GenerateEdges(List<ZonePolygon> polygons, List<GeomPoint> poi)
+    public static GeomPoint[] GenerateEdges(List<ZonePolygon> polygons, List<GeomPoint> poi)
     {
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
         {
-            HexSize = 0.75f,
+            HexSize = 0.5f,
             Density = 1,
             UseConvexHull = false,
             AddPolygonVertices = false,
@@ -57,7 +57,7 @@ public class LightGraphGenerator
                     X = v.X,
                     Y = v.Y,
                     Weight = 0,
-                    Influence = 0
+                    //Influence = 0
                 };
                 pointsByLocation.Add(v, p);
                 return p;
@@ -88,10 +88,10 @@ public class LightGraphGenerator
             var n = GetNeighbours(p.Item1, originEdges);
             return n.Any(x => x.Id == p.Item2.Id);
         });
-        int iterations = 5;
+        //int iterations = 5;
 
-        while (iterations-- > 0)
-        {
+        //while (iterations-- > 0)
+        //{
             foreach ((GeomPoint, GeomPoint) pair in pairs)
             {
                 if (GetNeighbours(pair.Item1, originEdges).Any(n => n.Id == pair.Item2.Id))
@@ -106,14 +106,15 @@ public class LightGraphGenerator
                 // Прибавляем всем точкам пути влияния
                 shortPath.ForEach(p =>
                 {
-                    if (p.Influence < 1)
+                    /*if (p.Influence < 3)
                     {
-                        p.Influence += 0.1;
-                    }
+                        p.Influence += 1;
+                    }*/
+                    p.AddPath(pair.Item1, pair.Item2);
                     /*var neighbors = GetNeighbours(p, originEdges);
                     foreach (GeomPoint np in neighbors)
                     {
-                        np.Influence += 0.025;
+                        np.Influence += 0.4;
                     }*/
                 });
             }
@@ -124,7 +125,7 @@ public class LightGraphGenerator
             {
                 foreach (GeomPoint graph2Vertex in originPoints)
                 {
-                    graph2Vertex.Influence /= maxInfluence;
+                    //graph2Vertex.Influence /= maxInfluence;
                 }
             }
 
@@ -133,24 +134,24 @@ public class LightGraphGenerator
             {
                 if (graph2Edge.From.Influence > 0 && graph2Edge.To.Influence > 0)
                 {
-                    graph2Edge.IncreaseWeight();
+                    // graph2Edge.SetWeight();
                 }
             }
             // сбрасываем
             foreach (GeomPoint graph2Vertex in originPoints)
             {
-                graph2Vertex.Influence /= 2;
+                //graph2Vertex.Influence /= 2;
             }
             
-#if DEBUG
+/*#if DEBUG
 
             Console.WriteLine(iterations);
             // рисуем исходный граф
             var svgShortGraph1 = GenerateSvg.Generate(polygonMap, originPoints.ToList(), originEdges.ToList());
             File.WriteAllText("short_graph"+iterations+".svg", svgShortGraph1, Encoding.UTF8);
 
-#endif  
-        }
+#endif  */
+        //}
         
 #if DEBUG
         // рисуем исходный граф
@@ -158,7 +159,7 @@ public class LightGraphGenerator
         File.WriteAllText("short_graph.svg", svgShortGraph, Encoding.UTF8);
 #endif        
 
-        return originEdges.Where(e => e.Weight > 0).ToArray();
+        return originPoints.Where(e => e.Influence > 0).ToArray();
     }
 
     private static IEnumerable<(GeomPoint, GeomPoint)> GeneratePoiPairs(List<GeomPoint> pois)

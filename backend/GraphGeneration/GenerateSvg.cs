@@ -107,7 +107,7 @@ public static class GenerateSvg
         var svg = new SvgBuilder(polygonMap.Render, scale);
 
         // Рисуем граф Делоне
-        svg.AppendLine("<g class=\"graph-edges\">");
+        /*svg.AppendLine("<g class=\"graph-edges\">");
         foreach (var triangle in edges)
         {
                 var t1 = triangle.From;
@@ -121,13 +121,13 @@ public static class GenerateSvg
                 var (x1, y1) = svg.Transform(t1.X, t1.Y);
                 var (x2, y2) = svg.Transform(t2.X, t2.Y);
 
-                if (triangle.Weight <= 0)
+                if (triangle.Weight <= 3)
                 {
                     continue;
                 }
 
                 // Вычисляем толщину линии в зависимости от веса (от 0.5 до 5)
-                var strokeWidth = Math.Max(0.5, Math.Min(20, 0.5 + triangle.Weight * 4.5));
+                var strokeWidth = Math.Max(0.5, Math.Min(20, 0.5 + triangle.Weight * 2.5));
 
                 // if (polygon1 == polygon2)
                     svg.AppendLine($@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" stroke=""#666"" stroke-width=""{strokeWidth.ToString(CultureInfo.InvariantCulture)}""/>");
@@ -136,7 +136,7 @@ public static class GenerateSvg
                 // svg.AppendLine($@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" class=""{"graph-edges"}""/>");
         }
 
-        svg.AppendLine("</g>");
+        svg.AppendLine("</g>");*/
 
         // Рисуем полигоны
         foreach (var polygon in polygonMap.Zones)
@@ -157,6 +157,10 @@ public static class GenerateSvg
         svg.AppendLine("<g class=\"graph-nodes\">");
         foreach (var point in points)
         {
+            if (point.Influence <= 1)
+            {
+                continue;
+            }
             var (x, y) =  svg.Transform(point.X, point.Y);
 
             // Определяем цвет и размер в зависимости от типа точки

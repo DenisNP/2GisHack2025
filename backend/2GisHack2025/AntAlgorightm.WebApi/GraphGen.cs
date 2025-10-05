@@ -43,7 +43,7 @@ public static class GraphGen
             });
     }
 
-    public static IEnumerable<ResultEdge> GetBestPath2(Zone[]  zones, Poi[] poi)
+    public static IEnumerable<ResultPoint> GetBestPath2(Zone[]  zones, Poi[] poi)
     {
         int maxId = poi.Max(p => p.Id);
         List<ZonePolygon> polygons = zones
@@ -62,19 +62,11 @@ public static class GraphGen
         IEnumerable<GeomPoint> points = poi.Select(pp => new GeomPoint { Id = pp.Id, X = pp.Point.X, Y = pp.Point.Y, Weight = pp.Weight });
         var edges = LightGraphGenerator.GenerateEdges(polygons, points.ToList());
 
-        return edges.Select(e => new ResultEdge
+        return edges.Select(e => new ResultPoint
         {
-            From = new Point
-            {
-                X = e.From.X,
-                Y = e.From.Y,
-            },
-            To = new Point
-            {
-                X = e.To.X,
-                Y = e.To.Y,
-            },
-            Weight = e.Weight,
+            X = e.X,
+            Y = e.Y,
+            Weight = e.Influence,
         });
     }
 }
