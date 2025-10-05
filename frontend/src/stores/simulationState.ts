@@ -24,20 +24,24 @@ export type ResultEdgeGeo = {
     weight: number
 }
 
+export type ResultGeoPoint = {
+    point: GeoPoint,
+    weight: number
+}
+
 const runSimulation = createEvent();
 
 const runSimulationFx = createEffect(async ({request, mapInfo: {origin, map}}: RunSimulationProps) => {
     let isSuccess = true;
-    let response: ResultEdgeGeo[] = [];
+    let response: ResultGeoPoint[] = [];
     try
     {
         var adjustedPoi = getAdjustedPoi(request.poi, request.zones);
         var apiResponse = await runSimulationApi({...request, poi: adjustedPoi});
 
-        response = apiResponse.map(x=>({
-            from: unprojectPoint(x.from, origin, map),
-            to: unprojectPoint(x.to, origin, map),
-            weight: x.weight
+        response = apiResponse.map(item=>({
+            point: unprojectPoint({x: item.x, y: item.y}, origin, map),
+            weight: item.weight
         }))
     }
     catch
@@ -48,7 +52,7 @@ const runSimulationFx = createEffect(async ({request, mapInfo: {origin, map}}: R
     return {isSuccess, response};
 });
 
-const $simulationResult = createStore<ResultEdgeGeo[]>([])
+const $simulationResult = createStore<ResultGeoPoint[]>([])
 .on(runSimulationFx.doneData, (state, result)=> {
     return result.isSuccess ? result.response : state
 })

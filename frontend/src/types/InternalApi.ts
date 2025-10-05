@@ -13,3 +13,9 @@ export interface ResultEdgeResponse {
     to: Point,
     weight: number
 }
+
+export interface RezultPointResponse {
+    x: number,
+    y: number,
+    weight: number
+}

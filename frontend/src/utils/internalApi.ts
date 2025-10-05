@@ -1,11 +1,11 @@
-import { RunSimulationRequest, ResultEdgeResponse } from "../types/InternalApi";
+import { RunSimulationRequest, RezultPointResponse } from "../types/InternalApi";
 import { convertToSnakeCase } from "./convertToSnakeCase";
 
 const RUN_SIMULATION = "/runSimulation"
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || ''
 
 
-export const runSimulationApi = async (request: RunSimulationRequest): Promise<ResultEdgeResponse[]> => {
+export const runSimulationApi = async (request: RunSimulationRequest): Promise<RezultPointResponse[]> => {
     try {
         const response = await fetch(`${SERVER_URL}${RUN_SIMULATION}`, {
             method: "POST",
