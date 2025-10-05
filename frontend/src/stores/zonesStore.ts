@@ -19,6 +19,11 @@ const addRestrictedZone = createEvent<ZoneData>()
 const setUrbanZones = createEvent<ZoneData[]>()
 const addUrbanZone = createEvent<ZoneData>()
 const setBaseZones = createEvent<ZoneData[]>()
+
+// События для управления состоянием рисования зон
+const setDrawingForZone = createEvent<{ zoneType: ZoneType; isDrawing: boolean }>();
+const cancelAllDrawing = createEvent();
+const setActiveZone = createEvent<ZoneType | null>();
 const addBaseZone = createEvent<ZoneData>()
 const incrementZoneId = createEvent<void>()
 const setNewId = createEvent<number>()
@@ -38,8 +43,36 @@ const $baseZones = restore(setBaseZones, []).on(addBaseZone, (state, zone) => [
     ...state,
     zone])
 const $newZoneId = createStore(1)
-.on(incrementZoneId, (state) => state + 1)
-.on(setNewId, (_, newId)=>newId);
+
+// Stores для управления состоянием рисования зон
+const $drawingStates = createStore<Record<ZoneType, boolean>>({
+    [ZoneType.None]: false,
+    [ZoneType.Available]: false,
+    [ZoneType.Restricted]: false,
+    [ZoneType.Urban]: false,
+});
+
+const $activeZone = createStore<ZoneType | null>(null);
+
+// Обновляем состояние рисования и активной зоны
+$drawingStates.on(setDrawingForZone, (state, { zoneType, isDrawing }) => ({
+    ...state,
+    [zoneType]: isDrawing
+}));
+
+$drawingStates.on(cancelAllDrawing, () => ({
+    [ZoneType.None]: false,
+    [ZoneType.Available]: false,
+    [ZoneType.Restricted]: false,
+    [ZoneType.Urban]: false,
+}));
+
+$activeZone.on(setActiveZone, (_, zoneType) => zoneType);
+
+// Обновляем ID зон
+$newZoneId
+    .on(incrementZoneId, (state) => state + 1)
+    .on(setNewId, (_, newId) => newId);
 
 const mapZoneData = (zoneData: ZoneData, zoneType: ZoneType, mapStore: MapStore): Zone => {
     if(!mapStore.map)
@@ -125,6 +158,24 @@ sample({
     target: mapEvents.setOrigin
 })
 
+// Логика управления рисованием при смене активной зоны
+sample({
+    clock: setActiveZone,
+    target: cancelAllDrawing
+});
+
+sample({
+    clock: setActiveZone,
+    source: { baseZones: $baseZones },
+    filter: (_, zoneType) => zoneType !== null,
+    fn: ({ baseZones }, zoneType) => {
+        // Проверяем можно ли рисовать (для None - только если нет зон)
+        const canDraw = zoneType !== ZoneType.None || baseZones.length === 0;
+        return { zoneType: zoneType!, isDrawing: canDraw };
+    },
+    target: setDrawingForZone
+});
+
 export const stores = {
     $availableZones,
     $restrictedZones,
@@ -133,6 +184,10 @@ export const stores = {
     $allZones,
     $newZoneId,
     $hasBaseZone,
+    $drawingStates,
+    $activeZone,
+    // Функция для получения состояния рисования конкретной зоны
+    getDrawingState: (zoneType: ZoneType) => $drawingStates.map(states => states[zoneType])
 }
 
 export const events = {
@@ -143,5 +198,8 @@ export const events = {
     incrementZoneId,
     addZone,
     setNewId,
-    clearAllZones
+    clearAllZones,
+    setDrawingForZone,
+    cancelAllDrawing,
+    setActiveZone
 }

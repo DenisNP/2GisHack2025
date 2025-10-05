@@ -6,6 +6,7 @@ import { getAdjustedPoi } from "../utils/getAdjustedPoi"
 import { ZoneData } from "../components/ZoneDrawer"
 import { AddPoiEventData } from "../components/PoiManager/PoiManager.types"
 import { RunSimulationRequest } from "../types/InternalApi"
+import { ZoneType } from "../types/Zone"
 
 
 type AllZones = {
@@ -22,10 +23,33 @@ type GlobalGeoStateProps = {
 
 const SAVED_STATE_KEY = "saved_state";
 
+// События для управления состоянием рисования
+const setActivePanel = createEvent<string | null>();
+
+// События для действий
 const getJson = createEvent();
 const saveCurrentState = createEvent();
 const restoreState = createEvent();
 const checkSavedState = createEvent(); // Новое событие для проверки
+
+// Store для активной панели
+const $activePanel = createStore<string | null>(null);
+
+// Обновляем активную панель
+$activePanel.on(setActivePanel, (_, panelId) => panelId);
+
+// При смене активной панели сообщаем zonesStore какая зона активна
+sample({
+    clock: setActivePanel,
+    fn: (panelId) => {
+        // Если панель это зона - передаем тип зоны, иначе null
+        if (panelId && Object.values(ZoneType).includes(panelId as ZoneType)) {
+            return panelId as ZoneType;
+        }
+        return null;
+    },
+    target: zonesEvents.setActiveZone
+});
 
 /**
  * Проверяет наличие и валидность сохраненного состояния в localStorage
@@ -182,12 +206,14 @@ sample({
 
 export const stores = {
     $globalState,
-    $hasSavedState
+    $hasSavedState,
+    $activePanel
 }
 
 export const events = {
     getJson,
     saveCurrentState,
     restoreState,
-    checkSavedState
+    checkSavedState,
+    setActivePanel
 }

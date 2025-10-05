@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState } from 'react';
+import React from 'react';
 import Mapgl from './Mapgl';
 import { MapglContextProvider } from './MapglContext';
 import { ZoneDrawer } from './components/ZoneDrawer';
@@ -29,6 +29,8 @@ import {
 import { useZones } from './hooks/useZones';
 import { Tools } from './components/Tools/Tools';
 import { NotificationProvider } from './components/NotificationProvider';
+import { useUnit } from 'effector-react';
+import { stores as globalStores, events as globalEvents } from './stores/globalState';
 
 // Компонент-обертка для управления видимостью панели
 const PanelWrapper: React.FC<{ 
@@ -62,8 +64,8 @@ function App() {
         setBaseZones,
     } = useZones();
 
-    // Состояние для открытой панели
-    const [openPanel, setOpenPanel] = useState<string | null>(null);
+    // Используем Effector store вместо useState
+    const openPanel = useUnit(globalStores.$activePanel);
 
     const sidebarWidth = 100; // Ширина узкой боковой панели
     const drawerWidth = 320; // Ширина выезжающей панели
@@ -108,7 +110,8 @@ function App() {
     ];
 
     const handleMenuClick = (itemId: string) => {
-        setOpenPanel(openPanel === itemId ? null : itemId);
+        const newPanel = openPanel === itemId ? null : itemId;
+        globalEvents.setActivePanel(newPanel);
     };
 
     return (
@@ -235,7 +238,7 @@ function App() {
                                     <Typography variant="h6">
                                         {menuItems.find(item => item.id === openPanel)?.label}
                                     </Typography>
-                                    <IconButton onClick={() => setOpenPanel(null)} size="small">
+                                    <IconButton onClick={() => globalEvents.setActivePanel(null)} size="small">
                                         <CloseIcon />
                                     </IconButton>
                                 </Stack>
