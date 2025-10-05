@@ -99,6 +99,7 @@ public static class GraphGenerator
         var shortPathPoint = new List<Vector2>(originPoints.Length);
         var shortEdges = new List<IEdge<Vector2>>(originEdges.Length);
         var maxLenPath = 0;
+        validPoi = originPoints.Where(p => p.IsPoi).ToList();
         foreach (var pair in PointPairsHelper.GetUniquePairs(validPoi))
         {
             var shortPath = QuickPathFinder
