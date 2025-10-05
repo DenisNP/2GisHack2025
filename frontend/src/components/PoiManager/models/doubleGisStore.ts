@@ -251,6 +251,7 @@ loadDataFx.doneData.watch((isSuccess) => {
             variant: "error",
             message: "Не удалось получить данные из справочника 2ГИС"
         })
+        return;
     }
 
     showNotification({

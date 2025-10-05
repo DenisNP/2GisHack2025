@@ -76,6 +76,7 @@ runSimulationFx.doneData.watch(({isSuccess}) => {
             variant: "error",
             message: "Не удалось выполнить симуляцию маршрутов"
         })
+        return;
     }
 
     showNotification({
