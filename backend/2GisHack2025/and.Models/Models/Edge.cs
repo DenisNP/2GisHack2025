@@ -3,6 +3,7 @@
 public class Edge
 {
     public Edge() {}
+    
     public Edge(Poi From , Poi To )
     {
         this.From = From;

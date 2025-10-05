@@ -47,9 +47,9 @@ app.UseHttpsRedirection();
 
 app.MapGet("/check", context => context.Response.WriteAsync("It works"));
 app.MapPost("/getAllWays", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetAllWays(edges, algorithm));
-app.MapPost("/getBestPath", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetBestPath(edges, algorithm));
-app.MapPost("/getBestPath2", (IAntColonyAlgorithm algorithm) => GetBestPath2(algorithm));
 app.MapPost("/getBestPath3", ([FromBody]InputData data, IAntColonyAlgorithm algorithm) => GraphGen.GetBestPath(data.Zones, data.Pois, algorithm));
+app.MapPost("/runSimulation", ([FromBody]InputData data, IAntColonyAlgorithm algorithm) => GraphGen.GetBestPath(data.Zones, data.Pois, algorithm));
+
 app.UseCors();
 app.Run();
 
@@ -57,43 +57,4 @@ app.Run();
 List<Result> GetAllWays(Edge[] edges, IAntColonyAlgorithm algorithm)
 {
     return algorithm.GetAllWays(edges);
-}
-
-Path GetBestPath(Edge[] edges, IAntColonyAlgorithm algorithm)
-{
-    return algorithm.GetBestWay(edges);
-}
-
-Path GetBestPath2(IAntColonyAlgorithm algorithm)
-{
-    var polygons = new List<ZonePolygon>
-    {
-        new ZonePolygon([
-            new Vector2(0, 0),
-            new Vector2(30, 0),
-            new Vector2(30, 30),
-            new Vector2(0, 30),
-            new Vector2(0, 0)
-        ]),
-        new ZonePolygon([
-            new Vector2(30, 10),  // Вплотную к первому полигону
-            new Vector2(50, 10),
-            new Vector2(40, 30),
-            new Vector2(30, 30),
-            new Vector2(30, 10)
-        ]),
-        new ZonePolygon([
-            new Vector2(10, 30),  // Вплотную к первому полигону
-            new Vector2(40, 30),
-            new Vector2(40, 50),
-            new Vector2(10, 50),
-            new Vector2(10, 30)
-        ])
-    };
-
-    List<Vector2> pois = [new Vector2(10001, 1, 2, 1), new Vector2(10002, 39, 18, 0.5)];
-
-    var result = GraphGenerator.GenerateEdges(polygons, pois);
-    
-    return new Path();
 }

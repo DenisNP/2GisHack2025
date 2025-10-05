@@ -11,7 +11,7 @@ namespace WebApplication2;
 
 public static class GraphGen
 {
-    public static Path GetBestPath(Zone[] zones, Poi[] poi, IAntColonyAlgorithm algorithm)
+    public static ResultEdge[] GetBestPath(Zone[] zones, Poi[] poi, IAntColonyAlgorithm algorithm)
     {
         var maxId = poi.Max(p => p.Id);
         var polygons = zones
@@ -29,6 +29,6 @@ public static class GraphGen
 
         var edges = GraphGenerator.GenerateEdges(polygons, points);
 
-        return new Path();
+        return [];
     }
 }
