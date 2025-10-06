@@ -6,9 +6,8 @@ using VoronatorSharp;
 
 namespace GraphGeneration;
 
-public class HexagonalGridGenerator
+public static class HexagonalGridGenerator
 {
-    
     public static float CalculateExpectedHexDistance(float hexSize)
     {
         // В гексагональной сетке есть два основных расстояния:

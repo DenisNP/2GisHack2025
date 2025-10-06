@@ -419,9 +419,9 @@ namespace VoronatorSharp
             }
             else
             {
-                var v0 = this.points[d.Hull[hi - 1]];
-                var v1 = this.points[d.Hull[hi]];
-                var v2 = this.points[d.Hull[hi + 1]];
+                var v0 = points[d.Hull[hi - 1]];
+                var v1 = points[d.Hull[hi]];
+                var v2 = points[d.Hull[hi + 1]];
                 var m1 = (v0 + v1) / 2;
                 var m2 = (v1 + v2) / 2;
                 var P = new List<Vector2>();

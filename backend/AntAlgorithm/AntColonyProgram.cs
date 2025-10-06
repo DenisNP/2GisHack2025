@@ -51,7 +51,7 @@ namespace AntColony
                 // initialize ants to random trails
                 ShowAnts(ants, dists);
 
-                int[] bestTrail = AntColonyProgram.BestTrail(ants, dists);
+                int[] bestTrail = BestTrail(ants, dists);
                 // determine the best initial trail
                 double bestLength = Length(bestTrail, dists);
                 // the length of the best trail
@@ -69,7 +69,7 @@ namespace AntColony
                     UpdateAnts(ants, pheromones, dists);
                     UpdatePheromones(pheromones, ants, dists);
 
-                    int[] currBestTrail = AntColonyProgram.BestTrail(ants, dists);
+                    int[] currBestTrail = BestTrail(ants, dists);
                     double currBestLength = Length(currBestTrail, dists);
                     if (currBestLength < bestLength)
                     {
@@ -317,7 +317,7 @@ namespace AntColony
                 {
                     for (int k = 0; k <= ants.Length - 1; k++)
                     {
-                        double length = AntColonyProgram.Length(ants[k], dists);
+                        double length = Length(ants[k], dists);
                         // length of ant k trail
                         double decrease = (1.0 - rho) * pheromones[i][j];
                         double increase = 0.0;

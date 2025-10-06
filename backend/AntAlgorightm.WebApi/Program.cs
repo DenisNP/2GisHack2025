@@ -1,15 +1,11 @@
-using System.Collections.Generic;
 using AntAlgorithm;
 using AntAlgorithm.Abstractions;
-using GraphGeneration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using VoronatorSharp;
 using WebApplication2;
-using Path = AntAlgorithm.Path;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,15 +42,8 @@ app.UseCors(policyBuilder => policyBuilder.AllowAnyOrigin().AllowAnyHeader().All
 app.UseHttpsRedirection();
 
 app.MapGet("/check", context => context.Response.WriteAsync("It works"));
-app.MapPost("/getAllWays", ([FromBody]Edge[] edges, IAntColonyAlgorithm algorithm) => GetAllWays(edges, algorithm));
 app.MapPost("/getBestPath3", ([FromBody]InputData data, IAntColonyAlgorithm algorithm) => GraphGen.GetBestPath(data.Zones, data.Pois, algorithm));
 app.MapPost("/runSimulation", ([FromBody]InputData data) => GraphGen.GetBestPath2(data.Zones, data.Pois));
 
 app.UseCors();
 app.Run();
-
-
-List<Result> GetAllWays(Edge[] edges, IAntColonyAlgorithm algorithm)
-{
-    return algorithm.GetAllWays(edges);
-}

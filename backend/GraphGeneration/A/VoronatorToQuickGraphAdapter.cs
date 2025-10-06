@@ -14,18 +14,6 @@ public class VoronatorToQuickGraphAdapter
     {
         var graph = new AdjacencyGraph<Vector2, Edge<Vector2>>();
 
-        // var pointFilter = new PointIgnoreFilter(ignore);
-        //
-        // // Добавляем все точки Voronoi как вершины
-        // foreach (var site in voronoi.Delaunator.Points)
-        // {
-        //     if (pointFilter.Skip(site))
-        //     {
-        //         continue;
-        //     }
-        //     graph.AddVertex(site);
-        // }
-
         var edgeFilter = new EdgeInRestrictedFilter(polygonMap, hexSize); 
         var points = new HashSet<Vector2>(voronoi.Delaunator.Points.Count);
 
@@ -52,11 +40,6 @@ public class VoronatorToQuickGraphAdapter
 
             graph.AddEdge(new Edge<Vector2>(edge.Item1, edge.Item2));
         }
-
-        // foreach (var point in points)
-        // {
-        //     graph.AddVertex(point);
-        // }
         
         return graph;
     }

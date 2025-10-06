@@ -1,14 +1,14 @@
-﻿using System.Text;
-using GraphGeneration.Filters;
+﻿using GraphGeneration.Filters;
 using GraphGeneration.Models;
 using GraphGeneration.Svg;
-using NetTopologySuite.Geometries;
 using QuickGraph;
 using VoronatorSharp;
-using Triangle = VoronatorSharp.Triangle;
 
 namespace GraphGeneration;
 
+/// <summary>
+/// При генерации Svg фильтрует ребра и точки в соответствии с Зонами.
+/// </summary>
 public static class GenerateFilteredSvg
 {
     public static string Generate(
@@ -20,8 +20,7 @@ public static class GenerateFilteredSvg
     {
         var svg = new SvgBuilder(polygonMap.Render, scale);
 
-
-        // Рисуем граф Делоне
+        // Рисуем граф 
         svg.AppendLine("<g class=\"graph-edges\">");
 
         var edgeFilter = new EdgeFakeFilter(polygonMap, hexSize); 
@@ -31,25 +30,15 @@ public static class GenerateFilteredSvg
                 var t1 = triangle.Source;
                 var t2 = triangle.Target;
 
-                // if (edgeFilter.Skip(t1, t2))
-                // {
-                //     continue;
-                // }
-
-                // Определяем, является ли ребро межполигональным
-                // var polygon1 = GetPointPolygon(new Point(t1.x, t1.y), pointsByPolygon);
-                // var polygon2 = GetPointPolygon(new Point(t2.x, t2.y), pointsByPolygon);
-                // var isCrossPolygon = polygon1 == polygon2 && (polygon2 != null || polygon1 != null);
+                if (edgeFilter.Skip(t1, t2))
+                {
+                    continue;
+                }
 
                 var (x1, y1) = svg.Transform(t1.X, t1.y);
                 var (x2, y2) = svg.Transform(t2.x, t2.y);
 
-                // if (polygon1 == polygon2)
-                    svg.AppendLine(
-                        $@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" class=""{"graph-edges"}""/>");
-
-                // string edgeClass = isCrossPolygon ? "cross-polygon-edges" : "graph-edges";
-                // svg.AppendLine($@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" class=""{"graph-edges"}""/>");
+                svg.AppendLine($@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" class=""{"graph-edges"}""/>");
         }
 
         svg.AppendLine("</g>");
@@ -100,50 +89,8 @@ public static class GenerateFilteredSvg
 
         // Информация
         var totalPoints = points.Count;
-        // var totalEdges = triangles.Count() * 3 / 2;
-        // var crossPolygonEdges = CountCrossPolygonEdges(triangles, pointsByPolygon);
-
         svg.AppendText($"Полигоны: {polygonMap.Zones.Count}, Точки: {totalPoints}, Ребра: {edges.Count}");
 
         return svg.ToString();
-    }
-
-// Вспомогательные функции
-    static NetTopologySuite.Geometries.Polygon? GetPointPolygon(Point point,
-        Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon)
-    {
-        foreach (var kvp in pointsByPolygon)
-        {
-            if (kvp.Value.Contains(point))
-                return kvp.Key;
-        }
-
-        return null;
-    }
-
-    private static int CountCrossPolygonEdges(
-        IEnumerable<Triangle> triangles,
-        Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon)
-    {
-        var count = 0;
-
-        foreach (var triangle in triangles)
-        {
-            for (var i = 0; i < 3; i++)
-            {
-                var tPoints = triangle.ToList();
-                var t1 = tPoints[i];
-                var t2 = tPoints[(i + 1) % 3];
-
-                // Определяем, является ли ребро межполигональным
-                var polygon1 = GetPointPolygon(new Point(t1.x, t1.y), pointsByPolygon);
-                var polygon2 = GetPointPolygon(new Point(t2.x, t2.y), pointsByPolygon);
-
-                if (polygon1 != polygon2)
-                    count++;
-            }
-        }
-
-        return count / 2; // Каждое ребро считается дважды
     }
 }

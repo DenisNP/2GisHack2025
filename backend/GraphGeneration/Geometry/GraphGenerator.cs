@@ -3,56 +3,13 @@ using AntAlgorithm;
 using GraphGeneration.A;
 using GraphGeneration.Filters;
 using GraphGeneration.Geometry;
-using NetTopologySuite.Geometries;
 using QuickGraph;
 using VoronatorSharp;
-using Point = NetTopologySuite.Geometries.Point;
 
 namespace GraphGeneration;
 
 public static class GraphGenerator
 {
-    // public static Edge[] Generate(List<ZonePolygon> polygons, List<Vector2> pois)
-    // {
-    //     // Настройки гексагонального заполнения
-    //     var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
-    //     {
-    //         HexSize = 4,
-    //         Density = 1,
-    //         UseConvexHull = false,
-    //         AddPolygonVertices = false,
-    //         AddEdgePoints = false,
-    //         EdgePointSpacing = 2f
-    //     };
-    //     
-    //     // Генерируем точки
-    //     var hexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(pois.Max(p=>p.Id), polygons.ToList(), settings);
-    //     
-    //     // Создаем общую диаграмму Вороного/Делоне для всех точек
-    //     // var vectorPoints = hexPoints.Select(p => new Vector2((float)p.X, (float)p.Y)).ToArray();
-    //     var voronator = new Voronator(hexPoints.Concat(pois).ToArray());
-    //
-    //     // var graphNodes = DelaunayGraph.BuildGraphFromDelaunay(voronator.Delaunator);
-    //
-    //     var pointsByPolygon = new Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>>();
-    //     
-    //     var ignore  = new List<NetTopologySuite.Geometries.Polygon>();
-    //
-    //     foreach (var polygon in polygons)
-    //     {
-    //         var polygonPoints = new NetTopologySuite.Geometries.Polygon(new LinearRing(
-    //             polygon.Vertices.Select(v => new Coordinate(v.X, v.Y)).ToArray()));
-    //         pointsByPolygon[polygonPoints] = polygon.Vertices.Select(v => new Point(v.X, v.Y)).ToList();
-    //         
-    //         if (polygon.Type == ZoneType.Restricted)
-    //             ignore.Add(polygonPoints);
-    //     }
-    //     
-    //     var svgContent = GenerateEdgesGraphDeprecate.GetEdges(ignore, pointsByPolygon, voronator.Delaunator, settings.HexSize);
-    //
-    //     return svgContent;
-    // }
-    
     public static (Edge[] Edges, HashSet<(Vector2, Vector2)> LongPaths, int MaxLenPath) GenerateEdges(List<ZonePolygon> polygons, List<Vector2> poi)
     {
         // Настройки гексагонального заполнения
@@ -122,10 +79,6 @@ public static class GraphGenerator
                 longPairs.Add((pair.Item2, pair.Item1));
             }
         }
-
-        // var start = new Vector2();
-        // var ends = new List<Vector2>();
-        // IEnumerable<Vector2> end = ends.Where(p => longPairs.Contains((start, p)));
 
 #if DEBUG
         // рисуем короткие пути

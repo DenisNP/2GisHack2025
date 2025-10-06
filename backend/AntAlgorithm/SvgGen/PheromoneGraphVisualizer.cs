@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 using System.Text;
-using and.Models;
 using AntAlgorithm;
 
 public class PheromoneGraphVisualizer

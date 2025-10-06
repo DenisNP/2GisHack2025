@@ -5,11 +5,11 @@ namespace GraphGeneration.Filters;
 
 public class EdgeCrossRestrictedFilter : IEdgeFilter
 {
-    private readonly IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> _ignore;
+    private readonly IReadOnlyCollection<Polygon> _ignore;
     private readonly float _expectedDistance;
     private readonly PointAllowedFilter _pointAllowedFilter;
 
-    public EdgeCrossRestrictedFilter(IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> allowed, IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> ignore, float hexSize)
+    public EdgeCrossRestrictedFilter(IReadOnlyCollection<Polygon> allowed, IReadOnlyCollection<Polygon> ignore, float hexSize)
     {
         _ignore = ignore;
         _expectedDistance = HexagonalGridGenerator.CalculateExpectedHexDistance(hexSize);
@@ -39,23 +39,6 @@ public class EdgeCrossRestrictedFilter : IEdgeFilter
             }
         }
         
-        // // Определяем, является ли ребро межполигональным
-        // var polygon1 = GetPointPolygon(new Point(t1.x, t1.y), pointsByPolygon);
-        // var polygon2 = GetPointPolygon(new Point(t2.x, t2.y), pointsByPolygon);
-        // var isCrossPolygon = polygon1 == polygon2 && (polygon2 != null || polygon1 != null);
-
         return (!a.IsPoi && _pointAllowedFilter.Skip(a)) || (!b.IsPoi && _pointAllowedFilter.Skip(b));
-    }
-
-    private static NetTopologySuite.Geometries.Polygon? GetPointPolygon(Point point,
-        Dictionary<NetTopologySuite.Geometries.Polygon, List<Point>> pointsByPolygon)
-    {
-        foreach (var kvp in pointsByPolygon)
-        {
-            if (kvp.Value.Contains(point))
-                return kvp.Key;
-        }
-
-        return null;
     }
 }

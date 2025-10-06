@@ -4,7 +4,7 @@ using VoronatorSharp;
 
 namespace GraphGeneration;
 
-public class HexagonalMultiPolygonGenerator
+public static class HexagonalMultiPolygonGenerator
 {
     public class HexagonalSettings
     {
@@ -50,52 +50,53 @@ public class HexagonalMultiPolygonGenerator
             points.AddRange(GetAllVertices(polygonMap.Generation));
         }
         
-        // // 5. Добавляем точки на рёбрах, если нужно
-        // if (settings.AddEdgePoints)
-        // {
-        //     points.AddRange(GenerateHexagonalEdgePoints(sourcePolygons, settings.HexSize, settings.EdgePointSpacing));
-        // }
+        // 5. Добавляем точки на рёбрах, если нужно
+        if (settings.AddEdgePoints)
+        {
+            points.AddRange(GenerateHexagonalEdgePoints(polygonMap, settings.HexSize, settings.EdgePointSpacing));
+        }
         
         return points.Distinct().ToList();
     }
     
     // Специальные точки на рёбрах для улучшения границ
-    // private static List<Vector2> GenerateHexagonalEdgePoints(List<Polygon> sourcePolygons, float hexSize, float edgeSpacing)
-    // {
-    //     var edgePoints = new List<Vector2>();
-    //     
-    //     foreach (var polygon in sourcePolygons)
-    //     {
-    //         for (int i = 0; i < polygon.Vertices.Count; i++)
-    //         {
-    //             Vector2 start = polygon.Vertices[i].Point;
-    //             Vector2 end = polygon.Vertices[(i + 1) % polygon.Vertices.Count].Point;
-    //             
-    //             // Добавляем точки вдоль ребра с учетом гексагонального шага
-    //             Vector2 direction = Vector2.Normalize(end - start);
-    //             float edgeLength = Vector2.Distance(start, end);
-    //             
-    //             // Используем меньший шаг для лучшего соответствия гексагональной сетке
-    //             float step = Math.Min(hexSize * 0.5f, edgeSpacing);
-    //             int steps = (int)(edgeLength / step);
-    //             
-    //             for (int j = 1; j < steps; j++)
-    //             {
-    //                 float t = (float)j / steps;
-    //                 Vector2 point = Vector2.Lerp(start, end, t);
-    //                 
-    //                 // Добавляем небольшие перпендикулярные смещения для лучшего соединения с сеткой
-    //                 Vector2 perpendicular = new Vector2(-direction.Y, direction.X);
-    //                 
-    //                 edgePoints.Add(point);
-    //                 edgePoints.Add(point + perpendicular * hexSize * 0.3f);
-    //                 edgePoints.Add(point - perpendicular * hexSize * 0.3f);
-    //             }
-    //         }
-    //     }
-    //     
-    //     return edgePoints;
-    // }
+    private static List<Vector2> GenerateHexagonalEdgePoints(PolygonMap polygonMap, float hexSize, float edgeSpacing)
+    {
+        var edgePoints = new List<Vector2>();
+        
+        foreach (var polygon in polygonMap.Zones)
+        {
+            for (int i = 0; i < polygon.Vertices.Count; i++)
+            {
+                Vector2 start = polygon.Vertices[i];
+                Vector2 end = polygon.Vertices[(i + 1) % polygon.Vertices.Count];
+                
+                // Добавляем точки вдоль ребра с учетом гексагонального шага
+                Vector2 direction = end - start;
+                direction.Normalize();
+                float edgeLength = Vector2.Distance(start, end);
+                
+                // Используем меньший шаг для лучшего соответствия гексагональной сетке
+                float step = Math.Min(hexSize * 0.5f, edgeSpacing);
+                int steps = (int)(edgeLength / step);
+                
+                for (int j = 1; j < steps; j++)
+                {
+                    float t = (float)j / steps;
+                    Vector2 point = Vector2.Lerp(start, end, t);
+                    
+                    // Добавляем небольшие перпендикулярные смещения для лучшего соединения с сеткой
+                    Vector2 perpendicular = new Vector2(-direction.Y, direction.X);
+                    
+                    edgePoints.Add(point);
+                    edgePoints.Add(point + perpendicular * hexSize * 0.3f);
+                    edgePoints.Add(point - perpendicular * hexSize * 0.3f);
+                }
+            }
+        }
+        
+        return edgePoints;
+    }
     
     // Вспомогательные методы (те же, что и раньше)
     private static ZonePolygon CalculateConvexHull(List<Vector2> points)
