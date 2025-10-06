@@ -1,5 +1,5 @@
-﻿using AntAlgorithm;
-using GraphGeneration.Models;
+﻿using GraphGeneration.Models;
+using PathScape.Domain.Models;
 using VoronatorSharp;
 
 namespace GraphGeneration.Geometry;

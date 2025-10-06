@@ -1,8 +1,8 @@
 ﻿// using System.Numerics;
 
 using System.Text.Json.Serialization;
-using AntAlgorithm;
 using NetTopologySuite.Geometries;
+using PathScape.Domain.Models;
 using VoronatorSharp;
 
 namespace GraphGeneration.Models;
@@ -25,7 +25,7 @@ public class ZonePolygon
         Type = type;
     }
     
-    public ZonePolygon(IEnumerable<Vector2> vertices, ZoneType type = ZoneType.Available)
+    public ZonePolygon(IEnumerable<Vector2> vertices, ZoneType type = ZoneType.None)
     {
         Vertices = vertices.Select((i,v) => new Vector2() { Id = v, x = i.X, y = i.y, Weight = 0 }).ToList();
         Type = type;

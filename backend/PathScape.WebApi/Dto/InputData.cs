@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
+using PathScape.Domain.Models;
 
-namespace AntAlgorithm;
+namespace WebApplication2.Dto;
 
 public class InputData
 {

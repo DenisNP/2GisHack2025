@@ -22,7 +22,7 @@ public class VoronatorFinderEdge : IEdge<Vector2>
     public override string ToString() => $"{Source} -> {Target}";
         
     // Для сравнения рёбер (независимо от направления)
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj is VoronatorFinderEdge other)
         {

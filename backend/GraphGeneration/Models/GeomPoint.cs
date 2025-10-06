@@ -17,7 +17,7 @@ public interface IEdge<TVertex>
     TVertex Target { get; }
 }
 
-public class GeomPoint
+public struct GeomPoint : IComparable
 {
     public GeomPoint(int id, float x, float y, double weight)
     {
@@ -34,12 +34,14 @@ public class GeomPoint
         Y = vector2.y;
         Weight = vector2.Weight;
     }
+    
+    public bool Equals(GeomPoint other) => X == other.X && Y == other.Y;
 
     public override bool Equals(object? obj)
     {
         if (obj is GeomPoint p)
         {
-            return Id == p.Id;
+            return Equals(p);
         }
 
         return false;
@@ -49,17 +51,31 @@ public class GeomPoint
     {
         return (X, Y).GetHashCode();
     }
+    
+    public int CompareTo(object? obj)
+    {
+        if (obj is GeomPoint point)
+        {
+            int xComparison = X.CompareTo(point.X);
+            if (xComparison != 0)
+                return xComparison;
+            
+            return Y.CompareTo(point.Y);
+        }
+        
+        throw new InvalidCastException(obj?.GetType().Name);
+    }
 
-    public int Id { get; set; }
-    public double X { get; }
-    public double Y { get; }
-    public double Weight { get; set; }
+    public int Id { get; }
+    public float X { get; }
+    public float Y { get; }
+    public double Weight { get; }
     public int Influence { get; set; }
     public bool Show { get; set; }
 
-    public Vector2 AsVector2() => new Vector2(Id, (float)X, (float)Y, Weight);
+    public Vector2 AsVector2() => new(Id, (float)X, (float)Y, Weight);
     public bool IsPoi => Weight > 0;
-    public Dictionary<int, bool> Paths { get; set; } = new();
+    public Dictionary<int, bool> Paths { get; } = new();
 
     public void AddPath(GeomPoint p1, GeomPoint p2)
     {
@@ -69,14 +85,12 @@ public class GeomPoint
         var combined = minp * 10000 + maxp;
         Paths.TryAdd(combined, true);
     }
+    
+    public override string ToString() => $"({X}, {Y})";
 }
 
 public class GeomEdge : IEdge<GeomPoint>
 {
-    public GeomEdge()
-    {
-    }
-    
     public GeomEdge(GeomPoint from, GeomPoint to, double weight)
     {
         From = from;
@@ -84,9 +98,9 @@ public class GeomEdge : IEdge<GeomPoint>
         Weight = weight;
     }
 
-    public GeomPoint From { get; set; }
-    public GeomPoint To { get; set; }
-    public double Weight { get; set; }
+    public GeomPoint From { get; }
+    public GeomPoint To { get; }
+    public double Weight { get; private set; }
 
     public int Id => From.Id < To.Id ? From.Id * 10000 + To.Id : To.Id * 10000 + From.Id;
 

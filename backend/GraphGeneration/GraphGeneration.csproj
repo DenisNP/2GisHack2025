@@ -11,8 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\and.Models\and.Models.csproj" />
-      <ProjectReference Include="..\AntAlgorithm\AntAlgorithm.csproj" />
+      <ProjectReference Include="..\PathScape.Domain\PathScape.Domain.csproj" />
       <ProjectReference Include="..\VoronatorSharp\VoronatorSharp.csproj" />
     </ItemGroup>
 

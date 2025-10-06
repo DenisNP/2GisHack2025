@@ -1,16 +1,16 @@
 ﻿using System.Text;
-using AntAlgorithm;
 using GraphGeneration.A;
 using GraphGeneration.Filters;
 using GraphGeneration.Models;
 using GraphGeneration.Svg;
+using PathScape.Domain.Models;
 using VoronatorSharp;
 
 namespace GraphGeneration.Geometry;
 
 public static class GraphGenerator
 {
-    public static (Edge[] Edges, HashSet<(GeomPoint, GeomPoint)> LongPaths, int MaxLenPath) GenerateEdges(List<ZonePolygon> polygons, List<Vector2> poi)
+    public static (IReadOnlyCollection<GeomEdge> Edges, HashSet<(GeomPoint, GeomPoint)> LongPaths, int MaxLenPath) GenerateEdges(List<ZonePolygon> polygons, List<Vector2> poi)
     {
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
@@ -107,11 +107,6 @@ public static class GraphGenerator
         // var svgFilteredGraph = GenerateSvg.Generate(polygonMap, points, edges);
         // File.WriteAllText("filtered_graph.svg", svgFilteredGraph, Encoding.UTF8);
 
-        var resultEdges = originEdges2
-            .Select(e => new Edge(
-                new Poi(e.Source.Id, e.Source.X, e.Source.Y, e.Source.Weight),
-                new Poi(e.Target.Id, e.Target.X, e.Target.Y, e.Target.Weight))
-            ).ToArray(); 
-        return (resultEdges, longPairs, maxLenPath);
+        return (originEdges2, longPairs, maxLenPath);
     }
 }

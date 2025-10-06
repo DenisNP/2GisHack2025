@@ -1,6 +1,6 @@
-﻿using AntAlgorithm;
-using GraphGeneration.Models;
+﻿using GraphGeneration.Models;
 using NetTopologySuite.Geometries;
+using PathScape.Domain.Models;
 
 namespace GraphGeneration.Geometry;
 

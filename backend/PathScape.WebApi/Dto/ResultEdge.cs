@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
+using PathScape.Domain.Models;
 
-namespace AntAlgorithm;
+namespace WebApplication2.Dto;
 
 public class ResultEdge
 {
@@ -8,10 +9,10 @@ public class ResultEdge
     // public int Id { get; set; }
     
     [JsonPropertyName("from")]
-    public Point From { get; set; }
+    public required Point From { get; set; }
     
     [JsonPropertyName("to")]
-    public Point To { get; set; }
+    public required Point To { get; set; }
     
     [JsonPropertyName("weight")]
     public double Weight { get; set; }
@@ -20,9 +21,9 @@ public class ResultEdge
 public class ResultPoint
 {
     [JsonPropertyName("x")]
-    public double X { get; set; }
+    public required double X { get; set; }
     [JsonPropertyName("y")]
-    public double Y { get; set; }
+    public required double Y { get; set; }
     [JsonPropertyName("weight")]
-    public double Weight { get; set; }
+    public required double Weight { get; set; }
 }

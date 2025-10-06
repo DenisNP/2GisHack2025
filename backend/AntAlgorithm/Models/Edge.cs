@@ -1,4 +1,6 @@
-﻿namespace AntAlgorithm;
+﻿using PathScape.Domain.Models;
+
+namespace and.Models.Models;
 
 public class Edge
 {

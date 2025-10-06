@@ -1,11 +1,11 @@
 using System.Text;
-using AntAlgorithm;
 using GraphGeneration.A;
 using GraphGeneration.Filters;
 using GraphGeneration.Geometry;
 using GraphGeneration.Models;
 using GraphGeneration.Svg;
 using NetTopologySuite.Geometries;
+using PathScape.Domain.Models;
 using VoronatorSharp;
 
 namespace GraphGeneration;

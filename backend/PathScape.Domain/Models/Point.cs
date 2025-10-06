@@ -1,7 +1,7 @@
 ﻿
 using System.Text.Json.Serialization;
 
-namespace AntAlgorithm;
+namespace PathScape.Domain.Models;
 
 public class Point
 {

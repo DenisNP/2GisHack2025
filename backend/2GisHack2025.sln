@@ -2,13 +2,20 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AntAlgorithm", "AntAlgorithm\AntAlgorithm.csproj", "{686E3A0A-0914-49C4-81B9-8430081A4197}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AntAlgorightm.WebApi", "AntAlgorightm.WebApi\AntAlgorightm.WebApi.csproj", "{D32241C8-C26A-4CFE-8F15-7D7A99AB48B6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PathScape.WebApi", "PathScape.WebApi\PathScape.WebApi.csproj", "{D32241C8-C26A-4CFE-8F15-7D7A99AB48B6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphGeneration", "GraphGeneration\GraphGeneration.csproj", "{967527CE-59A2-40EB-8D6C-ED0E036E42BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "and.Models", "and.Models\and.Models.csproj", "{C1C51D16-1EFA-4DE6-A676-A472DF6579A0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PathScape.Domain", "PathScape.Domain\PathScape.Domain.csproj", "{C1C51D16-1EFA-4DE6-A676-A472DF6579A0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoronatorSharp", "VoronatorSharp\VoronatorSharp.csproj", "{EEC9DCCF-2D19-4859-B355-F734393E8B6A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFolder", "SolutionFolder", "{439DACDE-ABF9-4643-9788-A2B1EC694FEB}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+		..\Dockerfile = ..\Dockerfile
+		..\.gitignore = ..\.gitignore
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

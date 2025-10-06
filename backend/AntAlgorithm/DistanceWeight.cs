@@ -1,4 +1,6 @@
-﻿namespace AntAlgorithm;
+﻿using PathScape.Domain.Models;
+
+namespace AntAlgorithm;
 
 internal class DistanceWeight
 {

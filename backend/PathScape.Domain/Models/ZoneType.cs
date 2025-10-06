@@ -1,4 +1,4 @@
-﻿namespace AntAlgorithm;
+﻿namespace PathScape.Domain.Models;
 
 public enum ZoneType
 {

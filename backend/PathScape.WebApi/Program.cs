@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using WebApplication2;
+using WebApplication2.Dto;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,8 +43,8 @@ app.UseCors(policyBuilder => policyBuilder.AllowAnyOrigin().AllowAnyHeader().All
 app.UseHttpsRedirection();
 
 app.MapGet("/check", context => context.Response.WriteAsync("It works"));
-app.MapPost("/getBestPath3", ([FromBody]InputData data, IAntColonyAlgorithm algorithm) => GraphGen.GetBestPath(data.Zones, data.Pois, algorithm));
-app.MapPost("/runSimulation", ([FromBody]InputData data) => GraphGen.GetBestPath2(data.Zones, data.Pois));
+app.MapPost("/getBestPath3", ([FromBody]InputData data, IAntColonyAlgorithm algorithm) => PathScapeService.GenerateGraph(data.Zones, data.Pois, algorithm));
+app.MapPost("/runSimulation", ([FromBody]InputData data) => PathScapeService.RunSimulation(data.Zones, data.Pois));
 
 app.UseCors();
 app.Run();

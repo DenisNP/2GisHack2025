@@ -1,5 +1,5 @@
 ﻿using System.Text.Json.Serialization;
-using AntAlgorithm;
+using PathScape.Domain.Models;
 
 [JsonSerializable(typeof(Result))]
 public class Result

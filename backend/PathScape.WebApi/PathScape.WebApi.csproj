@@ -13,7 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\and.Models\and.Models.csproj" />
+      <ProjectReference Include="..\PathScape.Domain\PathScape.Domain.csproj" />
       <ProjectReference Include="..\AntAlgorithm\AntAlgorithm.csproj" />
       <ProjectReference Include="..\GraphGeneration\GraphGeneration.csproj" />
     </ItemGroup>
