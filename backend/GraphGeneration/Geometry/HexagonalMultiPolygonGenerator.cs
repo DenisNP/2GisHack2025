@@ -58,6 +58,22 @@ public static class HexagonalMultiPolygonGenerator
         
         return points.Distinct().ToList();
     }
+
+    public static List<Vector2> GenerateSpacedHexagonalPointsOutside(int maxId, PolygonMap polygonMap, float hexSize)
+    {
+        var points = new List<Vector2>();
+        var pointFilter = new PointRestrictedUrbanOrAvailableFilter(polygonMap);
+
+        // 1. Находим общий ограничивающий полигон
+        var boundingPolygon = CalculateConvexHull(polygonMap.Render.SelectMany(v => v.Coordinates).Select(c => new Vector2((float)c.X, (float)c.Y)).ToList());
+
+        // 2. Генерируем гексагональную сетку в bounding полигоне
+        points.AddRange(HexagonalGridGenerator.GenerateHexagonalGridInPolygon(maxId, boundingPolygon, hexSize));
+        
+        // 3. Фильтруем точки, оставляя только внутри исходных полигонов
+        points.RemoveAll(p => pointFilter.Skip(p));
+        return points.Distinct().ToList();
+    }
     
     // Специальные точки на рёбрах для улучшения границ
     private static List<Vector2> GenerateHexagonalEdgePoints(PolygonMap polygonMap, float hexSize, float edgeSpacing)

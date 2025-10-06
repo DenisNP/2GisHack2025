@@ -18,12 +18,13 @@ public static class LightGraphGenerator
         double avArea = polygonMap.Available.Sum(p => p.Area);
         double side = Math.Sqrt(avArea);
         Console.WriteLine("Total Area: " + avArea + "; side: " + side);
-        double hexSize = Math.Min(3f, Math.Max(0.5f, side / 200f));
+        float hexSize = Math.Clamp((float)side / 200f, 0.5f, 3f);
+        float bigHexSize = Math.Clamp(hexSize * 3, 3f, 5f);
 
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
         {
-            HexSize = (float)hexSize,
+            HexSize = hexSize,
             Density = 1,
             UseConvexHull = false,
             AddPolygonVertices = false,
@@ -39,13 +40,16 @@ public static class LightGraphGenerator
         List<Vector2> centersUrban = polygonMap
             .Urban
             .Where(u => polygonMap.Restricted.Any(u.Intersects)) 
-            .SelectMany(u => HexagonalGridGenerator.GenerateHexagonalGridInPolygon(poiMaxId, new ZonePolygon(u, ZoneType.Urban), 4))
+            .SelectMany(u => HexagonalGridGenerator.GenerateHexagonalGridInPolygon(poiMaxId, new ZonePolygon(u, ZoneType.Urban), bigHexSize))
             .ToList();
         poiMaxId += centersUrban.Count;
         List<Vector2> generatedHexPoints = HexagonalMultiPolygonGenerator.GenerateHexagonalPoints(poiMaxId, polygonMap, settings);
+        poiMaxId += generatedHexPoints.Count;
+        List<Vector2> generatedBigHexPoints = HexagonalMultiPolygonGenerator.GenerateSpacedHexagonalPointsOutside(poiMaxId, polygonMap, bigHexSize);
+        poiMaxId += generatedBigHexPoints.Count;
 
         // Создаем общую диаграмму Вороного/Делоне для всех точек
-        var voronator = new Voronator(generatedHexPoints.Concat(validPoi.Select(x => x.AsVector2())).Concat(centersUrban).ToArray());
+        var voronator = new Voronator(generatedHexPoints.Concat(validPoi.Select(x => x.AsVector2())).Concat(centersUrban).Concat(generatedBigHexPoints).ToArray());
 
         // Строим граф для а*
         var (originPoints, originEdges) = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator, settings.HexSize);
@@ -111,7 +115,7 @@ public static class LightGraphGenerator
                 }
 
                 Console.WriteLine("Increment: " + inc + "; paths: " + pathsCount);
-                if (inc == 0 && pathsCount > 5)
+                if (inc == 0 && pathsCount > 10)
                 {
                     originPoints.ForEach(p => p.Show = false);
                     continue;
