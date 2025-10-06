@@ -145,7 +145,7 @@ public class LightGraphGenerator
                 }
 
                 Console.WriteLine("Increment: " + inc + "; paths: " + pathsCount);
-                if (inc == 0 && pathsCount >= 8)
+                if (inc == 0 && pathsCount > 10)
                 {
                     originPoints.ForEach(p => p.Show = false);
                     continue;
