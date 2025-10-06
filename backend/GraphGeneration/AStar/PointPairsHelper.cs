@@ -1,6 +1,6 @@
 ﻿using GraphGeneration.Models;
 
-namespace GraphGeneration.A;
+namespace GraphGeneration.AStar;
 
 public static class PointPairsHelper
 {
@@ -14,7 +14,6 @@ public static class PointPairsHelper
             }
         }
     }
-    
    
     public static IEnumerable<IEdge<GeomPoint>> GetEdges(IList<GeomPoint> vectors)
     {

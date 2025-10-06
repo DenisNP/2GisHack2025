@@ -4,15 +4,11 @@ using PathScape.Domain.Models;
 
 namespace GraphGeneration.Geometry;
 
-public class PolygonHelper
+public static class PolygonHelper
 {
     public static PolygonMap GetPolygonMap(IReadOnlyCollection<ZonePolygon> zones)
     {
         var polygonsForGeneration = zones.Where(z => z.Type == ZoneType.Available).ToArray();
-            // zones.Any(p => p.Type == ZoneType.None)
-            //     ? [zones.First(p => p.Type == ZoneType.None)]
-            //     : zones;
-        
         var ignore  = new List<Polygon>(zones.Count);
         var allowed  = new List<Polygon>(zones.Count);
         var urban  = new List<Polygon>(zones.Count);

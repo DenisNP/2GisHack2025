@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using AntAlgorithm.Abstractions;
 using GraphGeneration;
-using GraphGeneration.Geometry;
 using GraphGeneration.Models;
 using PathScape.Domain.Models;
 using VoronatorSharp;
@@ -12,7 +10,7 @@ namespace WebApplication2;
 
 public static class PathScapeService
 {
-    public static void GenerateGraph(Zone[] zones, Poi[] poi, IAntColonyAlgorithm algorithm)
+    public static void GenerateGraph(Zone[] zones, Poi[] poi)
     {
         var maxId = poi.Max(p => p.Id);
         var polygons = zones
@@ -30,7 +28,7 @@ public static class PathScapeService
 
         var points = poi.Select(pp => new Vector2(pp.Id, (float)pp.Point.X,  (float)pp.Point.Y, pp.Weight)).ToList();
 
-        GraphGenerator.GenerateEdges(polygons, points);
+        AStarVoronatorGraphGenerator.GenerateEdges(polygons, points);
     }
 
     public static IEnumerable<ResultPoint> RunSimulation(Zone[] zones, Poi[] poi)

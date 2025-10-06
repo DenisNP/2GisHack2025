@@ -43,7 +43,7 @@ app.UseCors(policyBuilder => policyBuilder.AllowAnyOrigin().AllowAnyHeader().All
 app.UseHttpsRedirection();
 
 app.MapGet("/check", context => context.Response.WriteAsync("It works"));
-app.MapPost("/getBestPath3", ([FromBody]InputData data, IAntColonyAlgorithm algorithm) => PathScapeService.GenerateGraph(data.Zones, data.Pois, algorithm));
+app.MapPost("/getBestPath3", ([FromBody]InputData data, IAntColonyAlgorithm _) => PathScapeService.GenerateGraph(data.Zones, data.Pois));
 app.MapPost("/runSimulation", ([FromBody]InputData data) => PathScapeService.RunSimulation(data.Zones, data.Pois));
 
 app.UseCors();

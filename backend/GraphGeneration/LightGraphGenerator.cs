@@ -1,9 +1,10 @@
 using System.Text;
-using GraphGeneration.A;
+using GraphGeneration.AStar;
 using GraphGeneration.Filters;
 using GraphGeneration.Geometry;
 using GraphGeneration.Models;
 using GraphGeneration.Svg;
+using GraphGeneration.VoronatorGraph;
 using NetTopologySuite.Geometries;
 using PathScape.Domain.Models;
 using VoronatorSharp;
@@ -52,7 +53,7 @@ public static class LightGraphGenerator
         var voronator = new Voronator(generatedHexPoints.Concat(validPoi.Select(x => x.AsVector2())).Concat(centersUrban).Concat(generatedBigHexPoints).ToArray());
 
         // Строим граф для а*
-        var (originPoints, originEdges) = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(poiMaxId + 1, polygonMap, voronator, settings.HexSize);
+        var (originPoints, originEdges) = VoronatorToGeomAdapter.ConvertToQuickGraph(poiMaxId + 1, polygonMap, voronator, settings.HexSize);
         
 #if DEBUG
         // рисуем исходный граф

@@ -1,13 +1,13 @@
 ﻿using GraphGeneration.Models;
 using VoronatorSharp;
 
-namespace GraphGeneration.A;
+namespace GraphGeneration.VoronatorGraph;
 
 public static class VoronatorNeighborsRecover
 {
     public static (VoronatorFinderEdge[], Vector2[]) Get(     
         PolygonMap polygonMap,
-        Voronator voronoi,
+        VoronatorSharp.Voronator voronoi,
         float hexSize,
         IList<Vector2> shortPath)
     {

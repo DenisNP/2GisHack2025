@@ -2,13 +2,13 @@
 using GraphGeneration.Models;
 using VoronatorSharp;
 
-namespace GraphGeneration.A;
+namespace GraphGeneration.VoronatorGraph;
 
 public class VoronatorNeighborsFinder
 {
-    private readonly Voronator _voronator;
+    private readonly VoronatorSharp.Voronator _voronator;
     
-    public VoronatorNeighborsFinder(Voronator voronator)
+    public VoronatorNeighborsFinder(VoronatorSharp.Voronator voronator)
     {
         _voronator = voronator;
     }

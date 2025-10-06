@@ -379,7 +379,7 @@ namespace VoronatorSharp
             }
             else if (Contains(i, (clipMin + clipMax) / 2))
             {
-                return new List<Vector2>()
+                return new List<Vector2>
                 {
                     clipMin,
                     new Vector2(clipMax.x, clipMin.y),

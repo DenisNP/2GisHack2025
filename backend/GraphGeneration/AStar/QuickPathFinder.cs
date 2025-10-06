@@ -1,7 +1,7 @@
 ﻿using GraphGeneration.Models;
 using VoronatorSharp;
 
-namespace GraphGeneration.A;
+namespace GraphGeneration.AStar;
 
 public static class QuickPathFinder
 {

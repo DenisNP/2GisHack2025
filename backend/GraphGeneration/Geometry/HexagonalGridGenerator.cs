@@ -30,6 +30,13 @@ public static class HexagonalGridGenerator
         // Среднее расстояние до ближайших соседей
         return (horizontalSpacing * 2 + diagonalDistance * 4) / 6f;
     }
+
+    public static IEnumerable<Vector2> GenerateHexagonalGridInPolygons(int maxId, IReadOnlyCollection<ZonePolygon> zones,
+        float hexSize)
+    {
+        return zones.SelectMany(boundingPolygon => HexagonalGridGenerator.GenerateHexagonalGridInPolygon(maxId,
+            boundingPolygon, hexSize));
+    }
     
     public static List<Vector2> GenerateHexagonalGridInPolygon(int maxId, ZonePolygon zonePolygon, float hexSize)
     {

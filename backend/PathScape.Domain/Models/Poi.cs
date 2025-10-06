@@ -9,7 +9,7 @@ public class Poi
     public Poi(int id, double x, double y, double weight)
     {
         Id = id;
-        Point = new Point() { X = x, Y = y };
+        Point = new Point { X = x, Y = y };
         Weight = weight;
     }
     

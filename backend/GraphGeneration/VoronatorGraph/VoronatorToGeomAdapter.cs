@@ -2,9 +2,9 @@
 using GraphGeneration.Models;
 using VoronatorSharp;
 
-namespace GraphGeneration.A;
+namespace GraphGeneration.VoronatorGraph;
 
-public static class VoronatorToQuickGraphAdapter
+public static class VoronatorToGeomAdapter
 {
     public static (List<GeomPoint> Points, List<GeomEdge> Edges) ConvertToQuickGraph(
         int startId,

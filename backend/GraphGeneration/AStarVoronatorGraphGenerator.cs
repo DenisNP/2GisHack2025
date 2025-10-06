@@ -1,14 +1,16 @@
 ﻿using System.Text;
-using GraphGeneration.A;
+using GraphGeneration.AStar;
 using GraphGeneration.Filters;
+using GraphGeneration.Geometry;
 using GraphGeneration.Models;
 using GraphGeneration.Svg;
+using GraphGeneration.VoronatorGraph;
 using PathScape.Domain.Models;
 using VoronatorSharp;
 
-namespace GraphGeneration.Geometry;
+namespace GraphGeneration;
 
-public static class GraphGenerator
+public static class AStarVoronatorGraphGenerator
 {
     public static (IList<GeomEdge> Edges, HashSet<(GeomPoint, GeomPoint)> LongPaths, int MaxLenPath) GenerateEdges(List<ZonePolygon> polygons, List<Vector2> poi)
     {
@@ -44,7 +46,7 @@ public static class GraphGenerator
         var voronator = new Voronator(generatedHexPoints.Concat(validPoi).Concat(centersUrban).ToArray());
         
         // Строим граф для а*
-        var (originPoints, originEdges) = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(poiMaxId + 1, polygonMap, voronator, settings.HexSize);
+        var (originPoints, originEdges) = VoronatorToGeomAdapter.ConvertToQuickGraph(poiMaxId + 1, polygonMap, voronator, settings.HexSize);
 
 #if DEBUG
         // рисуем исходный граф
@@ -95,7 +97,7 @@ public static class GraphGenerator
         
         // Строим воронова по стабильным точкам и коротким путям
         var voronator2 = new Voronator(recoveredPoints);
-        var (originPoints2, originEdges2) = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(poiMaxId + 1,polygonMap, voronator2, settings.HexSize);
+        var (originPoints2, originEdges2) = VoronatorToGeomAdapter.ConvertToQuickGraph(poiMaxId + 1,polygonMap, voronator2, settings.HexSize);
 
 #if DEBUG
         // рисуем воронова по стабильным точкам и коротким путям
