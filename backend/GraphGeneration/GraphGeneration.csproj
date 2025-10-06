@@ -13,6 +13,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\2GisHack2025\and.Models\and.Models.csproj" />
+      <ProjectReference Include="..\and.Models\and.Models.csproj" />
+      <ProjectReference Include="..\AntAlgorithm\AntAlgorithm.csproj" />
       <ProjectReference Include="..\VoronatorSharp\VoronatorSharp.csproj" />
     </ItemGroup>
 
