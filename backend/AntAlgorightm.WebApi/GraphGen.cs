@@ -57,7 +57,7 @@ public static class GraphGen
             zone.Vertices.Add(zone.Vertices.First());
         }
 
-        IEnumerable<GeomPoint> points = poi.Select(pp => new GeomPoint { Id = pp.Id, X = pp.Point.X, Y = pp.Point.Y, Weight = pp.Weight });
+        IEnumerable<GeomPoint> points = poi.Select(pp => new GeomPoint(pp.Id, (float)pp.Point.X, (float)pp.Point.Y, pp.Weight));
         var edges = LightGraphGenerator.GenerateEdges(polygons, points.ToList());
 
         return edges.Select(e => new ResultPoint

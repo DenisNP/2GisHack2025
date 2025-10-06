@@ -146,8 +146,9 @@ public static class LightGraphGenerator
         var svgShortGraph = GenerateSvg.Generate(polygonMap, originPoints.ToList(), originEdges.ToList());
         File.WriteAllText("short_graph.svg", svgShortGraph, Encoding.UTF8);
 #endif        
-
-        return originPoints.Where(e => e.Show && !e.IsPoi).ToArray();
+        
+        var pointAllowedFilter = new PointAllowedFilter(polygonMap.Available);
+        return originPoints.Where(e => e.Show && !e.IsPoi && !pointAllowedFilter.Skip(e.AsVector2())).ToArray();
     }
 
     private static int GetPairId((GeomPoint, GeomPoint) pair)

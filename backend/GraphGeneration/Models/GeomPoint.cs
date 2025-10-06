@@ -19,7 +19,6 @@ public interface IEdge<TVertex>
 
 public class GeomPoint
 {
-    public GeomPoint(){}
     public GeomPoint(int id, float x, float y, double weight)
     {
         Id = id;
@@ -35,10 +34,25 @@ public class GeomPoint
         Y = vector2.y;
         Weight = vector2.Weight;
     }
-    
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is GeomPoint p)
+        {
+            return Id == p.Id;
+        }
+
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        return (X, Y).GetHashCode();
+    }
+
     public int Id { get; set; }
-    public double X { get; set; }
-    public double Y { get; set; }
+    public double X { get; }
+    public double Y { get; }
     public double Weight { get; set; }
     public int Influence { get; set; }
     public bool Show { get; set; }
