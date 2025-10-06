@@ -5,7 +5,7 @@ namespace GraphGeneration.A;
 
 public static class QuickPathFinder
 {
-    public static IEnumerable<GeomPoint> FindPath(IReadOnlyCollection<GeomEdge> edges, IReadOnlyCollection<GeomPoint> points, GeomPoint start, GeomPoint end)
+    public static IEnumerable<GeomPoint> FindPath(IList<GeomEdge> edges, IList<GeomPoint> points, GeomPoint start, GeomPoint end)
     {
         // Построение графа смежности
         var neighbors = new Dictionary<int, List<(GeomPoint neighbor, double cost)>>();

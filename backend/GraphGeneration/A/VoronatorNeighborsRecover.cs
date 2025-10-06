@@ -9,7 +9,7 @@ public static class VoronatorNeighborsRecover
         PolygonMap polygonMap,
         Voronator voronoi,
         float hexSize,
-        IReadOnlyCollection<Vector2> shortPath)
+        IList<Vector2> shortPath)
     {
         var edgeFinder = new VoronatorNeighborsFinder(voronoi);
 

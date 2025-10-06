@@ -7,12 +7,13 @@ namespace GraphGeneration.A;
 public static class VoronatorToQuickGraphAdapter
 {
     public static (List<GeomPoint> Points, List<GeomEdge> Edges) ConvertToQuickGraph(
+        int startId,
         PolygonMap polygonMap,
         Voronator voronoi,
         float hexSize)
     {
         var edgeFilter = new EdgeInRestrictedFilter(polygonMap, hexSize); 
-        var points = new HashSet<GeomPoint>(voronoi.Delaunator.Points.Count);
+        var points = new Dictionary<Vector2, GeomPoint>(voronoi.Delaunator.Points.Count);
         var edges = new List<GeomEdge>(voronoi.Delaunator.Points.Count);
 
         // Добавляем рёбра между соседними ячейками
@@ -22,14 +23,21 @@ public static class VoronatorToQuickGraphAdapter
             {
                 continue;
             }
-            var from = new GeomPoint(edge.Item1);
-            var to = new GeomPoint(edge.Item2);
-            points.Add(from);
-            points.Add(to);
+
+            if (!points.TryGetValue(edge.Item1, out var from))
+            {
+                from = new GeomPoint(startId++, edge.Item1.X, edge.Item1.Y, edge.Item1.Weight);
+                points.Add(edge.Item1, from);
+            }
+            if (!points.TryGetValue(edge.Item2, out var to))
+            {
+                to = new GeomPoint(startId++, edge.Item2.X, edge.Item2.Y, edge.Item1.Weight);
+                points.Add(edge.Item2, to);
+            }
 
             edges.Add(new GeomEdge(from, to, 0));
         }
         
-        return (points.ToList(), edges);
+        return (points.Values.ToList(), edges);
     }
 }

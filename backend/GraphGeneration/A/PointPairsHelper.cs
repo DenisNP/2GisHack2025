@@ -4,7 +4,7 @@ namespace GraphGeneration.A;
 
 public static class PointPairsHelper
 {
-    public static IEnumerable<(GeomPoint, GeomPoint)> GetUniquePairs(IReadOnlyCollection<GeomPoint> vectors)
+    public static IEnumerable<(GeomPoint, GeomPoint)> GetUniquePairs(IList<GeomPoint> vectors)
     {
         for (int i = 0; i < vectors.Count; i++)
         {
@@ -16,7 +16,7 @@ public static class PointPairsHelper
     }
     
    
-    public static IEnumerable<IEdge<GeomPoint>> GetEdges(IReadOnlyCollection<GeomPoint> vectors)
+    public static IEnumerable<IEdge<GeomPoint>> GetEdges(IList<GeomPoint> vectors)
     {
         return vectors
             .Zip(vectors.Skip(1), (v1, v2) => new GeomEdge(v1, v2, 0));

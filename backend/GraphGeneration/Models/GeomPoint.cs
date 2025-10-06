@@ -17,7 +17,7 @@ public interface IEdge<TVertex>
     TVertex Target { get; }
 }
 
-public struct GeomPoint : IComparable
+public class GeomPoint : IComparable
 {
     public GeomPoint(int id, float x, float y, double weight)
     {

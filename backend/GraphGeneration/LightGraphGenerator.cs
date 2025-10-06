@@ -52,7 +52,7 @@ public static class LightGraphGenerator
         var voronator = new Voronator(generatedHexPoints.Concat(validPoi.Select(x => x.AsVector2())).Concat(centersUrban).Concat(generatedBigHexPoints).ToArray());
 
         // Строим граф для а*
-        var (originPoints, originEdges) = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator, settings.HexSize);
+        var (originPoints, originEdges) = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(poiMaxId + 1, polygonMap, voronator, settings.HexSize);
         
 #if DEBUG
         // рисуем исходный граф
@@ -148,7 +148,9 @@ public static class LightGraphGenerator
 #endif        
         
         var pointAllowedFilter = new PointAllowedFilter(polygonMap.Available);
-        return originPoints.Where(e => e.Show && !e.IsPoi && !pointAllowedFilter.Skip(e.AsVector2())).ToArray();
+        return originPoints
+            .Where(e => e.Show && !e.IsPoi && !pointAllowedFilter.Skip(e.AsVector2()))
+            .ToArray();
     }
 
     private static int GetPairId((GeomPoint, GeomPoint) pair)

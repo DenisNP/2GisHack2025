@@ -23,7 +23,7 @@ public class VoronatorNeighborsFinder
     public Dictionary<Vector2, NeighborhoodResult> FindNeighborsWithEdges(
         PolygonMap polygonMap,
         float hexSize,
-        IReadOnlyCollection<Vector2> partialPoints)
+        IList<Vector2> partialPoints)
     {
         var result = new Dictionary<Vector2, NeighborhoodResult>();
         var edgeFilter = new EdgeFakeFilter(polygonMap, hexSize);
