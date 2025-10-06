@@ -58,28 +58,32 @@ public static class GenerateSvg
             svg.AppendLine(@"""/>");
         }
 
-        // Рисуем узлы графа
-        svg.AppendLine("<g class=\"graph-nodes\">");
+        // Добавляем отображение ID узлов
+        svg.AppendLine("<g class=\"node-labels\">");
         foreach (var point in points)
         {
-            var (x, y) =  svg.Transform(point.X, point.Y);
-
-            // Определяем цвет и размер в зависимости от веса
-            var fillColor = "#d32f2f"; // красный по умолчанию
-            double radius = 10; // размер по умолчанию
-
-            if (!point.IsPoi)
-            {
-                fillColor = "#008000";
-            }
-            else
-            {
-                radius = 20; // увеличенный размер для узлов с весом
-            }
-
-            svg.AppendLine($@"<circle cx=""{x}"" cy=""{y}"" r=""{radius}"" fill=""{fillColor}""/>");
+            var (x, y) = svg.Transform(point.X, point.Y);
+    
+            // Смещаем текст немного выше точки для лучшей читаемости
+            var textY = y - 25;
+    
+            // Определяем цвет текста в зависимости от типа точки
+            var textColor = point.IsPoi ? "#d32f2f" : "#008000";
+            var fontSize = point.IsPoi ? "12" : "10";
+            var fontWeight = point.IsPoi ? "bold" : "normal";
+    
+            svg.AppendLine($@"
+        <text 
+            x=""{x}"" 
+            y=""{textY}"" 
+            fill=""{textColor}"" 
+            font-size=""{fontSize}"" 
+            font-weight=""{fontWeight}"" 
+            text-anchor=""middle""
+            class=""node-id"">
+            {point.Id}
+        </text>");
         }
-
         svg.AppendLine("</g>");
 
         // Информация
