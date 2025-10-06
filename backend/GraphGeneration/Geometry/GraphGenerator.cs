@@ -3,14 +3,14 @@ using AntAlgorithm;
 using GraphGeneration.A;
 using GraphGeneration.Filters;
 using GraphGeneration.Geometry;
-using QuickGraph;
+using GraphGeneration.Models;
 using VoronatorSharp;
 
 namespace GraphGeneration;
 
 public static class GraphGenerator
 {
-    public static (Edge[] Edges, HashSet<(Vector2, Vector2)> LongPaths, int MaxLenPath) GenerateEdges(List<ZonePolygon> polygons, List<Vector2> poi)
+    public static (Edge[] Edges, HashSet<(GeomPoint, GeomPoint)> LongPaths, int MaxLenPath) GenerateEdges(List<ZonePolygon> polygons, List<Vector2> poi)
     {
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
@@ -44,9 +44,7 @@ public static class GraphGenerator
         var voronator = new Voronator(generatedHexPoints.Concat(validPoi).Concat(centersUrban).ToArray());
         
         // Строим граф для а*
-        var graph = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator, settings.HexSize);
-        var originPoints = graph.Vertices.ToArray();
-        var originEdges = graph.Edges.ToArray();
+        var (originPoints, originEdges) = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator, settings.HexSize);
 
 #if DEBUG
         // рисуем исходный граф
@@ -55,20 +53,20 @@ public static class GraphGenerator
 #endif
 
         // ищем короткие пути между всеми парами POI
-        var shortPathPoint = new List<Vector2>(originPoints.Length);
-        var shortEdges = new HashSet<IEdge<Vector2>>(originEdges.Length);
+        var shortPathPoint = new List<GeomPoint>(originPoints.Count);
+        var shortEdges = new HashSet<IEdge<GeomPoint>>(originEdges.Count);
         var maxLenPath = 0;
-        var longPairs = new HashSet<(Vector2, Vector2)>();
+        var longPairs = new HashSet<(GeomPoint, GeomPoint)>();
 
-        validPoi = originPoints.Where(p => p.IsPoi).ToList();
-        foreach (var pair in PointPairsHelper.GetUniquePairs(validPoi))
+        var validPoi2 = originPoints.Where(p => p.IsPoi).ToList();
+        foreach (var pair in PointPairsHelper.GetUniquePairs(validPoi2))
         {
             var shortPath = QuickPathFinder
-                .FindPath(graph, pair.Item1, pair.Item2)
+                .FindPath(originEdges, originPoints,pair.Item1, pair.Item2)
                 .ToList();
             maxLenPath = Math.Max(maxLenPath, shortPath.Count);
             shortPathPoint.AddRange(shortPath);
-            foreach (IEdge<Vector2> edge in PointPairsHelper.GetEdges(shortPath))
+            foreach (IEdge<GeomPoint> edge in PointPairsHelper.GetEdges(shortPath))
             {
                 shortEdges.Add(edge);
             }
@@ -90,13 +88,14 @@ public static class GraphGenerator
         
         // смешиваем точки обогащенные соседями и точки с Urban+Available
         var urbanFilter = new PointAvaliableAndUrbanFilter(polygonMap);
-        var recoveredPoints = shortPathPoint.Concat(originPoints.Where(p => !urbanFilter.Skip(p))).ToList();
+        var recoveredPoints = shortPathPoint
+            .Concat(originPoints.Where(p => !urbanFilter.Skip(p.AsVector2())))
+            .Select(p => p.AsVector2())
+            .ToList();
         
         // Строим воронова по стабильным точкам и коротким путям
         var voronator2 = new Voronator(recoveredPoints);
-        var graph2 = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator2, settings.HexSize);
-        var originPoints2 = graph2.Vertices.ToArray();
-        var originEdges2 = graph2.Edges.ToArray();
+        var (originPoints2, originEdges2) = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator2, settings.HexSize);
 
 #if DEBUG
         // рисуем воронова по стабильным точкам и коротким путям

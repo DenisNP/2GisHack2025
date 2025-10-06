@@ -1,21 +1,19 @@
 ﻿using GraphGeneration.Filters;
 using GraphGeneration.Models;
-using QuickGraph;
 using VoronatorSharp;
 
 namespace GraphGeneration.A;
 
-public class VoronatorToQuickGraphAdapter
+public static class VoronatorToQuickGraphAdapter
 {
-    public static AdjacencyGraph<Vector2, Edge<Vector2>> ConvertToQuickGraph(
+    public static (List<GeomPoint> Points, List<GeomEdge> Edges) ConvertToQuickGraph(
         PolygonMap polygonMap,
         Voronator voronoi,
         float hexSize)
     {
-        var graph = new AdjacencyGraph<Vector2, Edge<Vector2>>();
-
         var edgeFilter = new EdgeInRestrictedFilter(polygonMap, hexSize); 
-        var points = new HashSet<Vector2>(voronoi.Delaunator.Points.Count);
+        var points = new HashSet<GeomPoint>(voronoi.Delaunator.Points.Count);
+        var edges = new List<GeomEdge>(voronoi.Delaunator.Points.Count);
 
         // Добавляем рёбра между соседними ячейками
         foreach (var edge in voronoi.Delaunator.GetEdges())
@@ -24,23 +22,14 @@ public class VoronatorToQuickGraphAdapter
             {
                 continue;
             }
+            var from = new GeomPoint(edge.Item1);
+            var to = new GeomPoint(edge.Item2);
+            points.Add(from);
+            points.Add(to);
 
-            if (!points.Contains(edge.Item1))
-            {
-                graph.AddVertex(edge.Item1);
-            }
-            
-            if (!points.Contains(edge.Item2))
-            {
-                graph.AddVertex(edge.Item2);
-            }
-            
-            points.Add(edge.Item1);
-            points.Add(edge.Item2);
-
-            graph.AddEdge(new Edge<Vector2>(edge.Item1, edge.Item2));
+            edges.Add(new GeomEdge(from, to, 0));
         }
         
-        return graph;
+        return (points.ToList(), edges);
     }
 }

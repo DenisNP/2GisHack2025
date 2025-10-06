@@ -1,10 +1,41 @@
-using QuickGraph;
 using VoronatorSharp;
 
 namespace GraphGeneration.Models;
 
+public interface IEdge<TVertex>
+{
+    /// <summary>Gets the source vertex</summary>
+    /// <getter>
+    ///   <ensures>Contract.Result&lt;TVertex&gt;() != null</ensures>
+    /// </getter>
+    TVertex Source { get; }
+
+    /// <summary>Gets the target vertex</summary>
+    /// <getter>
+    ///   <ensures>Contract.Result&lt;TVertex&gt;() != null</ensures>
+    /// </getter>
+    TVertex Target { get; }
+}
+
 public class GeomPoint
 {
+    public GeomPoint(){}
+    public GeomPoint(int id, float x, float y, double weight)
+    {
+        Id = id;
+        X = x;
+        Y = y;
+        Weight = weight;
+    }
+    
+    public GeomPoint(Vector2 vector2)
+    {
+        Id = vector2.Id;
+        X = vector2.x;
+        Y = vector2.y;
+        Weight = vector2.Weight;
+    }
+    
     public int Id { get; set; }
     public double X { get; set; }
     public double Y { get; set; }
@@ -12,7 +43,7 @@ public class GeomPoint
     public int Influence { get; set; }
     public bool Show { get; set; }
 
-    public Vector2 AsVector2() => new Vector2((float)X, (float)Y);
+    public Vector2 AsVector2() => new Vector2(Id, (float)X, (float)Y, Weight);
     public bool IsPoi => Weight > 0;
     public Dictionary<int, bool> Paths { get; set; } = new();
 
@@ -28,6 +59,17 @@ public class GeomPoint
 
 public class GeomEdge : IEdge<GeomPoint>
 {
+    public GeomEdge()
+    {
+    }
+    
+    public GeomEdge(GeomPoint from, GeomPoint to, double weight)
+    {
+        From = from;
+        To = to;
+        Weight = weight;
+    }
+
     public GeomPoint From { get; set; }
     public GeomPoint To { get; set; }
     public double Weight { get; set; }

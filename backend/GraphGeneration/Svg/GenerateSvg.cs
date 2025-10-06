@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using GraphGeneration.Models;
 using GraphGeneration.Svg;
-using QuickGraph;
 using VoronatorSharp;
 
 namespace GraphGeneration;

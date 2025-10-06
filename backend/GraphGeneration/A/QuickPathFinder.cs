@@ -1,41 +1,11 @@
 ﻿using GraphGeneration.Models;
-using QuickGraph;
-using QuickGraph.Algorithms;
 using VoronatorSharp;
 
 namespace GraphGeneration.A;
 
 public static class QuickPathFinder
 {
-    public static IEnumerable<Vector2> FindPath(AdjacencyGraph<Vector2, Edge<Vector2>> graph, Vector2 start, Vector2 end)
-    {
-        // Функция стоимости (евклидово расстояние)
-        double EdgeCost(Edge<Vector2> edge) => Vector2.Distance(edge.Source, edge.Target);
-
-        // Эвристическая функция (расстояние до цели)
-        double Heuristic(Vector2 vertex) => Vector2.Distance(vertex, end);
-
-        try
-        {
-            var tryGetPath  = graph.ShortestPathsAStar(EdgeCost, Heuristic, start);
-            
-            // // Находим путь
-            // astar.Compute(start);
-            
-            if (tryGetPath(end, out var path))
-            {
-                return path.Select(edge => edge.Target).Prepend(start);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Path not found: {ex.Message}");
-        }
-        
-        return [];
-    }
-
-    public static IEnumerable<GeomPoint> FindPath(IList<GeomEdge> edges, IList<GeomPoint> points, GeomPoint start, GeomPoint end)
+    public static IEnumerable<GeomPoint> FindPath(IReadOnlyCollection<GeomEdge> edges, IReadOnlyCollection<GeomPoint> points, GeomPoint start, GeomPoint end)
     {
         // Построение графа смежности
         var neighbors = new Dictionary<int, List<(GeomPoint neighbor, double cost)>>();
@@ -133,31 +103,5 @@ public static class QuickPathFinder
         }
         
         return path;
-    }
-    
-    public static IEnumerable<GeomPoint> FindPath(AdjacencyGraph<GeomPoint, GeomEdge> graph, GeomPoint start, GeomPoint end)
-    {
-        // Функция стоимости (евклидово расстояние)
-        double EdgeCost(GeomEdge edge) => edge.Cost();
-
-        // Эвристическая функция (расстояние до цели)
-        double Heuristic(GeomPoint vertex) => Vector2.Distance(vertex.AsVector2(), end.AsVector2());
-
-        try
-        {
-            TryFunc<GeomPoint, IEnumerable<GeomEdge>>? tryGetPath  = graph.ShortestPathsAStar(EdgeCost, Heuristic, start);
-            
-            
-            if (tryGetPath(end, out IEnumerable<GeomEdge>? path))
-            {
-                return path.SelectMany(e => new List<GeomPoint> { e.Source, e.Target }).Distinct().ToList();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Path not found: {ex.Message}");
-        }
-
-        return [];
     }
 }

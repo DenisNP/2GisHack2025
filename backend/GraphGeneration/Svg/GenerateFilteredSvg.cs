@@ -1,7 +1,6 @@
 ﻿using GraphGeneration.Filters;
 using GraphGeneration.Models;
 using GraphGeneration.Svg;
-using QuickGraph;
 using VoronatorSharp;
 
 namespace GraphGeneration;
@@ -13,8 +12,8 @@ public static class GenerateFilteredSvg
 {
     public static string Generate(
         PolygonMap polygonMap,
-        IReadOnlyCollection<Vector2> points,
-        IReadOnlyCollection<IEdge<Vector2>> edges,
+        IReadOnlyCollection<GeomPoint> points,
+        IReadOnlyCollection<IEdge<GeomPoint>> edges,
         double scale,
         float hexSize)
     {
@@ -35,8 +34,8 @@ public static class GenerateFilteredSvg
                     continue;
                 }
 
-                var (x1, y1) = svg.Transform(t1.X, t1.y);
-                var (x2, y2) = svg.Transform(t2.x, t2.y);
+                var (x1, y1) = svg.Transform(t1.X, t1.Y);
+                var (x2, y2) = svg.Transform(t2.X, t2.Y);
 
                 svg.AppendLine($@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" class=""{"graph-edges"}""/>");
         }
@@ -63,7 +62,7 @@ public static class GenerateFilteredSvg
         var pointFilter = new PointFakeFilter(polygonMap);
         foreach (var point in points)
         {
-            if (!point.IsPoi && pointFilter.Skip(point))
+            if (!point.IsPoi && pointFilter.Skip(point.AsVector2()))
             {
                 continue;
             }

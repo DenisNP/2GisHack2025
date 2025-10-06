@@ -5,12 +5,11 @@ using GraphGeneration.Filters;
 using GraphGeneration.Geometry;
 using GraphGeneration.Models;
 using NetTopologySuite.Geometries;
-using QuickGraph;
 using VoronatorSharp;
 
 namespace GraphGeneration;
 
-public class LightGraphGenerator
+public static class LightGraphGenerator
 {
     public static GeomPoint[] GenerateEdges(List<ZonePolygon> polygons, List<GeomPoint> poi)
     {
@@ -48,36 +47,7 @@ public class LightGraphGenerator
         var voronator = new Voronator(generatedHexPoints.Concat(validPoi.Select(x => x.AsVector2())).Concat(centersUrban).ToArray());
 
         // Строим граф для а*
-        Dictionary<Vector2, GeomPoint> pointsByLocation = poi.ToDictionary(p => p.AsVector2());
-
-        AdjacencyGraph<Vector2, Edge<Vector2>> graph = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator, settings.HexSize);
-        int id = poiMaxId + 1;
-        List<GeomPoint> originPoints = graph.Vertices.Select(v =>
-        {
-            if (!pointsByLocation.TryGetValue(v, out GeomPoint? retP))
-            {
-                var p = new GeomPoint
-                {
-                    Id = id++,
-                    X = v.X,
-                    Y = v.Y,
-                    Weight = 0,
-                    //Influence = 0
-                };
-                pointsByLocation.Add(v, p);
-                return p;
-            }
-            else
-            {
-                return retP;
-            }
-        }).ToList();
-        List<GeomEdge> originEdges = graph.Edges.Select(e => new GeomEdge
-        {
-            From = pointsByLocation[e.Source],
-            To = pointsByLocation[e.Target],
-            Weight = 0
-        }).ToList();
+        var (originPoints, originEdges) = VoronatorToQuickGraphAdapter.ConvertToQuickGraph(polygonMap, voronator, settings.HexSize);
         
 #if DEBUG
         // рисуем исходный граф
@@ -86,7 +56,6 @@ public class LightGraphGenerator
 #endif
         
         // считаем кратчайшие расстояния
-        //var graph2 = ConvertToQuickGraph(originEdges, originPoints);
         var pairs = GeneratePoiPairs(originPoints.Where(p => p.IsPoi).ToList(), originEdges, polygonMap, out int uniqCount).ToList();
         //int iterations = 2;
         Console.WriteLine("Pairs: " + pairs.Count);
@@ -245,14 +214,5 @@ public class LightGraphGenerator
     {
         return edges.Where(e => e.From.Id == point.Id || e.To.Id == e.Id)
             .Select(e => e.From.Id == point.Id ? e.To : e.From);
-    }
-    
-    public static AdjacencyGraph<GeomPoint, GeomEdge> ConvertToQuickGraph(List<GeomEdge> originEdges, List<GeomPoint> originPoints)
-    {
-        var graph = new AdjacencyGraph<GeomPoint, GeomEdge>();
-        originPoints.ForEach(p => graph.AddVertex(p));
-        originEdges.ForEach(e => graph.AddEdge(e));
-        
-        return graph;
     }
 }

@@ -1,5 +1,4 @@
-﻿using QuickGraph;
-using VoronatorSharp;
+﻿using VoronatorSharp;
 
 namespace GraphGeneration.Models;
 

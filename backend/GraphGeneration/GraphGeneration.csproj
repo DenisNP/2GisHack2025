@@ -8,11 +8,9 @@
 
     <ItemGroup>
       <PackageReference Include="NetTopologySuite" Version="2.6.0" />
-      <PackageReference Include="QuickGraph" Version="3.6.61119.7" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\2GisHack2025\and.Models\and.Models.csproj" />
       <ProjectReference Include="..\and.Models\and.Models.csproj" />
       <ProjectReference Include="..\AntAlgorithm\AntAlgorithm.csproj" />
       <ProjectReference Include="..\VoronatorSharp\VoronatorSharp.csproj" />
