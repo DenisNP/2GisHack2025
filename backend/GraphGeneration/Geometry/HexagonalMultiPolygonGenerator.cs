@@ -2,7 +2,7 @@
 using GraphGeneration.Models;
 using VoronatorSharp;
 
-namespace GraphGeneration;
+namespace GraphGeneration.Geometry;
 
 public static class HexagonalMultiPolygonGenerator
 {

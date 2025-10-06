@@ -5,7 +5,7 @@ using AntAlgorithm;
 using NetTopologySuite.Geometries;
 using VoronatorSharp;
 
-namespace GraphGeneration;
+namespace GraphGeneration.Models;
 
 public class ZonePolygon
 {

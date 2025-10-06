@@ -4,6 +4,7 @@ using GraphGeneration.A;
 using GraphGeneration.Filters;
 using GraphGeneration.Geometry;
 using GraphGeneration.Models;
+using GraphGeneration.Svg;
 using NetTopologySuite.Geometries;
 using VoronatorSharp;
 

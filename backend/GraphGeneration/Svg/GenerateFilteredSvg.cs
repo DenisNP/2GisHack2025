@@ -1,9 +1,7 @@
 ﻿using GraphGeneration.Filters;
 using GraphGeneration.Models;
-using GraphGeneration.Svg;
-using VoronatorSharp;
 
-namespace GraphGeneration;
+namespace GraphGeneration.Svg;
 
 /// <summary>
 /// При генерации Svg фильтрует ребра и точки в соответствии с Зонами.

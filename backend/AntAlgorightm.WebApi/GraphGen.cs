@@ -3,6 +3,7 @@ using System.Linq;
 using AntAlgorithm;
 using AntAlgorithm.Abstractions;
 using GraphGeneration;
+using GraphGeneration.Geometry;
 using GraphGeneration.Models;
 using VoronatorSharp;
 

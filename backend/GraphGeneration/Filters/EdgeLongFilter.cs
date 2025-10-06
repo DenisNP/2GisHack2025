@@ -1,4 +1,5 @@
-﻿using GraphGeneration.Models;
+﻿using GraphGeneration.Geometry;
+using GraphGeneration.Models;
 using VoronatorSharp;
 
 namespace GraphGeneration.Filters;

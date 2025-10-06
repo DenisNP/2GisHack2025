@@ -1,10 +1,8 @@
-﻿
-
-
-using AntAlgorithm;
+﻿using AntAlgorithm;
+using GraphGeneration.Models;
 using VoronatorSharp;
 
-namespace GraphGeneration;
+namespace GraphGeneration.Geometry;
 
 public static class HexagonalGridGenerator
 {

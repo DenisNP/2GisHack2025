@@ -1,10 +1,12 @@
 ﻿using System.Globalization;
 using GraphGeneration.Models;
-using GraphGeneration.Svg;
 using VoronatorSharp;
 
-namespace GraphGeneration;
+namespace GraphGeneration.Svg;
 
+/// <summary>
+/// Генерит svg по графу как есть
+/// </summary>
 public static class GenerateSvg
 {
     public static string Generate(

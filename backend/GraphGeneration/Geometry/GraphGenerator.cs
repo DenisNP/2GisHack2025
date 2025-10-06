@@ -2,11 +2,11 @@
 using AntAlgorithm;
 using GraphGeneration.A;
 using GraphGeneration.Filters;
-using GraphGeneration.Geometry;
 using GraphGeneration.Models;
+using GraphGeneration.Svg;
 using VoronatorSharp;
 
-namespace GraphGeneration;
+namespace GraphGeneration.Geometry;
 
 public static class GraphGenerator
 {

@@ -1,4 +1,5 @@
-﻿using NetTopologySuite.Geometries;
+﻿using GraphGeneration.Geometry;
+using NetTopologySuite.Geometries;
 using VoronatorSharp;
 
 namespace GraphGeneration.Filters;
