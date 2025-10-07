@@ -477,6 +477,14 @@ export const ZoneDrawer:React.FC<ZoneDrawerProps> = ({type, zones, isActiveZone,
             </>
         )}
         
+        {/* Информационное сообщение для Urban зон */}
+        {type === ZoneType.Urban && (
+            <Alert severity="warning" icon={<InfoIcon />} sx={{ mt: 1 }}>
+                "Общая" зона отключает действие "Запрещенных" зон внутри себя. 
+                Используйте для выделения проходов, арок в домах и других доступных мест в запрещенных областях.
+            </Alert>
+        )}
+        
         {/* Подписи через MUI Alert */}
         {maxZonesReached && (
             <Alert severity="warning" icon={<WarningIcon />}>

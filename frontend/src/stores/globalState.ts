@@ -1,5 +1,6 @@
 import {stores as zonesStore, events as zonesEvents} from "./zonesStore"
 import {stores as poiStores, events as poiEvents} from "../components/PoiManager/models"
+import {stores as mapStores} from "./mapStore"
 import { combine, createEffect, createEvent, createStore, sample } from "effector"
 import { convertToSnakeCase } from "../utils/convertToSnakeCase"
 import { getAdjustedPoi } from "../utils/getAdjustedPoi"
@@ -7,6 +8,7 @@ import { ZoneData } from "../components/ZoneDrawer"
 import { AddPoiEventData } from "../components/PoiManager/PoiManager.types"
 import { RunSimulationRequest } from "../types/InternalApi"
 import { ZoneType } from "../types/Zone"
+import { centerMapOnBaseZone } from "../utils/centerMapOnBaseZone"
 
 
 type AllZones = {
@@ -98,6 +100,8 @@ const $hasSavedState = createStore(validateSavedState());
 const checkSavedStateFx = createEffect(() => {
     return validateSavedState();
 });
+
+const centerMapOnBaseZoneFx = createEffect(centerMapOnBaseZone)
 
 // Обновляем store при изменении localStorage
 $hasSavedState.on(checkSavedStateFx.doneData, (_, isValid) => isValid);
@@ -202,6 +206,15 @@ sample({
 sample({
     clock: checkSavedState,
     target: checkSavedStateFx
+})
+
+// центруем карту после восстановления из стора
+sample({
+    clock: restoreStateFx.done,
+    source: mapStores.$mapStore.map(x=>x.map),
+    filter: (map) => map !== undefined,
+    fn: (map) => map!,
+    target: centerMapOnBaseZoneFx
 })
 
 export const stores = {

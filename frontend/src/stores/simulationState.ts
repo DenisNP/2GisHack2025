@@ -9,6 +9,7 @@ import { Map as MapGl } from '@2gis/mapgl/types';
 import { GeoPoint } from "../types/GeoPoint";
 import { unprojectPoint } from "../utils/pointsProjection";
 import { showNotification } from "../utils/showNotification";
+import { centerMapOnBaseZone } from "../utils/centerMapOnBaseZone";
 
 type RunSimulationProps = {
     request: RunSimulationRequest,
@@ -32,6 +33,9 @@ export type ResultGeoPoint = {
 const runSimulation = createEvent();
 
 const runSimulationFx = createEffect(async ({request, mapInfo: {origin, map}}: RunSimulationProps) => {
+    // Центрируем карту по baseZone перед началом симуляции
+    centerMapOnBaseZone(map);
+    
     let isSuccess = true;
     let response: ResultGeoPoint[] = [];
     try
