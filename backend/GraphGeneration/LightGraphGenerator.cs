@@ -152,7 +152,7 @@ public class LightGraphGenerator
                     continue;
                 }
 
-                var coeff = Math.Clamp(-4.2 * Math.Log(350 / (side + 1) + 1) + 18, 10, 20);
+                var coeff = Math.Clamp(10 + 10 * Math.Exp(-0.008 * side), 10, 20);
                 if (pointsCount <= side * coeff)
                 {
                     break;
