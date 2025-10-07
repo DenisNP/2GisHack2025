@@ -51,7 +51,18 @@ public class ZonePolygon
         
         return windingNumber != 0;
     }
+
+    public Vector2 GetCentroid()
+    {
+        Vector2 sum = Vector2.zero;
+        foreach (var vertex in Vertices)
+        {
+            sum += vertex;
+        }
     
+        return sum / Vertices.Count;
+    }
+
     private float IsLeft(Vector2 a, Vector2 b, Vector2 point)
     {
         return (b.X - a.X) * (point.Y - a.Y) - (point.X - a.X) * (b.Y - a.Y);

@@ -35,7 +35,7 @@ public static class VoronatorToGeomAdapter
                 points.Add(edge.Item2, to);
             }
 
-            edges.Add(new GeomEdge(from, to, 0));
+            edges.Add(new GeomEdge(from, to));
         }
         
         return (points.Values.ToList(), edges);

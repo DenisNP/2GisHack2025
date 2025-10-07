@@ -30,15 +30,8 @@ public static class HexagonalGridGenerator
         // Среднее расстояние до ближайших соседей
         return (horizontalSpacing * 2 + diagonalDistance * 4) / 6f;
     }
-
-    public static IEnumerable<Vector2> GenerateHexagonalGridInPolygons(int maxId, IReadOnlyCollection<ZonePolygon> zones,
-        float hexSize)
-    {
-        return zones.SelectMany(boundingPolygon => HexagonalGridGenerator.GenerateHexagonalGridInPolygon(maxId,
-            boundingPolygon, hexSize));
-    }
     
-    public static List<Vector2> GenerateHexagonalGridInPolygon(int maxId, ZonePolygon zonePolygon, float hexSize)
+    public static List<Vector2> GenerateHexagonalGridInPolygon(ref int maxId, ZonePolygon zonePolygon, float hexSize, bool forceCentroidIfEmpty = false)
     {
         var points = new List<Vector2>();
         var (min, max) = zonePolygon.GetBoundingBox();
@@ -72,17 +65,24 @@ public static class HexagonalGridGenerator
                 points.Add(point);
             }
         }
-        
+
+        if (forceCentroidIfEmpty && points.Count == 0)
+        {
+            var centroid = zonePolygon.GetCentroid();
+            var cPoint = new Vector2(maxId++, centroid.X, centroid.Y, 0);
+            return [cPoint];
+        }
+
         return points;
     }
     
     // Альтернативный метод: гексагональная сетка с дополнительными точками на границах
-    public static List<Vector2> GenerateDenseHexagonalGrid(int maxId, ZonePolygon zonePolygon, float hexSize, int density = 1)
+    public static List<Vector2> GenerateDenseHexagonalGrid(ref int maxId, ZonePolygon zonePolygon, float hexSize, int density = 1)
     {
         var points = new List<Vector2>();
         
         if (density <= 1)
-            return GenerateHexagonalGridInPolygon(maxId, zonePolygon, hexSize);
+            return GenerateHexagonalGridInPolygon(ref maxId, zonePolygon, hexSize);
         
         // Генерируем несколько слоев со смещением для лучшего покрытия
         for (var layer = 0; layer < density; layer++)

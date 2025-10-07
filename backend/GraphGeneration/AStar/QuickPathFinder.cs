@@ -5,22 +5,8 @@ namespace GraphGeneration.AStar;
 
 public static class QuickPathFinder
 {
-    public static IEnumerable<GeomPoint> FindPath(IList<GeomEdge> edges, IList<GeomPoint> points, GeomPoint start, GeomPoint end)
+    public static IEnumerable<GeomPoint> FindPath(IList<GeomPoint> points, Dictionary<int, List<(GeomPoint neighbor, double cost)>> neighbors, GeomPoint start, GeomPoint end)
     {
-        // Построение графа смежности
-        var neighbors = new Dictionary<int, List<(GeomPoint neighbor, double cost)>>();
-        
-        foreach (var point in points)
-        {
-            neighbors[point.Id] = new List<(GeomPoint, double)>();
-        }
-        
-        foreach (var edge in edges)
-        {
-            neighbors[edge.From.Id].Add((edge.To, edge.Cost()));
-            neighbors[edge.To.Id].Add((edge.From, edge.Cost()));
-        }
-        
         // Эвристическая функция (евклидово расстояние)
         double Heuristic(GeomPoint a, GeomPoint b)
         {

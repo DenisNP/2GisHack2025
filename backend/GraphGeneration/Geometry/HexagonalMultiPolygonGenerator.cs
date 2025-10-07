@@ -17,7 +17,7 @@ public static class HexagonalMultiPolygonGenerator
     }
     
     public static List<Vector2> GenerateHexagonalPoints(
-        int maxId,
+        ref int maxId,
         PolygonMap polygonMap,
         HexagonalSettings settings)
     {
@@ -32,12 +32,12 @@ public static class HexagonalMultiPolygonGenerator
         // 2. Генерируем гексагональную сетку в bounding полигоне
         if (settings.Density > 1)
         {
-            points.AddRange(HexagonalGridGenerator.GenerateDenseHexagonalGrid(maxId,
+            points.AddRange(HexagonalGridGenerator.GenerateDenseHexagonalGrid(ref maxId,
                 boundingPolygon, settings.HexSize, settings.Density));
         }
         else
         {
-            points.AddRange(HexagonalGridGenerator.GenerateHexagonalGridInPolygon(maxId,
+            points.AddRange(HexagonalGridGenerator.GenerateHexagonalGridInPolygon(ref maxId,
                 boundingPolygon, settings.HexSize));
         }
         
@@ -59,7 +59,7 @@ public static class HexagonalMultiPolygonGenerator
         return points.Distinct().ToList();
     }
 
-    public static List<Vector2> GenerateSpacedHexagonalPointsOutside(int maxId, PolygonMap polygonMap, float hexSize)
+    public static List<Vector2> GenerateSpacedHexagonalPointsOutside(ref int maxId, PolygonMap polygonMap, float hexSize)
     {
         var points = new List<Vector2>();
         var pointFilter = new PointRestrictedUrbanOrAvailableFilter(polygonMap);
@@ -68,7 +68,7 @@ public static class HexagonalMultiPolygonGenerator
         var boundingPolygon = CalculateConvexHull(polygonMap.Render.SelectMany(v => v.Coordinates).Select(c => new Vector2((float)c.X, (float)c.Y)).ToList());
 
         // 2. Генерируем гексагональную сетку в bounding полигоне
-        points.AddRange(HexagonalGridGenerator.GenerateHexagonalGridInPolygon(maxId, boundingPolygon, hexSize));
+        points.AddRange(HexagonalGridGenerator.GenerateHexagonalGridInPolygon(ref maxId, boundingPolygon, hexSize));
         
         // 3. Фильтруем точки, оставляя только внутри исходных полигонов
         points.RemoveAll(p => pointFilter.Skip(p));

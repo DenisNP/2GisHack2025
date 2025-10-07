@@ -101,7 +101,7 @@ public static class GenerateSvg
             var (x2, y2) = svg.Transform(t2.X, t2.Y);
 
             // Вычисляем толщину линии в зависимости от веса (от 0.5 до 5)
-            var strokeWidth = Math.Max(0.5, Math.Min(20, 0.5 + triangle.Weight * 2.5));
+            var strokeWidth = 1;
 
             svg.AppendLine($@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" stroke=""#666"" stroke-width=""{strokeWidth.ToString(CultureInfo.InvariantCulture)}""/>");
         }

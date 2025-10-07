@@ -47,7 +47,7 @@ public class GeomPoint : IComparable
     public float X { get; }
     public float Y { get; }
     public double Weight { get; }
-    public int Influence { get; set; }
+    public double Influence { get; set; }
     public bool Show { get; set; }
 
     public Vector2 AsVector2() => new(Id, (float)X, (float)Y, Weight);
