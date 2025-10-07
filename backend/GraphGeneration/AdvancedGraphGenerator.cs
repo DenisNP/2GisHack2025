@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using GraphGeneration.AStar;
 using GraphGeneration.Filters;
 using GraphGeneration.Geometry;
 using GraphGeneration.Models;
@@ -18,9 +19,9 @@ public static class AdvancedGraphGenerator
     private const float maxBigHexSize = 5f;
     private const float bigHexToSmallRatio = 3f;
     private const double startClusterDistanceInMeters = 5f;
-    private const double maxClusterDistanceInMeters = 20f;
+    private const double maxClusterDistanceInMeters = 30f;
     private const int maxClustersNumber = 20;
-    
+
     public static GeomPoint[] GenerateEdges(List<ZonePolygon> polygons, List<GeomPoint> poi)
     {
         PolygonMap polygonMap = PolygonHelper.GetPolygonMap(polygons);
@@ -57,10 +58,15 @@ public static class AdvancedGraphGenerator
         List<Vector2> generatedBigHexPoints = HexagonalMultiPolygonGenerator.GenerateSpacedHexagonalPointsOutside(ref poiMaxId, polygonMap, bigHexSize);
 
         // Создаем общую диаграмму Вороного/Делоне для всех точек
-        var voronator = new Voronator(generatedHexPoints.Concat(validPoi.Select(x => x.AsVector2())).Concat(urban).Concat(generatedBigHexPoints).ToArray());
+        var allPoints = generatedHexPoints
+            .Concat(validPoi.Select(x => x.AsVector2()))
+            .Concat(urban)
+            .Concat(generatedBigHexPoints);
+
+        var voronator = new Voronator(allPoints.ToArray());
 
         // Строим граф для а*
-        (List<GeomPoint> originPoints, List<GeomEdge> originEdges) = VoronatorToGeomAdapter.ConvertToQuickGraph(poiMaxId + 1, polygonMap, voronator, settings.HexSize);
+        (List<GeomPoint> originPoints, List<GeomEdge> originEdges) = VoronatorToGeomAdapter.ConvertToQuickGraph(1, polygonMap, voronator, settings.HexSize);
 
         // Построение графа смежности
         var neighbors = new Dictionary<int, List<(GeomPoint neighbor, double cost)>>();
@@ -81,22 +87,61 @@ public static class AdvancedGraphGenerator
         File.WriteAllText("origin_graph.svg", svgOriginGraph, Encoding.UTF8);
 #endif
         // Подготавливаем сетку для симуляции
-        List<(GeomPoint, GeomPoint)> pairs = GeneratePoiPairs(originPoints.Where(p => p.IsPoi).ToList(), neighbors, polygonMap).ToList();
-        Console.WriteLine("Pairs: " + pairs.Count);
         
         // Кластеризуем
         double currentMaxClusterDistance = startClusterDistanceInMeters;
-        List<List<GeomPoint>> clusters = originPoints.Select(p => new List<GeomPoint>{p}).ToList();
+        var pois = originPoints.Where(p => p.IsPoi).ToList();
+
+        List<List<GeomPoint>> clusters = pois.Select(p => new List<GeomPoint>{p}).ToList();
+        Console.WriteLine("Clusters: " + clusters.Count);
         while (clusters.Count > maxClustersNumber && currentMaxClusterDistance < maxClusterDistanceInMeters)
         {
             currentMaxClusterDistance = Math.Min(currentMaxClusterDistance * 1.2, maxClusterDistanceInMeters);
-            clusters = GeomHelper.Clusterize(originPoints, polygonMap, currentMaxClusterDistance);
+            clusters = GeomHelper.Clusterize(pois, polygonMap, currentMaxClusterDistance);
+            
+            Console.WriteLine("Clusters: " + clusters.Count + "; distance: " + currentMaxClusterDistance);
+        }
+        
+        var centroids = clusters.Select(GeomHelper.GetMainClusterPoint).ToList();
+        List<(GeomPoint, GeomPoint)> pairs = GeneratePoiPairs(centroids, polygonMap).ToList();
+        Console.WriteLine("Pairs: " + pairs.Count);
+
+#if DEBUG
+        // рисуем исходный граф
+        var svgClustersGraph = GenerateSvg.Generate(
+            polygonMap,
+            originPoints.Where(p => !p.IsPoi || centroids.Any(c => c.Id == p.Id)).ToList(),
+            originEdges.ToList()
+        );
+        File.WriteAllText("clusters_graph.svg", svgClustersGraph, Encoding.UTF8);
+#endif
+
+        // строим маршруты
+        var pathsByPois = new Dictionary<(int, int), List<GeomPoint>>();
+        foreach (var pair in pairs)
+        {
+            List<GeomPoint> path = QuickPathFinder.FindPath(originPoints, neighbors, pair.Item1, pair.Item2);
+            //Console.WriteLine("Path from " +  pair.Item1.Id + " to " + pair.Item2.Id + ": " + path.Count);
+            var key = (pair.Item1.Id, pair.Item2.Id);
+            if (!pathsByPois.ContainsKey(key))
+            {
+                pathsByPois[key] = path.ToList();
+                pathsByPois[key].ForEach(p =>
+                {
+                    p.Influence++;
+                    p.Show = true;
+                });
+            }
         }
 
 #if DEBUG
         // рисуем исходный граф
-        var svgShortGraph = GenerateSvg.Generate(polygonMap, clusters.Select(GeomHelper.GetCentroid).ToList(), originEdges.ToList());
-        File.WriteAllText("clusters_graph.svg", svgShortGraph, Encoding.UTF8);
+        var svgPathsGraph = GenerateSvg.Generate(
+            polygonMap,
+            originPoints.Where(p => !p.IsPoi || centroids.Any(c => c.Id == p.Id)).ToList(),
+            originEdges.ToList()
+        );
+        File.WriteAllText("paths_graph.svg", svgPathsGraph, Encoding.UTF8);
 #endif
 
         var pointAllowedFilter = new PointAllowedFilter(polygonMap.Available);
@@ -116,15 +161,10 @@ public static class AdvancedGraphGenerator
         }
     }
 
-    private static IEnumerable<(GeomPoint, GeomPoint)> GeneratePoiPairs(List<GeomPoint> pois, Dictionary<int, List<(GeomPoint neighbor, double cost)>> neighbors, PolygonMap polygonMap)
+    private static IEnumerable<(GeomPoint, GeomPoint)> GeneratePoiPairs(List<GeomPoint> pois, PolygonMap polygonMap)
     {
         var pairs = GenerateUniqPairs(pois).ToList();
-        pairs.RemoveAll(p =>
-        {
-            var n = neighbors[p.Item1.Id];
-            return n.Any(x => x.neighbor.Id == p.Item2.Id);
-        });
-        pairs.RemoveAll(p => PolygonHelper.IsPairCrossesAvailable(p.Item1, p.Item2, polygonMap));
+        pairs.RemoveAll(p => !PolygonHelper.IsPairCrossesAvailable(p.Item1, p.Item2, polygonMap));
 
         return pairs;
     }

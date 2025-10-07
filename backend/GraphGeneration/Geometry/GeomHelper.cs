@@ -4,7 +4,7 @@ namespace GraphGeneration.Geometry;
 
 public static class GeomHelper
 {
-    public static GeomPoint GetCentroid(List<GeomPoint> cluster)
+    public static GeomPoint GetMainClusterPoint(List<GeomPoint> cluster)
     {
         if (cluster == null || cluster.Count == 0)
             throw new ArgumentException("Кластер не может быть пустым", nameof(cluster));
@@ -12,20 +12,34 @@ public static class GeomHelper
         if (cluster.Count == 1)
             return cluster[0];
 
-        // Вычисляем средние координаты
+        // Вычисляем средние координаты (центр кластера)
         double sumX = cluster.Sum(p => p.X);
         double sumY = cluster.Sum(p => p.Y);
         double centerX = sumX / cluster.Count;
         double centerY = sumY / cluster.Count;
 
-        // Суммируем веса
+        // Находим ближайшую к центру точку
+        GeomPoint closestPoint = cluster[0];
+        double minDistance = CalculateDistance(closestPoint, new GeomPoint(0, (float)centerX, (float)centerY, 0));
+
+        for (int i = 1; i < cluster.Count; i++)
+        {
+            double distance = CalculateDistance(cluster[i], new GeomPoint(0, (float)centerX, (float)centerY, 0));
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestPoint = cluster[i];
+            }
+        }
+
+        // Суммируем веса всех точек в кластере
         double totalWeight = cluster.Sum(p => p.Weight);
 
-        // Генерируем случайный идентификатор
-        var random = new Random();
-        int randomId = 100000 + random.Next(100000);
+        // Обновляем вес ближайшей точки
+        closestPoint.Weight = totalWeight;
 
-        return new GeomPoint(randomId, (float)centerX, (float)centerY, totalWeight);
+        // Возвращаем ту же точку с обновленным весом
+        return closestPoint;
     }
     
     public static List<List<GeomPoint>> Clusterize(IList<GeomPoint> points, PolygonMap map, double maxClusterDistance)
@@ -71,11 +85,16 @@ public static class GeomHelper
         {
             var distance = CalculateDistance(candidate, point);
             if (distance > maxClusterDistance)
+            {
                 return false;
+            }
 
             // Проверяем, не пересекает ли линия между точками доступные полигоны
-            if (PolygonHelper.IsPairCrossesAvailable(candidate, point, map))
+            if (PolygonHelper.IsPairCrossesAvailable(candidate, point, map)
+                || PolygonHelper.IsPairCrossesRestricted(candidate, point, map))
+            {
                 return false;
+            }
         }
 
         return true;

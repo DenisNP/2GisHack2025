@@ -72,6 +72,7 @@ public class SvgBuilder
             .graph-nodes { /* fill теперь задается инлайн */ }
             .cross-polygon-edges { stroke: #ff9800; stroke-width: 2; stroke-dasharray: 4,2; }
             .info { font-family: Arial; font-size: 12px; fill: #666; }
+            .poi-id { font-family: Arial; font-size: 12px; fill: #000; font-weight: bold; }
         </style>
     </defs>");
 

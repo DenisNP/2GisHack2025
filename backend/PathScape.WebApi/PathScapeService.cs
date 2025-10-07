@@ -12,10 +12,9 @@ public static class PathScapeService
 {
     public static IEnumerable<ResultPoint> RunSimulation(Zone[] zones, Poi[] poi)
     {
-        int maxId = poi.Max(p => p.Id);
         List<ZonePolygon> polygons = zones
             .Select(zone => new ZonePolygon(
-                    zone.Region.Select((region, i) => new Vector2(maxId + i, (float)region.X, (float)region.Y, 0)),
+                    zone.Region.Select((region, i) => new Vector2(100000 + i, (float)region.X, (float)region.Y, 0)),
                     zone.ZoneType
                 )
             )

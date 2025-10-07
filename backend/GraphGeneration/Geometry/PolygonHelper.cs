@@ -52,4 +52,17 @@ public static class PolygonHelper
         }
         return false;
     }
+    
+    public static bool IsPairCrossesRestricted(GeomPoint p1, GeomPoint p2, PolygonMap map)
+    {
+        var line = new LineString([new Coordinate(p1.X, p1.Y), new Coordinate(p2.X, p2.Y)]);
+        foreach (Polygon polygon in map.Restricted)
+        {
+            if (line.Crosses(polygon))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 }

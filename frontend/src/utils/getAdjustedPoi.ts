@@ -37,8 +37,8 @@ function pointInAnyPolygon(point: Point, polygons: Point[][]): boolean {
 function tryMovePointOutOfPolygons(
     point: Point, 
     polygons: Point[][], 
-    stepPixels: number = 2, 
-    maxRadius: number = 50
+    stepMeters: number = 0.5,
+    maxRadius: number = 3
 ): Point | null {
     // Если точка уже не в полигоне, возвращаем её
     if (!pointInAnyPolygon(point, polygons)) {
@@ -46,7 +46,7 @@ function tryMovePointOutOfPolygons(
     }
     
     // Пробуем смещать точку по кругу с увеличивающимся радиусом
-    for (let radius = stepPixels; radius <= maxRadius; radius += stepPixels) {
+    for (let radius = stepMeters; radius <= maxRadius; radius += stepMeters) {
         // Проверяем 8 направлений (каждые 15 градусов)
         for (let angle = 0; angle < 360; angle += 15) {
             const radians = (angle * Math.PI) / 180;
@@ -72,12 +72,12 @@ function tryMovePointOutOfPolygons(
 function processPointsAgainstPolygons(
     points: Poi[], 
     polygons: Point[][], 
-    stepPixels: number, 
+    stepMeters: number,
     maxRadius: number
 ): Poi[] {
     return points.reduce<Poi[]>((result, poi) => {
-        const adjustedPoint = tryMovePointOutOfPolygons(poi.point, polygons, stepPixels, maxRadius);
-        
+        const adjustedPoint = tryMovePointOutOfPolygons(poi.point, polygons, stepMeters, maxRadius);
+
         // Если удалось найти свободное место, добавляем точку
         if (adjustedPoint !== null) {
             result.push({
@@ -106,8 +106,8 @@ export function getAdjustedPoi(poi: Poi[], allZones: Zone[]): Poi[] {
     const adjustedPoi = processPointsAgainstPolygons(
         poi, 
         polygons, 
-        2,  // шаг в пикселях
-        50  // максимальный радиус поиска
+        0.5,  // шаг в метрах
+        3  // максимальный радиус поиска
     );
     
     return adjustedPoi;

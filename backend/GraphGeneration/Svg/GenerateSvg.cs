@@ -9,78 +9,7 @@ namespace GraphGeneration.Svg;
 /// </summary>
 public static class GenerateSvg
 {
-    private const double defaultScale = 2;
-    
-    public static string Generate(
-        PolygonMap polygonMap,
-        IReadOnlyCollection<Vector2> points,
-        IReadOnlyCollection<IEdge<Vector2>> edges,
-        double scale = defaultScale)
-    {
-        var svg = new SvgBuilder(polygonMap.Render, scale);
-
-        // Рисуем граф
-        svg.AppendLine("<g class=\"graph-edges\">");
-        foreach (var triangle in edges)
-        {
-            var t1 = triangle.Source;
-            var t2 = triangle.Target;
-
-            var (x1, y1) = svg.Transform(t1.X, t1.y);
-            var (x2, y2) = svg.Transform(t2.x, t2.y);
-
-            svg.AppendLine($@"<line x1=""{x1}"" y1=""{y1}"" x2=""{x2}"" y2=""{y2}"" class=""{"graph-edges"}""/>");
-        }
-
-        svg.AppendLine("</g>");
-
-        // Рисуем полигоны
-        foreach (var polygon in polygonMap.Zones)
-        {
-            var polygonClass = $"polygon-{polygon.Type.ToString().ToLower()}";
-
-            svg.Append($@"<polygon class=""{polygonClass}"" points=""");
-            foreach (var coord in polygon.Vertices)
-            {
-                var (x, y) =  svg.Transform(coord.X, coord.Y);
-                svg.Append($"{x},{y} ");
-            }
-
-            svg.AppendLine(@"""/>");
-        }
-
-        // Рисуем узлы графа
-        svg.AppendLine("<g class=\"graph-nodes\">");
-        foreach (var point in points)
-        {
-            var (x, y) =  svg.Transform(point.X, point.Y);
-
-            // Определяем цвет и размер в зависимости от веса
-            var fillColor = "#d32f2f"; // красный по умолчанию
-            double radius = 10; // размер по умолчанию
-
-            if (!point.IsPoi)
-            {
-                fillColor = "#008000";
-            }
-            else
-            {
-                radius = 20; // увеличенный размер для узлов с весом
-            }
-
-            svg.AppendLine($@"<circle cx=""{x}"" cy=""{y}"" r=""{radius}"" fill=""{fillColor}""/>");
-        }
-
-        svg.AppendLine("</g>");
-
-        // Информация
-        var totalPoints = points.Count;
-        var totalEdges = edges.Count;
-
-        svg.AppendText($"Полигоны: {polygonMap.Zones.Count}, Точки: {totalPoints}, Ребра: {totalEdges}");
-
-        return svg.ToString();
-    }
+    private const double defaultScale = 7;
 
     public static string Generate(
         PolygonMap polygonMap,
@@ -145,10 +74,16 @@ public static class GenerateSvg
             }
             else
             {
-                radius = 20;
+                radius = 10;
             }
 
             svg.AppendLine($@"<circle cx=""{x}"" cy=""{y}"" r=""{radius.ToString(CultureInfo.InvariantCulture)}"" fill=""{fillColor}""/>");
+            
+            // Добавляем ID для POI
+            if (point.IsPoi)
+            {
+                svg.AppendLine($@"<text x=""{x + radius + 5}"" y=""{y + 5}"" class=""poi-id"" font-size=""12"" fill=""#000"" font-family=""Arial"">{point.Id}</text>");
+            }
         }
 
         svg.AppendLine("</g>");

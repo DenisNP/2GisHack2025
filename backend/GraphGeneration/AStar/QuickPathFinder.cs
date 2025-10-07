@@ -5,7 +5,7 @@ namespace GraphGeneration.AStar;
 
 public static class QuickPathFinder
 {
-    public static IEnumerable<GeomPoint> FindPath(IList<GeomPoint> points, Dictionary<int, List<(GeomPoint neighbor, double cost)>> neighbors, GeomPoint start, GeomPoint end)
+    public static List<GeomPoint> FindPath(IList<GeomPoint> points, Dictionary<int, List<(GeomPoint neighbor, double cost)>> neighbors, GeomPoint start, GeomPoint end)
     {
         // Эвристическая функция (евклидово расстояние)
         double Heuristic(GeomPoint a, GeomPoint b)
@@ -27,7 +27,7 @@ public static class QuickPathFinder
             gScore[point.Id] = double.PositiveInfinity;
         }
         gScore[start.Id] = 0;
-        
+
         // f-score: g-score + эвристика
         var fScore = new Dictionary<int, double>();
         foreach (var point in points)
