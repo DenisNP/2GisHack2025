@@ -88,7 +88,7 @@ public class SvgBuilder
     {
         var svgHeight = (int)(_height * _scale) + padding * 2;
         var svgX = padding + (int)((x - _overallEnvelope.MinX) * _scale);
-        var svgY = svgHeight - padding - (int)((y - _overallEnvelope.MinY) * _scale);
+        var svgY = padding + (int)((y - _overallEnvelope.MinY) * _scale);
         return (svgX, svgY);
     }
     

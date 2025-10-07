@@ -19,7 +19,7 @@ public class LightGraphGenerator
         double side = Math.Sqrt(avArea);
         Console.WriteLine("Total Area: " + avArea + "; side: " + side);
         float hexSize = Math.Clamp((float)side / 200f, 0.5f, 3f);
-        float bigHexSize = Math.Clamp(hexSize * 3, 3f, 5f);
+        float bigHexSize = Math.Clamp(hexSize * 5, 4f, 10f);
 
         // Настройки гексагонального заполнения
         var settings = new HexagonalMultiPolygonGenerator.HexagonalSettings
@@ -31,7 +31,7 @@ public class LightGraphGenerator
             AddEdgePoints = false,
             EdgePointSpacing = 2f
         };
-        
+
         var poiFilter = new PointAllowedFilter(polygonMap.Render);
         List<GeomPoint> validPoi = poi.Where(p => !poiFilter.Skip(p.AsVector2())).ToList();
         int poiMaxId = validPoi.Max(p => p.Id);
@@ -175,9 +175,10 @@ public class LightGraphGenerator
         // рисуем исходный граф
         var svgShortGraph = GenerateSvg.Generate(polygonMap, originPoints.ToList(), originEdges.ToList());
         File.WriteAllText("short_graph.svg", svgShortGraph, Encoding.UTF8);
-#endif        
+#endif
 
-        return originPoints.Where(e => e.Show && !e.IsPoi).ToArray();
+        var filter = new PointAllowedFilter(polygonMap.Available);
+        return originPoints.Where(e => e.Show && !e.IsPoi && !filter.Skip(e.AsVector2())).ToArray();
     }
 
     private static int GetPairId((GeomPoint, GeomPoint) pair)
