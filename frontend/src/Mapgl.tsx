@@ -23,6 +23,7 @@ export default function Mapgl() {
                 style: process.env.REACT_APP_MAPGL_STYLE_ID,
                 disableRotationByUserInteraction: true,
             });
+            console.log(process.env.REACT_APP_MAPGL_API_KEY);
 
             setMapglContext({
                 mapglInstance: map,

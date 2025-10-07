@@ -1,19 +1,20 @@
 import { getBoundingBox } from './getBoundingBox';
-import { ApiResponse } from '../types/ApiResponse';
+import { ApiResponse, ApiItem } from '../types/ApiResponse';
 
 const API_KEY = process.env.REACT_APP_MAPGL_API_KEY || '';
 const API_ENDPOINT = 'https://catalog.api.2gis.com/3.0/items';
 const API_LOCALE = 'ru_RU';
 const API_FIELDS = 'items.point,items.caption,items.links,items.links.database_entrances,items.geometry.hover,items.rubrics';
-const API_TYPE = 'branch,building,station_platform,station.metro,station_entrance';
+const API_TYPE = ['branch', 'building', 'station.metro,station_entrance,station_platform'];
 const API_PAGE_SIZE = Number(process.env.REACT_APP_2GIS_PAGE_SIZE) || 10;
 
 /**
- * Выполняет GET запрос к API 2GIS каталога с фиксированными параметрами
+ * Выполняет GET запрос к API 2GIS каталога с фиксированными параметрами для одного типа
+ * @param type - Тип объекта для запроса
  * @param page - Опциональный номер страницы для пагинации
  * @returns Promise с ответом от API
  */
-export async function fetchFromApi(page?: number): Promise<Response> {
+export async function fetchFromApi(type: string, page?: number): Promise<Response> {
     // Получаем ограничивающий прямоугольник из Urban зон
     const boundingBox = getBoundingBox();
     
@@ -27,7 +28,7 @@ export async function fetchFromApi(page?: number): Promise<Response> {
         key: API_KEY,
         locale: API_LOCALE,
         fields: API_FIELDS,
-        type: API_TYPE,
+        type: type,
         page_size: API_PAGE_SIZE,
         point1: `${boundingBox.topLeft.lng},${boundingBox.topLeft.lat}`,
         point2: `${boundingBox.bottomRight.lng},${boundingBox.bottomRight.lat}`,
@@ -60,13 +61,14 @@ export async function fetchFromApi(page?: number): Promise<Response> {
 }
 
 /**
- * Выполняет GET запрос к API 2GIS каталога и возвращает JSON ответ
+ * Выполняет GET запрос к API 2GIS каталога и возвращает JSON ответ для одного типа
+ * @param type - Тип объекта для запроса
  * @param page - Опциональный номер страницы для пагинации
  * @returns Promise с JSON ответом или null, если ответ не распарсился или items пуст
  */
-export async function fetchJsonFromApi(page?: number): Promise<ApiResponse | null> {
+export async function fetchJsonFromApi(type: string, page?: number): Promise<ApiResponse | null> {
     try {
-        const response = await fetchFromApi(page);
+        const response = await fetchFromApi(type, page);
         const data: ApiResponse = await response.json();
 
         // Проверяем, что items существует и не пустой
@@ -80,3 +82,4 @@ export async function fetchJsonFromApi(page?: number): Promise<ApiResponse | nul
         throw new Error('Ошибка при парсинге ответа API');
     }
 }
+

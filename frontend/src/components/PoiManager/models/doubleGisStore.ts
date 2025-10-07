@@ -12,6 +12,9 @@ import { ZoneType } from "../../../types/Zone";
 import { fetchJsonFromApi } from "../../../utils/api";
 import { showNotification } from "../../../utils/showNotification";
 
+// Константы для API
+const API_TYPE = ['branch', 'building', 'station.metro,station_entrance,station_platform'];
+
 
 const MAX_SIZE_ZONE_IN_METERS = 4
 
@@ -129,7 +132,7 @@ async function processBuilding(item: ApiItem): Promise<void> {
     }
     
     // Обрабатываем входы, если они есть
-    const entrances = item.links?.database_entrances;
+    const entrances = item.links?.database_entrances || item.links?.entrances;
     if (entrances && entrances.length > 0) {
         for (const entrance of entrances) {
             const points = entrance.geometry?.points;
@@ -201,31 +204,62 @@ async function processItem(item: ApiItem): Promise<void> {
 
 const loadDataInternal = async () => {
     console.log('Начало загрузки POI из 2GIS API...');
-    let currentPage = 1;
     let totalItems = 0;
+    let totalPages = 0;
     
-    while (true) {
-        // Получаем данные со страницы
-        const response = await fetchJsonFromApi(currentPage);
+    // Внешний цикл по типам объектов
+    for (const type of API_TYPE) {
+        console.log(`Начинаем загрузку данных для типа: ${type}`);
+        let currentPage = 1;
+        let typeItems = 0;
+        let typePages = 0;
         
-        // Если получили null, останавливаем цикл
-        if (!response) {
-            break;
+        // Внутренний цикл по страницам для текущего типа
+        while (true) {
+            try {
+                // Получаем данные со страницы для текущего типа
+                const response = await fetchJsonFromApi(type, currentPage);
+                
+                // Если получили null, останавливаем цикл для этого типа
+                if (!response) {
+                    break;
+                }
+                
+                // Обрабатываем все элементы на странице
+                const items = response.result?.items || [];
+                typeItems += items.length;
+                typePages++;
+                
+                for (const item of items) {
+                    await processItem(item);
+                }
+                
+                // Проверяем, есть ли еще страницы для этого типа
+                const totalItemsForType = response.result?.total || 0;
+                if (typeItems >= totalItemsForType || items.length === 0) {
+                    break;
+                }
+                
+                // Переходим к следующей странице
+                currentPage++;
+                
+            } catch (error) {
+                console.error(`Ошибка при загрузке страницы ${currentPage} для типа ${type}:`, error);
+                break;
+            }
         }
         
-        // Обрабатываем все элементы на странице
-        const items = response.result?.items || [];
-        totalItems += items.length;
+        console.log(`Завершена загрузка для типа ${type}: страниц ${typePages}, элементов ${typeItems}`);
+        totalItems += typeItems;
+        totalPages += typePages;
         
-        for (const item of items) {
-            await processItem(item);
+        // Небольшая пауза между запросами разных типов для снижения нагрузки на API
+        if (type !== API_TYPE[API_TYPE.length - 1]) {
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
-        
-        // Переходим к следующей странице
-        currentPage++;
     }
     
-    console.log(`Загрузка завершена. Обработано страниц: ${currentPage - 1}, элементов: ${totalItems}`);
+    console.log(`Загрузка завершена. Всего обработано страниц: ${totalPages}, элементов: ${totalItems}`);
 }
 
 const loadData = createEvent();

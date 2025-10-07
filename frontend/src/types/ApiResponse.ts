@@ -22,6 +22,7 @@ export interface ApiItemGeometry {
 
 export interface ApiItemLinks {
     database_entrances?: ApiDatabaseEntrance[];
+    entrances?: ApiDatabaseEntrance[];
 }
 
 export interface ApiItem {

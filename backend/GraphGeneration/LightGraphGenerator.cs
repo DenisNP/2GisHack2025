@@ -144,18 +144,19 @@ public class LightGraphGenerator
                     }
                 }
 
-                Console.WriteLine("Increment: " + inc + "; paths: " + pathsCount);
-                if (inc == 0 && pathsCount > 10)
+                var pointsCount = originPoints.Count(p => p.Show);
+                Console.WriteLine("Increment: " + inc + "; paths: " + pathsCount + "; points: " + pointsCount);
+                if (inc == 0 && pointsCount > side * 25)
                 {
                     originPoints.ForEach(p => p.Show = false);
                     continue;
                 }
 
-                if (pathsCount <= Math.Sqrt(pairs.Count) * 10)
+                if (pointsCount <= side * 15)
                 {
                     break;
                 }
-                else
+                else if (inc < 20)
                 {
                     originPoints.ForEach(p => p.Show = false);
                 }
