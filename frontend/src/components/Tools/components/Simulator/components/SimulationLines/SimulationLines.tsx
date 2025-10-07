@@ -11,11 +11,61 @@ export const SimulationLines: React.FC = () => {
     const simulationResult = useUnit(stores.$simulationResult);
     const markersRef = useRef<any[]>([]);
 
-    
-
     // Создание точек на карте
     useEffect(() => {
         if (!mapglInstance || !mapgl) return;
+
+        const createMarkers = (points: ResultGeoPoint[]) => {
+            // Настраиваем батч-обработку
+            const batchSize = 100;
+            let processedCount = 0;
+
+            const processBatch = () => {
+                const endIndex = Math.min(processedCount + batchSize, points.length);
+                
+                for (let i = processedCount; i < endIndex; i++) {
+                    const point = points[i];
+
+                    const size = 6;
+                    const div = document.createElement('div');
+                    div.style.cssText = `
+                        width: ${size}px;
+                        height: ${size}px;
+                        background: ${POINT_COLOR};
+                        border: 1px solid rgba(255, 255, 255, 0.8);
+                        border-radius: 50%;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                        position: absolute;
+                        transform: translate(-50%, -50%);
+                        pointer-events: none;
+                        will-change: transform;
+                    `;
+
+                    try {
+                        const marker = new (mapgl as any).HtmlMarker(mapglInstance, {
+                            coordinates: [point.point.lng, point.point.lat],
+                            html: div,
+                            interactive: false,
+                            zIndex: 1000,
+                        });
+
+                        markersRef.current.push(marker);
+                    } catch (e) {
+                        console.warn('Ошибка создания маркера:', e);
+                    }
+                }
+
+                processedCount = endIndex;
+
+                if (processedCount < points.length) {
+                    // Продолжаем обработку в следующем кадре
+                    requestAnimationFrame(processBatch);
+                }
+            };
+
+            // Запускаем обработку
+            processBatch();
+        };
 
         // Очищаем существующие маркеры
         markersRef.current.forEach((marker) => {
@@ -27,36 +77,9 @@ export const SimulationLines: React.FC = () => {
         });
         markersRef.current = [];
 
-        // Если нет результатов симуляции, выходим
-        if (!simulationResult || simulationResult.length === 0) {
-            return;
-        }
+        createMarkers(simulationResult);
 
-        // Создаем маленькие коричневые точки для каждого результата
-        simulationResult.forEach((point: ResultGeoPoint, index: number) => {
-            try {
-                const html = document.createElement('div');
-                html.style.width = '6px';
-                html.style.height = '6px';
-                html.style.backgroundColor = POINT_COLOR; // коричневый цвет
-                html.style.borderRadius = '50%';
-                html.style.border = '1px solid rgba(255, 255, 255, 0.8)';
-                html.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.3)';
-
-                const marker = new (mapgl as any).HtmlMarker(mapglInstance, {
-                    coordinates: [point.point.lng, point.point.lat],
-                    html,
-                    interactive: false,
-                    zIndex: 1000,
-                });
-
-                markersRef.current.push(marker);
-            } catch (e) {
-                console.error(`Ошибка при создании маркера ${index}:`, e);
-            }
-        });
-
-        // Очистка при размонтировании компонента
+        // Очистка при размонтировании
         return () => {
             markersRef.current.forEach((marker) => {
                 try {
