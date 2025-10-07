@@ -31,7 +31,7 @@ public static class VoronatorToGeomAdapter
             }
             if (!points.TryGetValue(edge.Item2, out var to))
             {
-                to = new GeomPoint(startId++, edge.Item2.X, edge.Item2.Y, edge.Item1.Weight);
+                to = new GeomPoint(startId++, edge.Item2.X, edge.Item2.Y, edge.Item2.Weight);
                 points.Add(edge.Item2, to);
             }
 

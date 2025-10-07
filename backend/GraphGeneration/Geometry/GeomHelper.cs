@@ -41,7 +41,7 @@ public static class GeomHelper
         // Возвращаем ту же точку с обновленным весом
         return closestPoint;
     }
-    
+
     public static List<List<GeomPoint>> Clusterize(IList<GeomPoint> points, PolygonMap map, double maxClusterDistance)
     {
         if (points == null || points.Count == 0)

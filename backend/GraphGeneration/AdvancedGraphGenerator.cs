@@ -19,7 +19,7 @@ public static class AdvancedGraphGenerator
     private const float maxBigHexSize = 5f;
     private const float bigHexToSmallRatio = 3f;
     private const double startClusterDistanceInMeters = 5f;
-    private const double maxClusterDistanceInMeters = 30f;
+    private const double maxClusterDistanceInMeters = 15f;
     private const int maxClustersNumber = 20;
 
     public static GeomPoint[] GenerateEdges(List<ZonePolygon> polygons, List<GeomPoint> poi)
