@@ -34,7 +34,7 @@ const runSimulation = createEvent();
 
 const runSimulationFx = createEffect(async ({request, mapInfo: {origin, map}}: RunSimulationProps) => {
     // Центрируем карту по baseZone перед началом симуляции
-    centerMapOnBaseZone(map);
+    // centerMapOnBaseZone(map);
     
     let isSuccess = true;
     let response: ResultGeoPoint[] = [];

@@ -102,7 +102,7 @@ public static class AdvancedGraphGenerator
             Console.WriteLine("Clusters: " + clusters.Count + "; distance: " + currentMaxClusterDistance);
         }
         
-        var centroids = clusters.Select(GeomHelper.GetMainClusterPoint).ToList();
+        List<GeomPoint> centroids = clusters.Select(GeomHelper.GetMainClusterPoint).ToList();
         List<(GeomPoint, GeomPoint)> pairs = GeneratePoiPairs(centroids, polygonMap).ToList();
         Console.WriteLine("Pairs: " + pairs.Count);
 
@@ -129,10 +129,12 @@ public static class AdvancedGraphGenerator
                 pathsByPois[key].ForEach(p =>
                 {
                     p.Influence += pair.Item1.Weight + pair.Item2.Weight;
-                    p.Show = true;
                 });
             }
         }
+        
+        var maxInfluence = originPoints.Max(p => p.Influence);
+        originPoints.ForEach(p => p.Influence /= maxInfluence);
 
 #if DEBUG
         // рисуем исходный граф
@@ -144,6 +146,24 @@ public static class AdvancedGraphGenerator
         File.WriteAllText("paths_graph.svg", svgPathsGraph, Encoding.UTF8);
 #endif
 
+        originPoints.ForEach(p => p.Influence = 0);
+        // симулируем движение
+        Simulation.Run(originPoints, centroids, pairs, pathsByPois, neighbors, polygonMap, hexSize);
+        
+        maxInfluence = originPoints.Max(p => p.Influence);
+        originPoints.ForEach(p => p.Influence /= maxInfluence);
+
+#if DEBUG
+        // рисуем исходный граф
+        var svgPaths2Graph = GenerateSvg.Generate(
+            polygonMap,
+            originPoints.Where(p => !p.IsPoi || centroids.Any(c => c.Id == p.Id)).ToList(),
+            originEdges.ToList()
+        );
+        File.WriteAllText("paths2_graph.svg", svgPaths2Graph, Encoding.UTF8);
+#endif        
+
+        // возвращаем
         var pointAllowedFilter = new PointAllowedFilter(polygonMap.Available);
         return originPoints
             .Where(e => e.Show && !e.IsPoi && !pointAllowedFilter.Skip(e.AsVector2()))
