@@ -68,12 +68,13 @@ public static class GenerateSvg
 
             if (!point.IsPoi)
             {
-                fillColor = "#008000"; // зелёный для обычных точек
+                fillColor = point.IsCommon ? "#2f5ed3" : "#008000"; // зелёный для обычных точек;
                 // Размер зависит от влияния (от 3 до 10)
                 radius = Math.Max(1, Math.Min(10, 1 + point.Influence));
             }
             else
             {
+
                 radius = 10;
             }
 

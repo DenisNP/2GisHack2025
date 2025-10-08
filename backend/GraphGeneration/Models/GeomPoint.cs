@@ -49,18 +49,21 @@ public class GeomPoint : IComparable
     public double Weight { get; set; }
     public double Influence { get; set; }
     public bool Show { get; set; }
+    public bool IsCommon { get; set; }
+    
+    public HashSet<(int, int)> Paths { get; } = new();
 
     public Vector2 AsVector2() => new(Id, (float)X, (float)Y, Weight);
     public bool IsPoi => Weight > 0;
-    public Dictionary<int, bool> Paths { get; } = new();
+    // public Dictionary<int, bool> Paths { get; } = new();
 
-    public void AddPath(GeomPoint p1, GeomPoint p2)
+    public void AddPath((int, int) key)
     {
-        var minp = p1.Id < p2.Id ? p1.Id : p2.Id;
-        var maxp = minp == p1.Id ? p2.Id : p1.Id;
-
-        var combined = minp * 10000 + maxp;
-        Paths.TryAdd(combined, true);
+        // var minp = p1.Id < p2.Id ? p1.Id : p2.Id;
+        // var maxp = minp == p1.Id ? p2.Id : p1.Id;
+        //
+        // var combined = minp * 10000 + maxp;
+        Paths.Add(key);
     }
     
     public override string ToString() => $"({X}, {Y})";

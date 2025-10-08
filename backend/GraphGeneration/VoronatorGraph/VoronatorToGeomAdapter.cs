@@ -29,10 +29,18 @@ public static class VoronatorToGeomAdapter
                 from = new GeomPoint(startId++, edge.Item1.X, edge.Item1.Y, edge.Item1.Weight);
                 points.Add(edge.Item1, from);
             }
+            else
+            {
+                from.IsCommon = true;
+            }
             if (!points.TryGetValue(edge.Item2, out var to))
             {
                 to = new GeomPoint(startId++, edge.Item2.X, edge.Item2.Y, edge.Item2.Weight);
                 points.Add(edge.Item2, to);
+            }
+            else
+            {
+                to.IsCommon = true;
             }
 
             edges.Add(new GeomEdge(from, to));
