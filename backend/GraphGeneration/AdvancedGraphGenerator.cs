@@ -25,7 +25,7 @@ public static class AdvancedGraphGenerator
     // Новые константы для фильтрации маршрутов
 // Новые константы для фильтрации маршрутов по медианной дистанции
     private const double commonPointsThreshold = 0.3; // 30% общих точек
-    private const double medianDistanceThreshold = 2.0; // Максимальная медианная дистанция для группировки маршрутов (в метрах)
+    private const double medianDistanceThreshold = 8.0; // Максимальная медианная дистанция для группировки маршрутов (в метрах)
     private const int minPointsForMedianComparison = 3; // Минимальное количество точек для сравнения медиан
     private const int minPathLengthForFiltering = 5; // Минимальная длина маршрута для фильтрации
 
@@ -181,15 +181,39 @@ public static class AdvancedGraphGenerator
 /// <summary>
 /// Фильтрует маршруты с общими точками или близкой медианной дистанцией, оставляя лучшие сегменты маршрутов
 /// </summary>
+/// <summary>
+/// Фильтрует маршруты: сначала по группам целиком, потом по сегментам для оставшихся
+/// </summary>
 private static Dictionary<(int, int), List<GeomPoint>> FilterPathsByCommonPoints(
+    Dictionary<(int, int), List<GeomPoint>> pathsByPois)
+{
+    // Сначала сбрасываем все Show = false для точек маршрутов (кроме POI)
+    // foreach (var route in pathsByPois.Values)
+    // {    
+    //     foreach (var point in route.Where(p => !p.IsPoi))
+    //     {
+    //         point.Show = false;
+    //     }
+    // }
+
+    // Этап 1: Группируем маршруты целиком
+    var groupedPaths = GroupPathsByCommonPointsAndDistance(pathsByPois);
+    Console.WriteLine($"После группировки маршрутов целиком: {groupedPaths.Count} маршрутов");
+
+    // Этап 2: Анализируем оставшиеся маршруты на уровне сегментов
+    AnalyzeRemainingPathsBySegments(groupedPaths);
+    
+    return groupedPaths;
+}
+
+/// <summary>
+/// Этап 1: Группировка маршрутов целиком по общим точкам и медианной дистанции
+/// </summary>
+private static Dictionary<(int, int), List<GeomPoint>> GroupPathsByCommonPointsAndDistance(
     Dictionary<(int, int), List<GeomPoint>> pathsByPois)
 {
     var pathGroups = new List<List<KeyValuePair<(int, int), List<GeomPoint>>>>();
     var processedKeys = new HashSet<(int, int)>();
-    
-    // Константы для группировки по медианной дистанции
-    const double medianDistanceThreshold = 2.0;
-    const int minPointsForMedianComparison = 3;
     
     // Группируем маршруты по общим точкам или близкой медианной дистанции
     foreach (var path1 in pathsByPois)
@@ -230,7 +254,7 @@ private static Dictionary<(int, int), List<GeomPoint>> FilterPathsByCommonPoints
         pathGroups.Add(group);
     }
     
-    // Для каждой группы анализируем сегменты и оставляем лучшие
+    // Для каждой группы оставляем только маршрут с максимальным средним Influence
     var result = new Dictionary<(int, int), List<GeomPoint>>();
     
     foreach (var group in pathGroups)
@@ -239,27 +263,30 @@ private static Dictionary<(int, int), List<GeomPoint>> FilterPathsByCommonPoints
         {
             // Если в группе только один маршрут, просто добавляем его
             result.Add(group[0].Key, group[0].Value);
-            MarkPointsAsVisible(group[0].Value);
+            // MarkPointsAsVisible(group[0].Value);
         }
         else
         {
-            Console.WriteLine($"Анализируем группу из {group.Count} маршрутов:");
+            Console.WriteLine($"Группа из {group.Count} маршрутов с общими точками:");
             
-            // Анализируем сегменты и выбираем лучшие
-            var bestSegmentsByRoute = AnalyzeAndSelectBestSegments(group);
+            // Находим маршрут с максимальным средним Influence
+            var bestPath = group
+                .Select(path => new {
+                    Path = path,
+                    AvgInfluence = CalculateAverageInfluence(path.Value),
+                    PathLength = path.Value.Count
+                })
+                .OrderByDescending(x => x.AvgInfluence)
+                .ThenByDescending(x => x.PathLength)
+                .First();
             
-            // Собираем финальные маршруты из лучших сегментов
-            foreach (var routeSegments in bestSegmentsByRoute)
-            {
-                var finalRoute = ReconstructRouteFromSegments(routeSegments.Value);
-                if (finalRoute.Count > 0)
-                {
-                    result.Add(routeSegments.Key, finalRoute);
-                    MarkPointsAsVisible(finalRoute);
-                    
-                    Console.WriteLine($"  Финальный маршрут {routeSegments.Key}: {finalRoute.Count} точек");
-                }
-            }
+            Console.WriteLine($"  Выбран маршрут {bestPath.Path.Key} со средним Influence: {bestPath.AvgInfluence:F2}");
+            
+            // Добавляем только лучший маршрут и помечаем его точки как видимые
+            result.Add(bestPath.Path.Key, bestPath.Path.Value);
+            // MarkPointsAsVisible(bestPath.Path.Value);
+            
+            // Остальные маршруты в группе не добавляем в результат, их точки остаются Show = false
         }
     }
     
@@ -267,70 +294,237 @@ private static Dictionary<(int, int), List<GeomPoint>> FilterPathsByCommonPoints
 }
 
 /// <summary>
-/// Анализирует сегменты маршрутов и выбирает лучшие для каждого участка
+/// Этап 2: Анализ оставшихся маршрутов на уровне сегментов
 /// </summary>
-private static Dictionary<(int, int), List<RouteSegment>> AnalyzeAndSelectBestSegments(
-    List<KeyValuePair<(int, int), List<GeomPoint>>> group)
+private static void AnalyzeRemainingPathsBySegments(
+    Dictionary<(int, int), List<GeomPoint>> remainingPaths)
 {
-    // Находим все общие точки между маршрутами в группе
-    var commonPoints = FindCommonPointsInGroup(group);
-    
-    // Разбиваем каждый маршрут на сегменты по общим точкам
-    var segmentsByRoute = new Dictionary<(int, int), List<RouteSegment>>();
-    
-    foreach (var route in group)
+    if (remainingPaths.Count < 2)
+    {
+        Console.WriteLine("Слишком мало маршрутов для анализа сегментов");
+        return;
+    }
+
+    Console.WriteLine($"Анализируем {remainingPaths.Count} маршрутов на уровне сегментов...");
+
+    // Находим все общие точки между всеми оставшимися маршрутами
+    var commonPoints = FindCommonPointsAcrossAllRoutes(remainingPaths);
+    Console.WriteLine($"Найдено {commonPoints.Count} общих точек между всеми маршрутами");
+
+    // Разбиваем все маршруты на сегменты по общим точкам
+    var allSegments = new List<RouteSegment>();
+    // var segmentsByRoute = new Dictionary<(int, int), List<RouteSegment>>();
+
+    foreach (var route in remainingPaths)
     {
         var segments = SplitRouteIntoSegments(route.Value, commonPoints);
-        segmentsByRoute[route.Key] = segments;
+        // segmentsByRoute[route.Key] = segments;
+        allSegments.AddRange(segments);
         
         Console.WriteLine($"  Маршрут {route.Key} разбит на {segments.Count} сегментов");
+        if (segments.Count == 0)
+            MarkPointsAsVisible(route.Value);
     }
-    
-    // Группируем схожие сегменты по медианной дистанции
-    var segmentGroups = GroupSimilarSegments(segmentsByRoute, commonPoints);
-    
-    // Для каждой группы сегментов выбираем лучший
-    var bestSegmentsByRoute = SelectBestSegmentsForEachRoute(segmentsByRoute, segmentGroups);
-    
-    return bestSegmentsByRoute;
+
+    // Группируем схожие сегменты по конечным точкам и медианной дистанции
+    var segmentGroups = GroupSimilarSegmentsAcrossAllRoutes(allSegments);
+    Console.WriteLine($"Создано {segmentGroups.Count} групп сегментов");
+
+    // Для каждой группы сегментов выбираем лучший и помечаем его точки как видимые
+    MarkBestSegmentsAsVisible(segmentGroups);
 }
 
 /// <summary>
-/// Находит общие точки между всеми маршрутами в группе
+/// Помечает точки лучших сегментов как видимые
 /// </summary>
-private static HashSet<int> FindCommonPointsInGroup(List<KeyValuePair<(int, int), List<GeomPoint>>> group)
+private static void MarkBestSegmentsAsVisible(List<List<RouteSegment>> segmentGroups)
+{
+    foreach (var group in segmentGroups)
+    {
+        if (group.Count == 0) continue;
+
+        // Выбираем сегмент с максимальным средним Influence
+        var bestSegment = group
+            .OrderByDescending(s => s.AvgInfluence)
+            .ThenByDescending(s => s.Points.Count)
+            .First();
+
+        // Помечаем точки лучшего сегмента как видимые
+        MarkPointsAsVisible(bestSegment.Points);
+
+        Console.WriteLine($"  Лучший сегмент {bestSegment.StartPointId}-{bestSegment.EndPointId}: " +
+                        $"Influence={bestSegment.AvgInfluence:F2}, точек={bestSegment.Points.Count}");
+
+        // Остальные сегменты в группе остаются с Show = false (уже сброшено в начале)
+    }
+}
+
+/// <summary>
+/// Находит общие точки между всеми маршрутами
+/// </summary>
+private static HashSet<int> FindCommonPointsAcrossAllRoutes(Dictionary<(int, int), List<GeomPoint>> routes)
 {
     var commonPoints = new HashSet<int>();
     
-    if (group.Count < 2) return commonPoints;
+    if (routes.Count < 2) return commonPoints;
+
+    // Собираем все точки из всех маршрутов
+    var allPoints = routes.Values.SelectMany(route => route.Select(p => p.Id)).ToList();
     
-    // Начинаем с точек первого маршрута
-    var firstRoutePoints = group[0].Value.Select(p => p.Id).ToHashSet();
-    
-    // Ищем точки, которые есть во всех маршрутах
-    foreach (var pointId in firstRoutePoints)
+    // Находим точки, которые встречаются в нескольких маршрутах
+    var pointFrequency = new Dictionary<int, int>();
+    foreach (var pointId in allPoints)
     {
-        bool isCommonInAll = true;
-        
-        for (int i = 1; i < group.Count; i++)
-        {
-            var routePointIds = group[i].Value.Select(p => p.Id).ToHashSet();
-            if (!routePointIds.Contains(pointId))
-            {
-                isCommonInAll = false;
-                break;
-            }
-        }
-        
-        if (isCommonInAll)
+        pointFrequency[pointId] = pointFrequency.GetValueOrDefault(pointId) + 1;
+    }
+
+    // Считаем общими точки, которые встречаются хотя бы в 2 маршрутах
+    foreach (var (pointId, frequency) in pointFrequency)
+    {
+        if (frequency >= 2)
         {
             commonPoints.Add(pointId);
         }
     }
-    
-    Console.WriteLine($"  Найдено {commonPoints.Count} общих точек в группе");
+
     return commonPoints;
 }
+
+/// <summary>
+/// Группирует схожие сегменты по всем маршрутам
+/// </summary>
+private static List<List<RouteSegment>> GroupSimilarSegmentsAcrossAllRoutes(List<RouteSegment> allSegments)
+{
+    var segmentGroups = new List<List<RouteSegment>>();
+    var processedSegments = new HashSet<RouteSegment>();
+
+    foreach (var segment in allSegments)
+    {
+        if (processedSegments.Contains(segment)) continue;
+
+        var group = new List<RouteSegment> { segment };
+        processedSegments.Add(segment);
+
+        // Находим все схожие сегменты
+        for (int i = 0; i < group.Count; i++)
+        {
+            var currentSegment = group[i];
+
+            foreach (var otherSegment in allSegments)
+            {
+                if (processedSegments.Contains(otherSegment)) continue;
+                if (currentSegment == otherSegment) continue;
+
+                // Сегменты считаются схожими если:
+                // 1. Они имеют одинаковые стартовые и конечные точки ИЛИ
+                // 2. Они имеют близкую медианную дистанцию и соединяют схожие участки
+                bool areSimilar = (AreSegmentsConnectingSimilarAreas(currentSegment, otherSegment) &&
+                                   CalculateMedianDistanceBetweenSegments(currentSegment, otherSegment) <= medianDistanceThreshold);
+
+                if (areSimilar)
+                {
+                    group.Add(otherSegment);
+                    processedSegments.Add(otherSegment);
+                }
+            }
+        }
+
+        segmentGroups.Add(group);
+    }
+    
+    foreach (var routeSegment in processedSegments.Except(allSegments))
+    {
+        MarkPointsAsVisible(routeSegment.Points);
+    }
+
+    return segmentGroups;
+}
+
+/// <summary>
+/// Проверяет, соединяют ли сегменты схожие области
+/// </summary>
+private static bool AreSegmentsConnectingSimilarAreas(RouteSegment seg1, RouteSegment seg2)
+{
+    // Простая проверка: сегменты считаются соединяющими схожие области,
+    // если их начальные и конечные точки находятся близко друг к другу
+    var seg1Start = seg1.Points.First().AsVector2();
+    var seg1End = seg1.Points.Last().AsVector2();
+    var seg2Start = seg2.Points.First().AsVector2();
+    var seg2End = seg2.Points.Last().AsVector2();
+
+    double startDistance = CalculateDistance(seg1Start, seg2Start);
+    double endDistance = CalculateDistance(seg1End, seg2End);
+
+    return startDistance <= 10 && endDistance <= 10;
+}
+
+
+
+// /// <summary>
+// /// Анализирует сегменты маршрутов и выбирает лучшие для каждого участка
+// /// </summary>
+// private static Dictionary<(int, int), List<RouteSegment>> AnalyzeAndSelectBestSegments(
+//     List<KeyValuePair<(int, int), List<GeomPoint>>> group)
+// {
+//     // Находим все общие точки между маршрутами в группе
+//     var commonPoints = FindCommonPointsInGroup(group);
+//     
+//     // Разбиваем каждый маршрут на сегменты по общим точкам
+//     var segmentsByRoute = new Dictionary<(int, int), List<RouteSegment>>();
+//     
+//     foreach (var route in group)
+//     {
+//         var segments = SplitRouteIntoSegments(route.Value, commonPoints);
+//         segmentsByRoute[route.Key] = segments;
+//         
+//         Console.WriteLine($"  Маршрут {route.Key} разбит на {segments.Count} сегментов");
+//     }
+//     
+//     // Группируем схожие сегменты по медианной дистанции
+//     var segmentGroups = GroupSimilarSegments(segmentsByRoute, commonPoints);
+//     
+//     // Для каждой группы сегментов выбираем лучший
+//     var bestSegmentsByRoute = SelectBestSegmentsForEachRoute(segmentsByRoute, segmentGroups);
+//     
+//     return bestSegmentsByRoute;
+// }
+
+// /// <summary>
+// /// Находит общие точки между всеми маршрутами в группе
+// /// </summary>
+// private static HashSet<int> FindCommonPointsInGroup(List<KeyValuePair<(int, int), List<GeomPoint>>> group)
+// {
+//     var commonPoints = new HashSet<int>();
+//     
+//     if (group.Count < 2) return commonPoints;
+//     
+//     // Начинаем с точек первого маршрута
+//     var firstRoutePoints = group[0].Value.Select(p => p.Id).ToHashSet();
+//     
+//     // Ищем точки, которые есть во всех маршрутах
+//     foreach (var pointId in firstRoutePoints)
+//     {
+//         bool isCommonInAll = true;
+//         
+//         for (int i = 1; i < group.Count; i++)
+//         {
+//             var routePointIds = group[i].Value.Select(p => p.Id).ToHashSet();
+//             if (!routePointIds.Contains(pointId))
+//             {
+//                 isCommonInAll = false;
+//                 break;
+//             }
+//         }
+//         
+//         if (isCommonInAll)
+//         {
+//             commonPoints.Add(pointId);
+//         }
+//     }
+//     
+//     Console.WriteLine($"  Найдено {commonPoints.Count} общих точек в группе");
+//     return commonPoints;
+// }
 
 /// <summary>
 /// Разбивает маршрут на сегменты по общим точкам
@@ -380,55 +574,55 @@ private static List<RouteSegment> SplitRouteIntoSegments(List<GeomPoint> route, 
     return segments;
 }
 
-/// <summary>
-/// Группирует схожие сегменты по медианной дистанции
-/// </summary>
-private static List<List<RouteSegment>> GroupSimilarSegments(
-    Dictionary<(int, int), List<RouteSegment>> segmentsByRoute,
-    HashSet<int> commonPoints)
-{
-    var allSegments = segmentsByRoute.Values.SelectMany(x => x).ToList();
-    var segmentGroups = new List<List<RouteSegment>>();
-    var processedSegments = new HashSet<RouteSegment>();
-    
-    foreach (var segment in allSegments)
-    {
-        if (processedSegments.Contains(segment)) continue;
-        
-        var group = new List<RouteSegment> { segment };
-        processedSegments.Add(segment);
-        
-        // Находим все схожие сегменты
-        for (int i = 0; i < group.Count; i++)
-        {
-            var currentSegment = group[i];
-            
-            foreach (var otherSegment in allSegments)
-            {
-                if (processedSegments.Contains(otherSegment)) continue;
-                if (currentSegment == otherSegment) continue;
-                
-                // Сегменты считаются схожими если:
-                // 1. Они имеют одинаковые стартовые и конечные точки ИЛИ
-                // 2. Они имеют близкую медианную дистанцию
-                bool areSimilar = (currentSegment.StartPointId == otherSegment.StartPointId &&
-                                 currentSegment.EndPointId == otherSegment.EndPointId) ||
-                                CalculateMedianDistanceBetweenSegments(currentSegment, otherSegment) <= medianDistanceThreshold;
-                
-                if (areSimilar)
-                {
-                    group.Add(otherSegment);
-                    processedSegments.Add(otherSegment);
-                }
-            }
-        }
-        
-        segmentGroups.Add(group);
-    }
-    
-    Console.WriteLine($"  Создано {segmentGroups.Count} групп сегментов");
-    return segmentGroups;
-}
+// /// <summary>
+// /// Группирует схожие сегменты по медианной дистанции
+// /// </summary>
+// private static List<List<RouteSegment>> GroupSimilarSegments(
+//     Dictionary<(int, int), List<RouteSegment>> segmentsByRoute,
+//     HashSet<int> commonPoints)
+// {
+//     var allSegments = segmentsByRoute.Values.SelectMany(x => x).ToList();
+//     var segmentGroups = new List<List<RouteSegment>>();
+//     var processedSegments = new HashSet<RouteSegment>();
+//     
+//     foreach (var segment in allSegments)
+//     {
+//         if (processedSegments.Contains(segment)) continue;
+//         
+//         var group = new List<RouteSegment> { segment };
+//         processedSegments.Add(segment);
+//         
+//         // Находим все схожие сегменты
+//         for (int i = 0; i < group.Count; i++)
+//         {
+//             var currentSegment = group[i];
+//             
+//             foreach (var otherSegment in allSegments)
+//             {
+//                 if (processedSegments.Contains(otherSegment)) continue;
+//                 if (currentSegment == otherSegment) continue;
+//                 
+//                 // Сегменты считаются схожими если:
+//                 // 1. Они имеют одинаковые стартовые и конечные точки ИЛИ
+//                 // 2. Они имеют близкую медианную дистанцию
+//                 bool areSimilar = (currentSegment.StartPointId == otherSegment.StartPointId &&
+//                                  currentSegment.EndPointId == otherSegment.EndPointId) ||
+//                                 CalculateMedianDistanceBetweenSegments(currentSegment, otherSegment) <= medianDistanceThreshold;
+//                 
+//                 if (areSimilar)
+//                 {
+//                     group.Add(otherSegment);
+//                     processedSegments.Add(otherSegment);
+//                 }
+//             }
+//         }
+//         
+//         segmentGroups.Add(group);
+//     }
+//     
+//     Console.WriteLine($"  Создано {segmentGroups.Count} групп сегментов");
+//     return segmentGroups;
+// }
 
 /// <summary>
 /// Выбирает лучшие сегменты для каждого маршрута
