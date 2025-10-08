@@ -128,7 +128,7 @@ public static class AdvancedGraphGenerator
                 pathsByPois[key] = path.ToList();
                 pathsByPois[key].ForEach(p =>
                 {
-                    p.Influence++;
+                    p.Influence += pair.Item1.Weight + pair.Item2.Weight;
                     p.Show = true;
                 });
             }
