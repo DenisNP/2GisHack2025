@@ -50,7 +50,7 @@ const addPoiFx = createEffect(({data, store, mapStore}: EffectProps<AddPoiEventD
                 weight: newWeight,
                 point: nearest.point,
                 geoPoint: nearest.geoPoint,
-                type: nearest.type,
+                type: data.type,
             }
         }
     }
