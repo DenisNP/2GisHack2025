@@ -1,8 +1,6 @@
-﻿using System.Text;
-using GraphGeneration.AStar;
+﻿using GraphGeneration.AStar;
 using GraphGeneration.Geometry;
 using GraphGeneration.Models;
-using GraphGeneration.Svg;
 
 namespace GraphGeneration;
 
@@ -11,7 +9,7 @@ public static class Optimizer
     private const int influenceDepth = 1;
     private static double _influenceIncrement = 0.25;
 
-    public static void Run(
+    public static List<List<GeomPoint>> Run(
         List<GeomPoint> points,
         List<GeomPoint> pois,
         List<(GeomPoint, GeomPoint)> pairs,
@@ -27,7 +25,7 @@ public static class Optimizer
             .ToList();
 
         double maxWeight = pairs.Max(pp => pp.Item1.Weight + pp.Item2.Weight);
-        //int pn = 0;
+        List<List<GeomPoint>> paths = new();
 
         while (orderedPairs.Count > 0)
         {
@@ -70,6 +68,11 @@ public static class Optimizer
                     currentNeighbours[i] = (n, cost);
                 }
             }
+
+            if (processed.Count > 0)
+            {
+                paths.Add(processed.ToList());
+            }
 #if DEBUG
             /*pn++;
             if (pn % 10 == 0)
@@ -86,5 +89,7 @@ public static class Optimizer
         }
 
         Console.WriteLine();
+
+        return paths;
     }
 }

@@ -20,7 +20,6 @@ public static class AdvancedGraphGenerator
     private static double _startClusterDistanceInMeters;
     private static double _maxClusterDistanceInMeters;
     private const int maxClustersNumber = 20;
-    private const double pointsReturnRatio = 0.4;
 
     public static GeomPoint[] GenerateEdges(List<ZonePolygon> polygons, List<GeomPoint> poi)
     {
@@ -120,7 +119,14 @@ public static class AdvancedGraphGenerator
 #endif
 
         // строим маршруты
-        Optimizer.Run(originPoints, centroids, pairs, neighbors, polygonMap, hexSize);
+        var paths = Optimizer.Run(originPoints, centroids, pairs, neighbors, polygonMap, hexSize);
+        
+        // Удаляем пути вне нужных зон
+        var pointAllowedFilter = new PointAllowedFilter(polygonMap.Available);
+        paths.ForEach(path => path.RemoveAll(p => p.IsPoi || pointAllowedFilter.Skip(p.AsVector2())));
+        paths.RemoveAll(path => path.Count == 0);
+
+        Console.WriteLine("Paths got: " + paths.Count);
 
 #if DEBUG
         // рисуем исходный граф
@@ -132,15 +138,26 @@ public static class AdvancedGraphGenerator
         File.WriteAllText("paths_graph.svg", svgPathsGraph, Encoding.UTF8);
 #endif
         
-        // Возвращаем верхние pointsReturnRatio по влиянию
-        var pointAllowedFilter = new PointAllowedFilter(polygonMap.Available);
-        var pointsAllowed = originPoints.Where(p => !p.IsPoi && !pointAllowedFilter.Skip(p.AsVector2())).ToList();
-        var pointsToShow = pointsAllowed
-            .OrderByDescending(p => p.Influence)
-            .Take((int)Math.Round(pointsReturnRatio * pointsAllowed.Count));
+        // Возвращаем верхние N по среднему влиянию пути
+        int pathsToReturn = (int)Math.Round(0.65824 * paths.Count + 0.36230 * side - 35.99);
+        Console.WriteLine("Paths to return " + pathsToReturn);
+
+        var pathsWithInfluence = paths
+            .Select(path => (path, influence: path.Average(p => p.Influence)))
+            .OrderByDescending(path => path.influence)
+            .Take(pathsToReturn);
+
+        foreach (var point in pathsWithInfluence.SelectMany(path => path.path))
+        {
+            point.Show = true;
+        }
+        
+        // нормализуем
+        double maxInfluence = paths.SelectMany(p => p).Select(p => p.Influence).Max();
+        originPoints.ForEach(p => p.Influence /= maxInfluence);
 
         // возвращаем
-        return pointsToShow.ToArray();
+        return originPoints.Where(p => p.Show).ToArray();
     }
 
     private static IEnumerable<(GeomPoint, GeomPoint)> GenerateUniqPairs(List<GeomPoint> pois)
