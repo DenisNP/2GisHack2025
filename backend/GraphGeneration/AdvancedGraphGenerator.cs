@@ -178,6 +178,9 @@ public static class AdvancedGraphGenerator
     /// <summary>
 /// Фильтрует маршруты с общими точками или близкой медианной дистанцией, оставляя только маршруты с максимальным средним Influence
 /// </summary>
+/// <summary>
+/// Фильтрует маршруты с общими точками или близкой медианной дистанцией, оставляя лучшие сегменты маршрутов
+/// </summary>
 private static Dictionary<(int, int), List<GeomPoint>> FilterPathsByCommonPoints(
     Dictionary<(int, int), List<GeomPoint>> pathsByPois)
 {
@@ -185,8 +188,8 @@ private static Dictionary<(int, int), List<GeomPoint>> FilterPathsByCommonPoints
     var processedKeys = new HashSet<(int, int)>();
     
     // Константы для группировки по медианной дистанции
-    const double medianDistanceThreshold = 5; // Максимальная медианная дистанция для группировки маршрутов
-    const int minPointsForMedianComparison = 3; // Минимальное количество точек для сравнения медиан
+    const double medianDistanceThreshold = 2.0;
+    const int minPointsForMedianComparison = 3;
     
     // Группируем маршруты по общим точкам или близкой медианной дистанции
     foreach (var path1 in pathsByPois)
@@ -196,7 +199,6 @@ private static Dictionary<(int, int), List<GeomPoint>> FilterPathsByCommonPoints
         var group = new List<KeyValuePair<(int, int), List<GeomPoint>>> { path1 };
         processedKeys.Add(path1.Key);
         
-        // Находим все маршруты с общими точками или близкой медианной дистанцией
         for (int i = 0; i < group.Count; i++)
         {
             var currentPath = group[i];
@@ -228,7 +230,7 @@ private static Dictionary<(int, int), List<GeomPoint>> FilterPathsByCommonPoints
         pathGroups.Add(group);
     }
     
-    // Для каждой группы оставляем только маршрут с максимальным средним Influence
+    // Для каждой группы анализируем сегменты и оставляем лучшие
     var result = new Dictionary<(int, int), List<GeomPoint>>();
     
     foreach (var group in pathGroups)
@@ -237,37 +239,311 @@ private static Dictionary<(int, int), List<GeomPoint>> FilterPathsByCommonPoints
         {
             // Если в группе только один маршрут, просто добавляем его
             result.Add(group[0].Key, group[0].Value);
-            group[0].Value.ForEach(p => p.Show = true);
+            MarkPointsAsVisible(group[0].Value);
         }
         else
         {
-            Console.WriteLine($"Группа из {group.Count} маршрутов:");
-            foreach (var path in group)
+            Console.WriteLine($"Анализируем группу из {group.Count} маршрутов:");
+            
+            // Анализируем сегменты и выбираем лучшие
+            var bestSegmentsByRoute = AnalyzeAndSelectBestSegments(group);
+            
+            // Собираем финальные маршруты из лучших сегментов
+            foreach (var routeSegments in bestSegmentsByRoute)
             {
-                double avgInfluence = CalculateAverageInfluence(path.Value);
-                Console.WriteLine($"  Маршрут {path.Key}: средний Influence = {avgInfluence:F2}, точек = {path.Value.Count}");
+                var finalRoute = ReconstructRouteFromSegments(routeSegments.Value);
+                if (finalRoute.Count > 0)
+                {
+                    result.Add(routeSegments.Key, finalRoute);
+                    MarkPointsAsVisible(finalRoute);
+                    
+                    Console.WriteLine($"  Финальный маршрут {routeSegments.Key}: {finalRoute.Count} точек");
+                }
             }
-            
-            // Находим маршрут с максимальным средним Influence
-            var bestPath = group
-                .Select(path => new {
-                    Path = path,
-                    AvgInfluence = CalculateAverageInfluence(path.Value),
-                    PathLength = path.Value.Count
-                })
-                .OrderByDescending(x => x.AvgInfluence)
-                .ThenByDescending(x => x.PathLength) // При равном Influence предпочитаем более длинные маршруты
-                .First();
-            
-            Console.WriteLine($"  Выбран маршрут {bestPath.Path.Key} со средним Influence: {bestPath.AvgInfluence:F2}");
-            
-            // Добавляем только лучший маршрут
-            result.Add(bestPath.Path.Key, bestPath.Path.Value);
-            bestPath.Path.Value.ForEach(p => p.Show = true);
         }
     }
     
     return result;
+}
+
+/// <summary>
+/// Анализирует сегменты маршрутов и выбирает лучшие для каждого участка
+/// </summary>
+private static Dictionary<(int, int), List<RouteSegment>> AnalyzeAndSelectBestSegments(
+    List<KeyValuePair<(int, int), List<GeomPoint>>> group)
+{
+    // Находим все общие точки между маршрутами в группе
+    var commonPoints = FindCommonPointsInGroup(group);
+    
+    // Разбиваем каждый маршрут на сегменты по общим точкам
+    var segmentsByRoute = new Dictionary<(int, int), List<RouteSegment>>();
+    
+    foreach (var route in group)
+    {
+        var segments = SplitRouteIntoSegments(route.Value, commonPoints);
+        segmentsByRoute[route.Key] = segments;
+        
+        Console.WriteLine($"  Маршрут {route.Key} разбит на {segments.Count} сегментов");
+    }
+    
+    // Группируем схожие сегменты по медианной дистанции
+    var segmentGroups = GroupSimilarSegments(segmentsByRoute, commonPoints);
+    
+    // Для каждой группы сегментов выбираем лучший
+    var bestSegmentsByRoute = SelectBestSegmentsForEachRoute(segmentsByRoute, segmentGroups);
+    
+    return bestSegmentsByRoute;
+}
+
+/// <summary>
+/// Находит общие точки между всеми маршрутами в группе
+/// </summary>
+private static HashSet<int> FindCommonPointsInGroup(List<KeyValuePair<(int, int), List<GeomPoint>>> group)
+{
+    var commonPoints = new HashSet<int>();
+    
+    if (group.Count < 2) return commonPoints;
+    
+    // Начинаем с точек первого маршрута
+    var firstRoutePoints = group[0].Value.Select(p => p.Id).ToHashSet();
+    
+    // Ищем точки, которые есть во всех маршрутах
+    foreach (var pointId in firstRoutePoints)
+    {
+        bool isCommonInAll = true;
+        
+        for (int i = 1; i < group.Count; i++)
+        {
+            var routePointIds = group[i].Value.Select(p => p.Id).ToHashSet();
+            if (!routePointIds.Contains(pointId))
+            {
+                isCommonInAll = false;
+                break;
+            }
+        }
+        
+        if (isCommonInAll)
+        {
+            commonPoints.Add(pointId);
+        }
+    }
+    
+    Console.WriteLine($"  Найдено {commonPoints.Count} общих точек в группе");
+    return commonPoints;
+}
+
+/// <summary>
+/// Разбивает маршрут на сегменты по общим точкам
+/// </summary>
+private static List<RouteSegment> SplitRouteIntoSegments(List<GeomPoint> route, HashSet<int> commonPoints)
+{
+    var segments = new List<RouteSegment>();
+    var currentSegment = new List<GeomPoint>();
+    int segmentStartIndex = 0;
+    
+    for (int i = 0; i < route.Count; i++)
+    {
+        currentSegment.Add(route[i]);
+        
+        // Если текущая точка общая (и не первая/последняя в маршруте), завершаем сегмент
+        if (commonPoints.Contains(route[i].Id) && i > 0 && i < route.Count - 1)
+        {
+            if (currentSegment.Count > 1)
+            {
+                segments.Add(new RouteSegment
+                {
+                    Points = currentSegment.ToList(),
+                    StartPointId = route[segmentStartIndex].Id,
+                    EndPointId = route[i].Id,
+                    AvgInfluence = CalculateAverageInfluence(currentSegment)
+                });
+            }
+            
+            // Начинаем новый сегмент с текущей точки
+            currentSegment = new List<GeomPoint> { route[i] };
+            segmentStartIndex = i;
+        }
+    }
+    
+    // Добавляем последний сегмент
+    if (currentSegment.Count > 1)
+    {
+        segments.Add(new RouteSegment
+        {
+            Points = currentSegment,
+            StartPointId = route[segmentStartIndex].Id,
+            EndPointId = route[route.Count - 1].Id,
+            AvgInfluence = CalculateAverageInfluence(currentSegment)
+        });
+    }
+    
+    return segments;
+}
+
+/// <summary>
+/// Группирует схожие сегменты по медианной дистанции
+/// </summary>
+private static List<List<RouteSegment>> GroupSimilarSegments(
+    Dictionary<(int, int), List<RouteSegment>> segmentsByRoute,
+    HashSet<int> commonPoints)
+{
+    var allSegments = segmentsByRoute.Values.SelectMany(x => x).ToList();
+    var segmentGroups = new List<List<RouteSegment>>();
+    var processedSegments = new HashSet<RouteSegment>();
+    
+    foreach (var segment in allSegments)
+    {
+        if (processedSegments.Contains(segment)) continue;
+        
+        var group = new List<RouteSegment> { segment };
+        processedSegments.Add(segment);
+        
+        // Находим все схожие сегменты
+        for (int i = 0; i < group.Count; i++)
+        {
+            var currentSegment = group[i];
+            
+            foreach (var otherSegment in allSegments)
+            {
+                if (processedSegments.Contains(otherSegment)) continue;
+                if (currentSegment == otherSegment) continue;
+                
+                // Сегменты считаются схожими если:
+                // 1. Они имеют одинаковые стартовые и конечные точки ИЛИ
+                // 2. Они имеют близкую медианную дистанцию
+                bool areSimilar = (currentSegment.StartPointId == otherSegment.StartPointId &&
+                                 currentSegment.EndPointId == otherSegment.EndPointId) ||
+                                CalculateMedianDistanceBetweenSegments(currentSegment, otherSegment) <= medianDistanceThreshold;
+                
+                if (areSimilar)
+                {
+                    group.Add(otherSegment);
+                    processedSegments.Add(otherSegment);
+                }
+            }
+        }
+        
+        segmentGroups.Add(group);
+    }
+    
+    Console.WriteLine($"  Создано {segmentGroups.Count} групп сегментов");
+    return segmentGroups;
+}
+
+/// <summary>
+/// Выбирает лучшие сегменты для каждого маршрута
+/// </summary>
+private static Dictionary<(int, int), List<RouteSegment>> SelectBestSegmentsForEachRoute(
+    Dictionary<(int, int), List<RouteSegment>> segmentsByRoute,
+    List<List<RouteSegment>> segmentGroups)
+{
+    var bestSegmentsByRoute = new Dictionary<(int, int), List<RouteSegment>>();
+    
+    // Инициализируем для каждого маршрута пустой список сегментов
+    foreach (var routeKey in segmentsByRoute.Keys)
+    {
+        bestSegmentsByRoute[routeKey] = new List<RouteSegment>();
+    }
+    
+    // Для каждой группы сегментов выбираем лучший
+    foreach (var segmentGroup in segmentGroups)
+    {
+        if (segmentGroup.Count == 0) continue;
+        
+        // Выбираем сегмент с максимальным средним Influence
+        var bestSegment = segmentGroup
+            .OrderByDescending(s => s.AvgInfluence)
+            .ThenByDescending(s => s.Points.Count)
+            .First();
+        
+        Console.WriteLine($"  Лучший сегмент: Influence={bestSegment.AvgInfluence:F2}, " +
+                        $"точки={bestSegment.Points.Count}, маршрут={bestSegment.GetRouteKey()}");
+        
+        // Добавляем лучший сегмент в соответствующий маршрут
+        var routeKey = bestSegment.GetRouteKey();
+        if (bestSegmentsByRoute.ContainsKey(routeKey))
+        {
+            bestSegmentsByRoute[routeKey].Add(bestSegment);
+        }
+    }
+    
+    // Сортируем сегменты в каждом маршруте по порядку следования
+    foreach (var routeKey in bestSegmentsByRoute.Keys.ToList())
+    {
+        var originalRoute = segmentsByRoute[routeKey];
+        var bestSegments = bestSegmentsByRoute[routeKey];
+        
+        // Восстанавливаем порядок сегментов как в оригинальном маршруте
+        bestSegmentsByRoute[routeKey] = bestSegments
+            .OrderBy(s => originalRoute.FindIndex(seg => seg.StartPointId == s.StartPointId))
+            .ToList();
+    }
+    
+    return bestSegmentsByRoute;
+}
+
+/// <summary>
+/// Восстанавливает маршрут из сегментов
+/// </summary>
+private static List<GeomPoint> ReconstructRouteFromSegments(List<RouteSegment> segments)
+{
+    if (segments.Count == 0) return new List<GeomPoint>();
+    
+    var route = new List<GeomPoint>();
+    
+    for (int i = 0; i < segments.Count; i++)
+    {
+        var segment = segments[i];
+        
+        // Для первого сегмента добавляем все точки
+        if (i == 0)
+        {
+            route.AddRange(segment.Points);
+        }
+        else
+        {
+            // Для последующих сегментов избегаем дублирования точек соединения
+            route.AddRange(segment.Points.Skip(1));
+        }
+    }
+    
+    return route;
+}
+
+/// <summary>
+/// Вычисляет медианную дистанцию между двумя сегментами
+/// </summary>
+private static double CalculateMedianDistanceBetweenSegments(RouteSegment segment1, RouteSegment segment2)
+{
+    return CalculateMedianDistanceBetweenPaths(segment1.Points, segment2.Points);
+}
+
+/// <summary>
+/// Помечает точки как видимые
+/// </summary>
+private static void MarkPointsAsVisible(List<GeomPoint> points)
+{
+    foreach (var point in points)
+    {
+        point.Show = true;
+    }
+}
+
+/// <summary>
+/// Модель сегмента маршрута
+/// </summary>
+private class RouteSegment
+{
+    public List<GeomPoint> Points { get; set; } = new();
+    public int StartPointId { get; set; }
+    public int EndPointId { get; set; }
+    public double AvgInfluence { get; set; }
+    
+    public (int, int) GetRouteKey()
+    {
+        if (Points.Count == 0) return (0, 0);
+        return (Points.First().Id, Points.Last().Id);
+    }
 }
 
 /// <summary>
