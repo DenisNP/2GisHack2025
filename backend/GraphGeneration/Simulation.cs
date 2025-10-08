@@ -176,7 +176,7 @@ public static class Simulation
     /// <param name="neighbors">Словарь соседей для всех точек</param>
     /// <param name="maxDepth">Максимальная глубина поиска (n = 1 для прямых соседей, n = 2 для соседей и соседей соседей и т.д.)</param>
     /// <returns>Список всех соседних точек с их уровнями глубины на глубинах от 1 до maxDepth</returns>
-    private static List<(GeomPoint neighbor, int depth)> GetAllNeighbors(
+    public static List<(GeomPoint neighbor, int depth)> GetAllNeighbors(
         GeomPoint point, 
         Dictionary<int, List<(GeomPoint neighbor, double cost)>> neighbors, 
         int maxDepth)

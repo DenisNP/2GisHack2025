@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using GraphGeneration.AStar;
 using GraphGeneration.Filters;
 using GraphGeneration.Geometry;
 using GraphGeneration.Models;
@@ -18,15 +17,19 @@ public static class AdvancedGraphGenerator
     private const float minBigHexSize = 3f;
     private const float maxBigHexSize = 5f;
     private const float bigHexToSmallRatio = 3f;
-    private const double startClusterDistanceInMeters = 5f;
-    private const double maxClusterDistanceInMeters = 15f;
+    private static double _startClusterDistanceInMeters;
+    private static double _maxClusterDistanceInMeters;
     private const int maxClustersNumber = 20;
+    private const double pointsReturnRatio = 0.4;
 
     public static GeomPoint[] GenerateEdges(List<ZonePolygon> polygons, List<GeomPoint> poi)
     {
         PolygonMap polygonMap = PolygonHelper.GetPolygonMap(polygons);
         double avArea = polygonMap.Available.Sum(p => p.Area);
         double side = Math.Sqrt(avArea);
+
+        _startClusterDistanceInMeters = side / 30;
+        _maxClusterDistanceInMeters = side / 5;
 
         Console.WriteLine("Total Area: " + avArea + "; side: " + side);
         float hexSize = Math.Clamp((float)side / sideToHexRatio, minSmallHexSize, maxSmallHexSize);
@@ -89,14 +92,14 @@ public static class AdvancedGraphGenerator
         // Подготавливаем сетку для симуляции
         
         // Кластеризуем
-        double currentMaxClusterDistance = startClusterDistanceInMeters;
+        double currentMaxClusterDistance = _startClusterDistanceInMeters;
         var pois = originPoints.Where(p => p.IsPoi).ToList();
 
         List<List<GeomPoint>> clusters = pois.Select(p => new List<GeomPoint>{p}).ToList();
         Console.WriteLine("Clusters: " + clusters.Count);
-        while (clusters.Count > maxClustersNumber && currentMaxClusterDistance < maxClusterDistanceInMeters)
+        while (clusters.Count > maxClustersNumber && currentMaxClusterDistance < _maxClusterDistanceInMeters)
         {
-            currentMaxClusterDistance = Math.Min(currentMaxClusterDistance * 1.2, maxClusterDistanceInMeters);
+            currentMaxClusterDistance = Math.Min(currentMaxClusterDistance * 1.2, _maxClusterDistanceInMeters);
             clusters = GeomHelper.Clusterize(pois, polygonMap, currentMaxClusterDistance);
             
             Console.WriteLine("Clusters: " + clusters.Count + "; distance: " + currentMaxClusterDistance);
@@ -117,24 +120,7 @@ public static class AdvancedGraphGenerator
 #endif
 
         // строим маршруты
-        var pathsByPois = new Dictionary<(int, int), List<GeomPoint>>();
-        foreach (var pair in pairs)
-        {
-            List<GeomPoint> path = QuickPathFinder.FindPath(originPoints, neighbors, pair.Item1, pair.Item2);
-            //Console.WriteLine("Path from " +  pair.Item1.Id + " to " + pair.Item2.Id + ": " + path.Count);
-            var key = (pair.Item1.Id, pair.Item2.Id);
-            if (!pathsByPois.ContainsKey(key))
-            {
-                pathsByPois[key] = path.ToList();
-                pathsByPois[key].ForEach(p =>
-                {
-                    p.Influence += pair.Item1.Weight + pair.Item2.Weight;
-                });
-            }
-        }
-        
-        var maxInfluence = originPoints.Max(p => p.Influence);
-        originPoints.ForEach(p => p.Influence /= maxInfluence);
+        Optimizer.Run(originPoints, centroids, pairs, neighbors, polygonMap, hexSize);
 
 #if DEBUG
         // рисуем исходный граф
@@ -145,31 +131,18 @@ public static class AdvancedGraphGenerator
         );
         File.WriteAllText("paths_graph.svg", svgPathsGraph, Encoding.UTF8);
 #endif
-
-        originPoints.ForEach(p => p.Influence = 0);
-        // симулируем движение
-        Simulation.Run(originPoints, centroids, pairs, pathsByPois, neighbors, polygonMap, hexSize);
         
-        maxInfluence = originPoints.Max(p => p.Influence);
-        originPoints.ForEach(p => p.Influence /= maxInfluence);
-
-#if DEBUG
-        // рисуем исходный граф
-        var svgPaths2Graph = GenerateSvg.Generate(
-            polygonMap,
-            originPoints.Where(p => !p.IsPoi || centroids.Any(c => c.Id == p.Id)).ToList(),
-            originEdges.ToList()
-        );
-        File.WriteAllText("paths2_graph.svg", svgPaths2Graph, Encoding.UTF8);
-#endif        
+        // Возвращаем верхние pointsReturnRatio по влиянию
+        var pointAllowedFilter = new PointAllowedFilter(polygonMap.Available);
+        var pointsAllowed = originPoints.Where(p => !p.IsPoi && !pointAllowedFilter.Skip(p.AsVector2())).ToList();
+        var pointsToShow = pointsAllowed
+            .OrderByDescending(p => p.Influence)
+            .Take((int)Math.Round(pointsReturnRatio * pointsAllowed.Count));
 
         // возвращаем
-        var pointAllowedFilter = new PointAllowedFilter(polygonMap.Available);
-        return originPoints
-            .Where(e => e.Show && !e.IsPoi && !pointAllowedFilter.Skip(e.AsVector2()))
-            .ToArray();
+        return pointsToShow.ToArray();
     }
-    
+
     private static IEnumerable<(GeomPoint, GeomPoint)> GenerateUniqPairs(List<GeomPoint> pois)
     {
         for (int i = 0; i < pois.Count; i++)

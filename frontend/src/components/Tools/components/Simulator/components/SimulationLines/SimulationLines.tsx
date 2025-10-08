@@ -4,7 +4,7 @@ import { useUnit } from "effector-react";
 import { stores, ResultGeoPoint } from "../../../../../../stores/simulationState";
 
 // Стиль для коричневых точек симуляции
-const POINT_COLOR = '#8B4513';
+const POINT_COLOR = '#008a06';
 
 export const SimulationLines: React.FC = () => {
     const { mapglInstance, mapgl } = useMapglContext();
@@ -26,27 +26,27 @@ export const SimulationLines: React.FC = () => {
                 for (let i = processedCount; i < endIndex; i++) {
                     const point = points[i];
 
-                    const size = 6;
+                    const size = Math.max(2, Math.min(2 + point.weight * 8, 10));
                     const div = document.createElement('div');
                     div.style.cssText = `
                         width: ${size}px;
                         height: ${size}px;
                         background: ${POINT_COLOR};
-                        border: 1px solid rgba(255, 255, 255, 0.8);
                         border-radius: 50%;
-                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
                         position: absolute;
                         transform: translate(-50%, -50%);
                         pointer-events: none;
                         will-change: transform;
                     `;
+                    // box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                    // border: 1px solid rgba(255, 255, 255, 0.8);
 
                     try {
                         const marker = new (mapgl as any).HtmlMarker(mapglInstance, {
                             coordinates: [point.point.lng, point.point.lat],
                             html: div,
                             interactive: false,
-                            zIndex: 1000,
+                            zIndex: 2000,
                         });
 
                         markersRef.current.push(marker);
