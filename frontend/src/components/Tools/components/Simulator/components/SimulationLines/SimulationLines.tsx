@@ -26,8 +26,9 @@ export const SimulationLines: React.FC = () => {
                 for (let i = processedCount; i < endIndex; i++) {
                     const point = points[i];
 
-                    const size = Math.max(1, Math.min(point.weight * 5, 5));
-                    const opacity = Math.max(0.4, 0.4 + point.weight * 0.6);
+                    const size = 4; // Math.max(1, Math.min(point.weight * 5, 5));
+                    const minOpacity = 0.6;
+                    const opacity = Math.max(minOpacity, minOpacity + point.weight * (1 - minOpacity));
                     const div = document.createElement('div');
                     div.style.cssText = `
                         width: ${size}px;
