@@ -153,11 +153,14 @@ public static class AdvancedGraphGenerator
         }
         
         // нормализуем
-        double maxInfluence = paths.SelectMany(p => p).Select(p => p.Influence).Max();
-        originPoints.ForEach(p => p.Influence /= maxInfluence);
+        var pointsToShow = originPoints.Where(p => p.Show).ToList();
+        double maxInfluence = pointsToShow.Select(p => p.Influence).Max();
+        double minInfluence = pointsToShow.Select(p => p.Influence).Min();
+        double diff = maxInfluence - minInfluence;
+        pointsToShow.ForEach(p => p.Influence = (p.Influence - minInfluence) / diff);
 
         // возвращаем
-        return originPoints.Where(p => p.Show).ToArray();
+        return pointsToShow.ToArray();
     }
 
     private static IEnumerable<(GeomPoint, GeomPoint)> GenerateUniqPairs(List<GeomPoint> pois)
