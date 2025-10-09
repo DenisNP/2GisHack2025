@@ -145,22 +145,23 @@ public static class AdvancedGraphGenerator
         var pathsWithInfluence = paths
             .Select(path => (path, influence: path.Average(p => p.Influence)))
             .OrderByDescending(path => path.influence)
-            .Take(pathsToReturn);
+            .Take(pathsToReturn)
+            .ToList();
 
-        foreach (var point in pathsWithInfluence.SelectMany(path => path.path))
+        double step = 1 / (double)pathsWithInfluence.Count;
+
+        for (var i = 0; i < pathsWithInfluence.Count; i++)
         {
-            point.Show = true;
+            (List<GeomPoint> path, _) = pathsWithInfluence[i];
+            foreach (GeomPoint pt in path)
+            {
+                pt.Show = true;
+                pt.Influence = step * (pathsWithInfluence.Count - i);
+            }
         }
-        
-        // нормализуем
-        var pointsToShow = originPoints.Where(p => p.Show).ToList();
-        double maxInfluence = pointsToShow.Select(p => p.Influence).Max();
-        double minInfluence = pointsToShow.Select(p => p.Influence).Min();
-        double diff = maxInfluence - minInfluence;
-        pointsToShow.ForEach(p => p.Influence = (p.Influence - minInfluence) / diff);
 
         // возвращаем
-        return pointsToShow.ToArray();
+        return originPoints.Where(p => p.Show).ToArray();
     }
 
     private static IEnumerable<(GeomPoint, GeomPoint)> GenerateUniqPairs(List<GeomPoint> pois)
