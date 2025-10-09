@@ -27,11 +27,13 @@ export const SimulationLines: React.FC = () => {
                     const point = points[i];
 
                     const size = Math.max(1, Math.min(point.weight * 5, 5));
+                    const opacity = Math.max(0.4, 0.4 + point.weight * 0.6);
                     const div = document.createElement('div');
                     div.style.cssText = `
                         width: ${size}px;
                         height: ${size}px;
                         background: ${POINT_COLOR};
+                        opacity: ${opacity};
                         border-radius: 50%;
                         position: absolute;
                         transform: translate(-50%, -50%);
