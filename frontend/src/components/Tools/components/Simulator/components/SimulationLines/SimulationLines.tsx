@@ -26,7 +26,7 @@ export const SimulationLines: React.FC = () => {
                 for (let i = processedCount; i < endIndex; i++) {
                     const point = points[i];
 
-                    const size = Math.max(3, Math.min(3 + point.weight * 4, 10));
+                    const size = Math.max(1, Math.min(point.weight * 5, 5));
                     const div = document.createElement('div');
                     div.style.cssText = `
                         width: ${size}px;
