@@ -139,7 +139,7 @@ public static class AdvancedGraphGenerator
 #endif
         
         // Возвращаем верхние N по среднему влиянию пути
-        int pathsToReturn = Math.Clamp((int)Math.Round(0.4 * Math.Pow(paths.Count, 0.9) + 0.2 * side), 10, 100);
+        int pathsToReturn = Math.Clamp((int)Math.Round(0.4 * Math.Pow(paths.Count, 0.9) + 0.2 * side), 10, 200);
         Console.WriteLine("Paths to return " + pathsToReturn);
 
         var pathsWithInfluence = paths
