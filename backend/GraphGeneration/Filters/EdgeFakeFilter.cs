@@ -13,4 +13,9 @@ public class EdgeFakeFilter : IEdgeFilter
     {
         return false;
     }
+    
+    public bool Skip(GeomPoint a, GeomPoint b)
+    {
+        return false;
+    }
 }

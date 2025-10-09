@@ -1,0 +1,9 @@
+﻿namespace PathScape.Domain.Models;
+
+public enum ZoneType
+{
+    None = 0,
+    Restricted = 1, // непроходимая область
+    Urban = 2, // область с уже имеющейся инфраструктурой для ходьбы (тротуары)
+    Available = 3, // доступная для передвижения, но неразмеченная область (газоны)
+}

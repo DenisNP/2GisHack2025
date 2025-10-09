@@ -5,6 +5,7 @@ import { MapglContextProvider } from './MapglContext';
 import { ZoneDrawer } from './components/ZoneDrawer';
 import { ZoneType } from './types/Zone';
 import { PoiManager } from './components/PoiManager/PoiManager';
+import { SimulationOverlay } from './components/SimulationOverlay/SimulationOverlay';
 import { 
     Box, 
     Typography, 
@@ -31,6 +32,7 @@ import { Tools } from './components/Tools/Tools';
 import { NotificationProvider } from './components/NotificationProvider';
 import { useUnit } from 'effector-react';
 import { stores as globalStores, events as globalEvents } from './stores/globalState';
+import { stores as simulationStores } from './stores/simulationState';
 
 // Компонент-обертка для управления видимостью панели
 const PanelWrapper: React.FC<{ 
@@ -66,6 +68,7 @@ function App() {
 
     // Используем Effector store вместо useState
     const openPanel = useUnit(globalStores.$activePanel);
+    const isSimulating = useUnit(simulationStores.$isSimulating);
 
     const sidebarWidth = 100; // Ширина узкой боковой панели
     const drawerWidth = 320; // Ширина выезжающей панели
@@ -119,6 +122,10 @@ function App() {
             <NotificationProvider>
                 <MapglContextProvider>
                     <CssBaseline />
+                    
+                    {/* Анимация симуляции поверх всего */}
+                    <SimulationOverlay isVisible={isSimulating} />
+                    
                     <Box sx={{ display: 'flex', height: '100vh', position: 'relative' }}>
                         {/* Узкая вертикальная панель слева */}
                         <Paper 

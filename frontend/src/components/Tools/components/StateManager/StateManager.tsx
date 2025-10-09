@@ -10,7 +10,7 @@ export const StateManager : React.FC = () => {
         </Typography>
         <Button 
             onClick={saveCurrentState}
-            variant="contained"
+            variant="outlined"
             disabled={!canSave}
             fullWidth
         >
@@ -18,7 +18,7 @@ export const StateManager : React.FC = () => {
         </Button>
         <Button 
             onClick={restoreState}
-            variant="contained"
+            variant="outlined"
             disabled={!hasSavedState}
             fullWidth
         >

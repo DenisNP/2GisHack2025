@@ -8,7 +8,7 @@ import {
     Alert
 } from "@mui/material"
 import { PlayArrow as PlayArrowIcon } from "@mui/icons-material"
-import { SimulationLines } from "./components/SimulationLines"
+import { SimulationLines } from "./components/SimulationLines/SimulationLines"
 
 export const Simulator : React.FC = () => {
     const [$canSimulate, $isSimulating, runSimulation] = useUnit([

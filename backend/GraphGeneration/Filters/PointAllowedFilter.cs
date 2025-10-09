@@ -5,9 +5,9 @@ namespace GraphGeneration.Filters;
 
 public class PointAllowedFilter:  IPointFilter
 {
-    private readonly IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> _allowed;
+    private readonly IReadOnlyCollection<Polygon> _allowed;
 
-    public PointAllowedFilter(IReadOnlyCollection<NetTopologySuite.Geometries.Polygon> allowed)
+    public PointAllowedFilter(IReadOnlyCollection<Polygon> allowed)
     {
         _allowed = allowed;
     }

@@ -1,33 +1,28 @@
-﻿// using System.Numerics;
-
-using System.Text.Json.Serialization;
-using AntAlgorithm;
-using NetTopologySuite.Geometries;
+﻿using NetTopologySuite.Geometries;
+using PathScape.Domain.Models;
 using VoronatorSharp;
 
-namespace GraphGeneration;
+namespace GraphGeneration.Models;
 
 public class ZonePolygon
 {
-    [JsonPropertyName("region")]
-    public List<Vector2> Vertices { get; set; } = new List<Vector2>();
+    public List<Vector2> Vertices { get; set; } = [];
     
     public ZonePolygon() { }
     
-    [JsonPropertyName("type")]
     public ZoneType Type { get; set; }
     
     public ZonePolygon(Polygon polygon, ZoneType type)
     {
         Vertices = polygon.Coordinates
-            .Select((i,v) => new Vector2() { Id = v, x = (float)i.X, y = (float)i.Y, Weight = 0 })
+            .Select((i,v) => new Vector2 { Id = v, x = (float)i.X, y = (float)i.Y, Weight = 0 })
             .ToList();
         Type = type;
     }
     
-    public ZonePolygon(IEnumerable<Vector2> vertices, ZoneType type = ZoneType.Available)
+    public ZonePolygon(IEnumerable<Vector2> vertices, ZoneType type = ZoneType.None)
     {
-        Vertices = vertices.Select((i,v) => new Vector2() { Id = v, x = i.X, y = i.y, Weight = 0 }).ToList();
+        Vertices = vertices.Select((i,v) => new Vector2 { Id = v, x = i.X, y = i.y, Weight = 0 }).ToList();
         Type = type;
     }
     
@@ -56,7 +51,18 @@ public class ZonePolygon
         
         return windingNumber != 0;
     }
+
+    public Vector2 GetCentroid()
+    {
+        Vector2 sum = Vector2.zero;
+        foreach (var vertex in Vertices)
+        {
+            sum += vertex;
+        }
     
+        return sum / Vertices.Count;
+    }
+
     private float IsLeft(Vector2 a, Vector2 b, Vector2 point)
     {
         return (b.X - a.X) * (point.Y - a.Y) - (point.X - a.X) * (b.Y - a.Y);
@@ -65,8 +71,6 @@ public class ZonePolygon
     // Получить ограничивающий прямоугольник
     public (Vector2 min, Vector2 max) GetBoundingBox()
     {
-
-            
         var minX = Vertices.Min(v => v.X);
         var minY = Vertices.Min(v => v.Y);
         var maxX = Vertices.Max(v => v.X);

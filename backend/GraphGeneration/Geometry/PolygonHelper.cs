@@ -1,18 +1,14 @@
-﻿using AntAlgorithm;
-using GraphGeneration.Models;
+﻿using GraphGeneration.Models;
 using NetTopologySuite.Geometries;
+using PathScape.Domain.Models;
 
 namespace GraphGeneration.Geometry;
 
-public class PolygonHelper
+public static class PolygonHelper
 {
     public static PolygonMap GetPolygonMap(IReadOnlyCollection<ZonePolygon> zones)
     {
         var polygonsForGeneration = zones.Where(z => z.Type == ZoneType.Available).ToArray();
-            // zones.Any(p => p.Type == ZoneType.None)
-            //     ? [zones.First(p => p.Type == ZoneType.None)]
-            //     : zones;
-        
         var ignore  = new List<Polygon>(zones.Count);
         var allowed  = new List<Polygon>(zones.Count);
         var urban  = new List<Polygon>(zones.Count);
@@ -42,5 +38,31 @@ public class PolygonHelper
         }
         
         return new PolygonMap(zones, polygonsForGeneration, urban, allowed, ignore, render);
+    }
+
+    public static bool IsPairCrossesAvailable(GeomPoint p1, GeomPoint p2, PolygonMap map)
+    {
+        var line = new LineString([new Coordinate(p1.X, p1.Y), new Coordinate(p2.X, p2.Y)]);
+        foreach (Polygon polygon in map.Available)
+        {
+            if (line.Crosses(polygon))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static bool IsPairCrossesRestricted(GeomPoint p1, GeomPoint p2, PolygonMap map)
+    {
+        var line = new LineString([new Coordinate(p1.X, p1.Y), new Coordinate(p2.X, p2.Y)]);
+        foreach (Polygon polygon in map.Restricted)
+        {
+            if (line.Crosses(polygon))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

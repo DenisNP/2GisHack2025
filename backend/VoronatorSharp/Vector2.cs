@@ -28,8 +28,8 @@ namespace VoronatorSharp
         {
             this.x = x;
             this.y = y;
-            this.Weight = 0;
-            this.Id = 0;
+            Weight = 0;
+            Id = 0;
         }
         
         public float x { get; set; }
@@ -118,18 +118,18 @@ namespace VoronatorSharp
         public void Normalize()
         {
             var m = magnitude;
-            this.x *= m;
-            this.y *= m;
+            x *= m;
+            y *= m;
         }
         public void Scale(Vector2 scale)
         {
-            this.x *= scale.x;
-            this.y *= scale.y;
+            x *= scale.x;
+            y *= scale.y;
         }
         public void Set(float newX, float newY)
         {
-            this.x = newX;
-            this.y = newY;
+            x = newX;
+            y = newY;
         }
         public float SqrMagnitude() => sqrMagnitude;
         public override string ToString() => $"({x}, {y})";

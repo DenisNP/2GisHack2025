@@ -1,0 +1,38 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+using GraphGeneration;
+using GraphGeneration.Models;
+using PathScape.Domain.Models;
+using VoronatorSharp;
+using WebApplication2.Dto;
+
+namespace WebApplication2;
+
+public static class PathScapeService
+{
+    public static IEnumerable<ResultPoint> RunSimulation(Zone[] zones, Poi[] poi)
+    {
+        List<ZonePolygon> polygons = zones
+            .Select(zone => new ZonePolygon(
+                    zone.Region.Select((region, i) => new Vector2(100000 + i, (float)region.X, (float)region.Y, 0)),
+                    zone.ZoneType
+                )
+            )
+            .ToList();
+        
+        foreach (var zone in polygons)
+        {
+            zone.Vertices.Add(zone.Vertices.First());
+        }
+
+        IEnumerable<GeomPoint> points = poi.Select(pp => new GeomPoint(pp.Id, (float)pp.Point.X, (float)pp.Point.Y, pp.Weight));
+        var edges = AdvancedGraphGenerator.GenerateEdges(polygons, points.ToList());
+
+        return edges.Select(e => new ResultPoint
+        {
+            X = e.X,
+            Y = e.Y,
+            Weight = e.Influence,
+        });
+    }
+}
